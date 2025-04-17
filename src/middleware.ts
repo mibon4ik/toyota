@@ -1,41 +1,21 @@
-import { NextResponse } from "next/server";
-import { withAuth } from "next-auth/middleware";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-import authConfig from "@/auth.config";
+export function middleware(request: NextRequest) {
+  const isLoggedIn = request.cookies.get('isLoggedIn')?.value === 'true' || localStorage.getItem('isLoggedIn') === 'true';
+  const path = request.nextUrl.pathname;
 
-export const middleware = withAuth(
-  // `withAuth` augments your `Request` with the user's token.
-  {
-    callbacks: {
-      authorized({ token, request }) {
-        const path = request.nextUrl.pathname;
+  if (path === '/auth/login' && isLoggedIn) {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
 
-        const isPublicPath = path === "/auth/login";
+  if (!isLoggedIn && (path === '/cart' || path === '/checkout')) {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
+  }
 
-        if (token && isPublicPath) {
-          return Response.redirect(new URL("/", request.nextUrl));
-        }
+  return NextResponse.next();
+}
 
-        if (!token && (path === "/cart" || path === "/checkout")) {
-          return false; // Redirect to login is handled in the unauthorized callback
-        }
-
-        return true; // Allow access
-      },
-      unauthorized({ request }) {
-        const url = new URL("/auth/login", request.url);
-        return NextResponse.redirect(url);
-      },
-    },
-    pages: {
-      signIn: '/auth/login',
-    },
-  },
-  // Only run the middleware on specified paths
-  ["/cart", "/checkout"]
-);
-
-// Optionally, don't invoke Middleware on some paths
 export const config = {
-  matcher: ["/cart", "/checkout"],
+  matcher: ['/cart', '/checkout', '/auth/login'],
 };

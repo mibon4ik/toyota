@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
@@ -17,6 +17,8 @@ interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
 export function MainNav({ className, ...props }: MainNavProps) {
   const pathname = usePathname();
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     // Load cart items from local storage on component mount
@@ -29,6 +31,10 @@ export function MainNav({ className, ...props }: MainNavProps) {
     } else {
       setCartItemCount(0);
     }
+
+    // Check login status from local storage
+    const storedLogin = localStorage.getItem('isLoggedIn');
+    setIsLoggedIn(storedLogin === 'true');
   }, []);
 
   useEffect(() => {
@@ -42,6 +48,12 @@ export function MainNav({ className, ...props }: MainNavProps) {
       setCartItemCount(0);
     }
   }, [cartItemCount]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    setIsLoggedIn(false);
+    router.push('/auth/login');
+  };
 
   return (
     <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
@@ -92,6 +104,17 @@ export function MainNav({ className, ...props }: MainNavProps) {
             )}
           </Button>
         </Link>
+        {isLoggedIn ? (
+          <Button size="sm" variant="ghost" onClick={handleLogout}>
+            Logout
+          </Button>
+        ) : (
+          <Link href="/auth/login">
+            <Button size="sm" variant="ghost">
+              Login
+            </Button>
+          </Link>
+        )}
         <Avatar>
           <AvatarImage src="/examples/card-example.png" alt="avatar" />
           <AvatarFallback>OM</AvatarFallback>
