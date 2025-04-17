@@ -23,9 +23,8 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
 
     if (existingItemIndex > -1) {
       // If item exists, update the quantity
-      cartItems = cartItems.map((item: any, index: number) =>
-        index === existingItemIndex ? { ...item, quantity: item.quantity + 1 } : item
-      );
+      cartItems[existingItemIndex].quantity = (cartItems[existingItemIndex].quantity || 0) + 1;
+      cartItems = [...cartItems]; // Create a new array to trigger useEffect in CartPage
     } else {
       // If item doesn't exist, add it to the cart with quantity 1
       cartItems = [...cartItems, { ...product, quantity: 1 }];
