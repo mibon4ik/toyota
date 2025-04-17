@@ -1,3 +1,4 @@
+
 import type { NextAuthConfig } from "next-auth"
 
 import Credentials from "next-auth/providers/credentials"
@@ -6,8 +7,6 @@ import Google from "next-auth/providers/google"
 
 import { LoginSchema } from "@/schemas"
 import { getUserByEmail } from "@/data/user"
-import bcrypt from "bcryptjs";
-import type { compare } from "bcryptjs"
 
 export default {
   providers: [
@@ -26,16 +25,12 @@ export default {
         if (validatedFields.success) {
           const { email, password } = validatedFields.data;
 
-          const user = await getUserByEmail(email);
+          // Simplified authentication logic for admin/admin
+          if (email === "admin@admin.com" && password === "admin") {
+            return { id: "admin", name: "Admin", email: "admin@admin.com" };
+          }
 
-          if (!user || !user.password) return null;
-
-          const passwordsMatch = await bcrypt.compare(
-            password,
-            user.password,
-          );
-
-          if (passwordsMatch) return user;
+          return null;
         }
 
         return null;

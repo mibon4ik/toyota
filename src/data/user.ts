@@ -1,8 +1,8 @@
+
 export const users = [
     {
-        id: "user1",
+        id: "admin",
         email: "admin@admin.com",
-        password: "$2a$10$sALb8czV0/YGBc9BnrY8SeF629Eu47B1H3Z3hKRRzZ6lca/QrSfsS" // bcrypt hash of "admin"
     }
 ];
 
