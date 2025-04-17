@@ -6,7 +6,7 @@ import Google from "next-auth/providers/google"
 
 import { LoginSchema } from "@/schemas"
 import { getUserByEmail } from "@/data/user"
-import bcrypt from "bcryptjs"
+import type { compare } from "bcryptjs"
 
 export default {
   providers: [
@@ -29,6 +29,7 @@ export default {
 
           if (!user || !user.password) return null;
 
+          const bcrypt = await import('bcryptjs');
           const passwordsMatch = await bcrypt.compare(
             password,
             user.password,
@@ -60,5 +61,3 @@ export default {
     error: "/auth/error",
   }
 } satisfies NextAuthConfig
-
-    
