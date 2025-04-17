@@ -60,5 +60,3 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
 };
 
 export default Autopart;
-
-
