@@ -42,19 +42,21 @@ const ShopPage = () => {
   const handleAddToCart = (product: AutoPart) => {
     const existingItemIndex = cartItems.findIndex((item) => item.id === product.id);
 
+    let updatedCart: CartItem[];
+
     if (existingItemIndex > -1) {
       // If item already exists in cart, increase the quantity
-      const updatedCart = cartItems.map((item, index) =>
+      updatedCart = cartItems.map((item, index) =>
         index === existingItemIndex ? {...item, quantity: item.quantity + 1} : item
       );
-      setCartItems(updatedCart);
-      localStorage.setItem('cartItems', JSON.stringify(updatedCart)); // Update local storage
     } else {
       // If item is not in cart, add it with quantity 1
-      const newItem = {...product, quantity: 1};
-      setCartItems([...cartItems, newItem]);
-      localStorage.setItem('cartItems', JSON.stringify([...cartItems, newItem])); // Update local storage
+      const newItem: CartItem = {...product, quantity: 1};
+      updatedCart = [...cartItems, newItem];
     }
+
+    setCartItems(updatedCart);
+    localStorage.setItem('cartItems', JSON.stringify(updatedCart)); // Update local storage
 
     toast({
       title: "Добавлено в корзину!",
