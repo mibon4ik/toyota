@@ -3,6 +3,7 @@
  * @fileOverview An AI agent that suggests compatible auto parts based on vehicle make and model.
  *
  * - suggestCompatibleParts - A function that handles the suggestion of compatible parts.
+ *   It takes vehicle make and model as input and returns a list of compatible auto parts.
  * - SuggestCompatiblePartsInput - The input type for the suggestCompatibleParts function.
  * - SuggestCompatiblePartsOutput - The return type for the suggestCompatibleParts function.
  */

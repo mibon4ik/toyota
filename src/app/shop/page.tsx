@@ -14,6 +14,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
+
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -57,6 +58,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link";
+import {useRouter, useSearchParams} from "next/navigation";
 
 const categories = [
   {
@@ -93,19 +95,27 @@ const categories = [
 
 const ShopPage = () => {
   const [products, setProducts] = useState<AutoPart[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const category = searchParams.get('category');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const products = await getAutoPartsByCategory(selectedCategory || 'all');
+      const products = await getAutoPartsByCategory(category || 'all');
       setProducts(products);
     };
 
     fetchProducts();
-  }, [selectedCategory]);
+  }, [category]);
 
   const handleCategoryClick = (category: string | null) => {
-    setSelectedCategory(category);
+    const newParams = new URLSearchParams(searchParams.toString());
+    if (category) {
+      newParams.set('category', category);
+    } else {
+      newParams.delete('category');
+    }
+    router.push(`/shop?${newParams.toString()}`);
   };
 
   return (
@@ -121,10 +131,10 @@ const ShopPage = () => {
                 All Categories
               </SidebarMenuButton>
             </SidebarMenuItem>
-            {categories.map((category) => (
-              <SidebarMenuItem key={category.value}>
-                <SidebarMenuButton onClick={() => handleCategoryClick(category.value)}>
-                  {category.name}
+            {categories.map((categoryItem) => (
+              <SidebarMenuItem key={categoryItem.value}>
+                <SidebarMenuButton onClick={() => handleCategoryClick(categoryItem.value)}>
+                  {categoryItem.name}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
@@ -150,7 +160,7 @@ const ShopPage = () => {
       <SidebarInset>
         <div className="container mx-auto py-8">
           <h1 className="text-3xl font-bold text-center mb-8">
-            {selectedCategory ? `Auto Parts - ${selectedCategory}` : 'Auto Parts Catalog'}
+            {category ? `Auto Parts - ${category}` : 'Auto Parts Catalog'}
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
             {products.map((product) => (

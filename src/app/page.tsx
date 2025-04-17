@@ -1,49 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, {useState} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
 import {cn} from "@/lib/utils";
 import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel";
 import Autopart from "@/components/autopart";
-import {Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger} from "@/components/ui/sheet";
-import {Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupAction, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInput, SidebarInset, SidebarMenu, SidebarMenuAction, SidebarMenuBadge, SidebarMenuButton, SidebarMenuItem, SidebarMenuSkeleton, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarProvider, SidebarRail, SidebarSeparator, SidebarTrigger, useSidebar} from "@/components/ui/sidebar";
 import Link from "next/link";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from "@/components/ui/accordion";
+import {suggestCompatibleParts} from '@/ai/flows/suggest-compatible-parts';
+import {Input} from "@/components/ui/input";
+import {useToast} from "@/hooks/use-toast";
 
 const categories = [
   {
     name: 'Engine',
     icon: Icons.engine,
-    href: '/category/engine',
+    href: '/shop?category=engine',
   },
   {
     name: 'Suspension',
     icon: Icons.suspension,
-    href: '/category/suspension',
+    href: '/shop?category=suspension',
   },
   {
     name: 'Brakes',
     icon: Icons.brakes,
-    href: '/category/brakes',
+    href: '/shop?category=brakes',
   },
   {
     name: 'Electrical',
     icon: Icons.electrical,
-    href: '/category/electrical',
+    href: '/shop?category=electrical',
   },
   {
     name: 'Body',
     icon: Icons.body,
-    href: '/category/body',
+    href: '/shop?category=body',
   },
   {
     name: 'Accessories',
     icon: Icons.accessories,
-    href: '/category/accessories',
+    href: '/shop?category=accessories',
   },
 ];
 
@@ -149,17 +147,42 @@ const banners = [
     title: 'Summer Sale - Up to 50% Off',
     imageUrl: 'https://picsum.photos/800/300',
     buttonText: 'Shop Now',
-    href: '/sale',
+    href: '/shop',
   },
   {
     title: 'New Arrivals - Check Out the Latest Parts',
     imageUrl: 'https://picsum.photos/800/300',
     buttonText: 'View New Arrivals',
-    href: '/new-arrivals',
+    href: '/shop',
   },
 ];
 
+async function getCompatibleParts(make: string, model: string) {
+  return await suggestCompatibleParts({make: make, model: model});
+}
+
 const HomePage = () => {
+  const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
+  const [compatibleParts, setCompatibleParts] = useState(null);
+  const { toast } = useToast();
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!make || !model) {
+      toast({
+        title: "Error",
+        description: "Please enter both make and model.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const parts = await getCompatibleParts(make, model);
+    setCompatibleParts(parts);
+  };
+
   return (
     <div className="fade-in">
       {/* Banner Carousel */}
@@ -187,6 +210,41 @@ const HomePage = () => {
         <CarouselNext />
       </Carousel>
 
+      {/* Compatibility Checker */}
+      <section className="py-12">
+        <div className="container mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8">Find Parts For Your Car</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-center justify-center gap-4">
+            <Input
+              type="text"
+              placeholder="Make"
+              value={make}
+              onChange={(e) => setMake(e.target.value)}
+              className="w-full md:w-48"
+            />
+            <Input
+              type="text"
+              placeholder="Model"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              className="w-full md:w-48"
+            />
+            <Button type="submit">Find Compatible Parts</Button>
+          </form>
+
+          {compatibleParts && compatibleParts.compatibleParts && (
+            <div className="mt-8">
+              <h3 className="text-2xl font-semibold mb-4">Compatible Parts</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
+                {compatibleParts.compatibleParts.map((product) => (
+                  <Autopart key={product.id} product={product} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Popular Categories */}
       <section className="py-12">
         <div className="container mx-auto text-center">
@@ -195,7 +253,7 @@ const HomePage = () => {
             {categories.map((category) => (
               <Link href={category.href} key={category.name} className="flex flex-col items-center justify-center">
                 <Card className="w-full p-4 product-card">
-                  <Icons.truck className="w-8 h-8 mb-2 text-primary"/>
+                  {React.createElement(category.icon, {className: "w-8 h-8 mb-2 text-primary"})}
                   <CardTitle className="text-sm font-semibold">{category.name}</CardTitle>
                 </Card>
               </Link>
@@ -235,7 +293,7 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
             {benefits.map((benefit) => (
               <Card key={benefit.title} className="p-6 product-card">
-                <Icons.truck className="w-10 h-10 mb-4 text-primary"/>
+                {React.createElement(benefit.icon, {className: "w-10 h-10 mb-4 text-primary"})}
                 <CardTitle className="text-xl font-semibold mb-2">{benefit.title}</CardTitle>
                 <CardDescription>{benefit.description}</CardDescription>
               </Card>
