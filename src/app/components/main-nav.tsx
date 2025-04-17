@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-import { MobileNav } from "@/components/ui/mobile-nav"
+import { MobileNav } from "@/components/mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";

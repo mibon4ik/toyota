@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -12,7 +15,7 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (email === 'admin@admin.com' && password === 'admin') {
+    if (email === 'admin' && password === 'admin') {
       // Store authentication status in local storage
       localStorage.setItem('isLoggedIn', 'true');
       router.push('/');
@@ -23,43 +26,43 @@ const LoginPage = () => {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-            Email
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            id="email"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-        <div className="mb-6">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-            Password
-          </label>
-          <input
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline"
-            id="password"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        {error && <p className="text-red-500 text-xs italic">{error}</p>}
-        <div className="flex items-center justify-between">
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            type="submit"
-          >
-            Sign In
-          </button>
-        </div>
-      </form>
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+                Username
+              </label>
+              <Input
+                id="email"
+                type="text"
+                placeholder="Username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {error && <p className="text-red-500 text-xs italic">{error}</p>}
+            <Button type="submit" className="w-full">
+              Sign In
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };
