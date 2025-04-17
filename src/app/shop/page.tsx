@@ -62,32 +62,32 @@ import {useRouter, useSearchParams} from "next/navigation";
 
 const categories = [
   {
-    name: 'Engine',
+    name: 'Двигатель',
     icon: Icons.engine,
     value: 'engine',
   },
   {
-    name: 'Suspension',
+    name: 'Подвеска',
     icon: Icons.suspension,
     value: 'suspension',
   },
   {
-    name: 'Brakes',
+    name: 'Тормоза',
     icon: Icons.brakes,
     value: 'brakes',
   },
   {
-    name: 'Electrical',
+    name: 'Электрика',
     icon: Icons.electrical,
     value: 'electrical',
   },
   {
-    name: 'Body',
+    name: 'Кузов',
     icon: Icons.body,
     value: 'body',
   },
   {
-    name: 'Accessories',
+    name: 'Аксессуары',
     icon: Icons.accessories,
     value: 'accessories',
   },
@@ -122,13 +122,13 @@ const ShopPage = () => {
     <SidebarProvider>
       <Sidebar inset="sm" collapsible="icon">
         <SidebarHeader>
-          <SidebarInput placeholder="Search parts..." />
+          <SidebarInput placeholder="Поиск запчастей..." />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton onClick={() => handleCategoryClick(null)}>
-                All Categories
+                Все категории
               </SidebarMenuButton>
             </SidebarMenuItem>
             {categories.map((categoryItem) => (
@@ -141,17 +141,17 @@ const ShopPage = () => {
           </SidebarMenu>
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
-              <AccordionTrigger>Filter by Price</AccordionTrigger>
+              <AccordionTrigger>Фильтр по цене</AccordionTrigger>
               <AccordionContent>
                 {/* Add price range slider here */}
-                <p>Price range slider will be added here.</p>
+                <p>Здесь будет добавлен слайдер диапазона цен.</p>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="item-2">
-              <AccordionTrigger>Filter by Brand</AccordionTrigger>
+              <AccordionTrigger>Фильтр по бренду</AccordionTrigger>
               <AccordionContent>
                 {/* Add brand selection here */}
-                <p>Brand selection will be added here.</p>
+                <p>Здесь будет добавлен выбор бренда.</p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
@@ -160,7 +160,7 @@ const ShopPage = () => {
       <SidebarInset>
         <div className="container mx-auto py-8">
           <h1 className="text-3xl font-bold text-center mb-8">
-            {category ? `Auto Parts - ${category}` : 'Auto Parts Catalog'}
+            {category ? `Автозапчасти - ${category}` : 'Каталог автозапчастей'}
           </h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
             {products.map((product) => (

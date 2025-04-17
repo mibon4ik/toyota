@@ -33,8 +33,8 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
 
     toast({
-      title: "Added to cart!",
-      description: `${product.name} has been added to your shopping cart.`,
+      title: "Добавлено в корзину!",
+      description: `${product.name} был добавлен в вашу корзину.`,
     });
   };
 
@@ -54,7 +54,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
           <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
         </CardContent>
       </Link>
-      <Button onClick={handleAddToCart}>Add to Cart</Button>
+      <Button onClick={handleAddToCart}>В корзину</Button>
     </Card>
   );
 };

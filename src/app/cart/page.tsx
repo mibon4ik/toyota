@@ -71,8 +71,8 @@ const CartPage = () => {
     setCartItems(currentItems => {
       const newItems = currentItems.filter(item => item.id !== id);
       toast({
-        title: "Item removed!",
-        description: "Item removed from cart"
+        title: "Товар удален!",
+        description: "Товар удален из корзины"
       });
       return newItems;
     });
@@ -80,9 +80,9 @@ const CartPage = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Shopping Cart</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
       {cartItems.length === 0 ? (
-        <p className="text-center">Your cart is empty.</p>
+        <p className="text-center">Ваша корзина пуста.</p>
       ) : (
         <>
           {cartItems.map((item) => (
@@ -102,14 +102,14 @@ const CartPage = () => {
                 </div>
                 <div className="flex flex-col items-end">
                   <p className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
-                  <Button size="sm" variant="destructive" onClick={() => removeItem(item.id)}>Remove</Button>
+                  <Button size="sm" variant="destructive" onClick={() => removeItem(item.id)}>Удалить</Button>
                 </div>
               </CardContent>
             </Card>
           ))}
           <div className="text-right">
-            <h2 className="text-2xl font-bold">Total: ${calculateTotal()}</h2>
-            <Button className="mt-4">Proceed to Checkout</Button>
+            <h2 className="text-2xl font-bold">Итого: ${calculateTotal()}</h2>
+            <Button className="mt-4">Перейти к оформлению</Button>
           </div>
         </>
       )}
