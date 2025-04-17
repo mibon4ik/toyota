@@ -17,17 +17,20 @@ const ShopPage = () => {
   const {toast} = useToast();
   const searchParams = useSearchParams();
   const category = searchParams.get('category');
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  useEffect(() => {
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    // Initialize cartItems from local storage
+    if (typeof window !== 'undefined') {
+      const storedCart = localStorage.getItem('cartItems');
+      return storedCart ? JSON.parse(storedCart) : [];
     }
-  }, []);
+    return [];
+  });
 
   useEffect(() => {
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    // Update local storage when cartItems change
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }
   }, [cartItems]);
 
   useEffect(() => {
@@ -56,7 +59,6 @@ const ShopPage = () => {
     }
 
     setCartItems(updatedCart);
-    localStorage.setItem('cartItems', JSON.stringify(updatedCart)); // Update local storage
 
     toast({
       title: "Добавлено в корзину!",

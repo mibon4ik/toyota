@@ -58,35 +58,38 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
       </SheetTrigger>
       <SheetContent side="left" className="pr-0">
         <NavLink href="/">
-          Home
+          Главная
         </NavLink>
         <NavLink href="/shop">
-          Shop
+          Магазин
         </NavLink>
         <NavLink href="/cart">
-          Cart
+          Корзина
         </NavLink>
         <NavLink href="/checkout">
-          Checkout
+          Оформление
         </NavLink>
         {isLoggedIn ? (
           <Button variant="ghost" onClick={handleLogout}>
-            Logout
+            Выйти
           </Button>
         ) : (
           <Link href="/auth/login">
             <Button variant="ghost">
-              Login
+              Войти
             </Button>
           </Link>
         )}
-        <SheetClose asChild>
-          <Button variant="ghost" className="absolute right-4 top-4">
-            <Icons.close className="h-6 w-6" />
-            <span className="sr-only">Close</span>
-          </Button>
+        <SheetClose  className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <Icons.close className="h-6 w-6" />
+          <span className="sr-only">Закрыть</span>
         </SheetClose>
       </SheetContent>
     </Sheet>
   )
 }
+
+MobileNav.displayName = "MobileNav";
+
+
+

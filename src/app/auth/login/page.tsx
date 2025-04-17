@@ -20,7 +20,7 @@ const LoginPage = () => {
       localStorage.setItem('isLoggedIn', 'true');
       router.push('/');
     } else {
-      setError('Invalid credentials');
+      setError('Неверные учетные данные');
     }
   };
 
@@ -28,37 +28,37 @@ const LoginPage = () => {
     <div className="flex justify-center items-center h-screen">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+          <CardTitle className="text-2xl text-center">Войти</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                Username
+                Имя пользователя
               </label>
               <Input
                 id="email"
                 type="text"
-                placeholder="Username"
+                placeholder="Имя пользователя"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
               <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
-                Password
+                Пароль
               </label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Password"
+                placeholder="Пароль"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
             <Button type="submit" className="w-full">
-              Sign In
+              Войти
             </Button>
           </form>
         </CardContent>
