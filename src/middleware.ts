@@ -1,38 +1,28 @@
+import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
 
-export {};
-// import NextAuth from "next-auth";
+import authConfig from "@/auth.config";
 
-// import authConfig from "@/auth.config";
+const { auth } = NextAuth(authConfig);
 
-// export const { auth } = NextAuth(authConfig)
+export async function middleware(request) {
+  const path = request.nextUrl.pathname;
+  const isLoggedIn = !!(await auth());
 
-// export const config = {
-//   matcher: [
-//     "/cart",
-//     "/checkout"
-//   ],
-// };
+  const isPublicPath = path === "/auth/login";
 
-// export async function middleware(request) {
-//   // Get the path
-//   const path = request.nextUrl.pathname
-//   const isLoggedIn = !!(await auth())
+  if (isLoggedIn && isPublicPath) {
+    return NextResponse.redirect(new URL("/", request.nextUrl));
+  }
 
-//   // Get the public routes
-//   const isPublicPath = path === "/auth/login"
+  if (!isLoggedIn && !isPublicPath && (path === "/cart" || path === "/checkout")) {
+    return NextResponse.redirect(new URL("/auth/login", request.nextUrl));
+  }
 
-//   // If a user is logged in and is trying to access
-//   // any of the public routes, redirect to the homepage.
-//   if (isLoggedIn && isPublicPath) {
-//     return Response.redirect(new URL("/", request.nextUrl))
-//   }
+  return NextResponse.next();
+}
 
-//   // If a user is not logged in and is trying to access
-//   // a protected route, redirect them to the login page.
-//   if (!isLoggedIn && !isPublicPath) {
-//     return Response.redirect(new URL("/auth/login", request.nextUrl))
-//   }
-//   // Do nothing to any other route
-//   return null
-// }
-    
+// Optionally, don't invoke Middleware on some paths
+export const config = {
+  matcher: ["/cart", "/checkout", "/auth/login"],
+};
