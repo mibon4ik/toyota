@@ -14,6 +14,26 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
   const { toast } = useToast();
 
   const handleAddToCart = () => {
+    // Get existing cart items from local storage
+    const existingCart = localStorage.getItem('cartItems');
+    let cartItems = existingCart ? JSON.parse(existingCart) : [];
+
+    // Check if the item already exists in the cart
+    const existingItemIndex = cartItems.findIndex((item: AutoPart) => item.id === product.id);
+
+    if (existingItemIndex > -1) {
+      // If item exists, update the quantity
+      cartItems = cartItems.map((item: any, index: number) =>
+        index === existingItemIndex ? { ...item, quantity: item.quantity + 1 } : item
+      );
+    } else {
+      // If item doesn't exist, add it to the cart with quantity 1
+      cartItems = [...cartItems, { ...product, quantity: 1 }];
+    }
+
+    // Save the updated cart items back to local storage
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
     toast({
       title: "Added to cart!",
       description: `${product.name} has been added to your shopping cart.`,
