@@ -40,7 +40,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
 
   return (
     <Card className="w-80 product-card">
-      <Link href={`/part/${product.id}`}>
+      
         <CardHeader>
           <CardTitle>{product.name}</CardTitle>
         </CardHeader>
@@ -53,7 +53,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
           <p className="text-sm text-muted-foreground">{product.brand}</p>
           <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
         </CardContent>
-      </Link>
+      
       <Button onClick={handleAddToCart}>В корзину</Button>
     </Card>
   );

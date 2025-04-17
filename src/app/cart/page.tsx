@@ -1,11 +1,10 @@
 "use client";
 
-import React, {useState, useEffect} from 'react';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {AutoPart} from "@/services/autoparts";
-import {useToast} from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { AutoPart } from "@/services/autoparts";
+import { useToast } from "@/hooks/use-toast";
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -14,7 +13,6 @@ interface CartItem extends AutoPart {
 const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
-  const router = useRouter();
 
   useEffect(() => {
     // Load cart items from local storage on component mount
@@ -29,7 +27,6 @@ const CartPage = () => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
   };
@@ -38,7 +35,7 @@ const CartPage = () => {
     setCartItems(currentItems => {
       return currentItems.map(item => {
         if (item.id === id) {
-          return {...item, quantity: item.quantity + 1};
+          return { ...item, quantity: item.quantity + 1 };
         }
         return item;
       });
@@ -49,7 +46,7 @@ const CartPage = () => {
     setCartItems(currentItems => {
       return currentItems.map(item => {
         if (item.id === id && item.quantity > 1) {
-          return {...item, quantity: item.quantity - 1};
+          return { ...item, quantity: item.quantity - 1 };
         }
         return item;
       });
