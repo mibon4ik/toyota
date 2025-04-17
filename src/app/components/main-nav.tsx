@@ -9,30 +9,40 @@ import { Icons } from "@/components/icons"
 import { MobileNav } from "@/components/ui/mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge";
+import { useEffect, useState } from "react";
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
 
-interface NavLinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
-  href: string
-  children: React.ReactNode
-}
-
-function NavLink({ className, href, children, ...props }: NavLinkProps) {
-  const pathname = usePathname()
-
-  const active =
-    (pathname === href) ||
-    (pathname?.startsWith(`${href}/`) ?? false)
-
-  return (
-    <Link href={href} className={cn(active ? "font-semibold text-foreground" : "text-muted-foreground", className)} {...props}>
-      {children}
-    </Link>
-  )
-}
-
-
 export function MainNav({ className, ...props }: MainNavProps) {
+  const pathname = usePathname();
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  useEffect(() => {
+    // Load cart items from local storage on component mount
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      const cartItems = JSON.parse(storedCart);
+      // Calculate total quantity of items in the cart
+      const totalCount = cartItems.reduce((total: number, item: any) => total + item.quantity, 0);
+      setCartItemCount(totalCount);
+    } else {
+      setCartItemCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      const cartItems = JSON.parse(storedCart);
+      // Calculate total quantity of items in the cart
+      const totalCount = cartItems.reduce((total: number, item: any) => total + item.quantity, 0);
+      setCartItemCount(totalCount);
+    } else {
+      setCartItemCount(0);
+    }
+  }, [cartItemCount]);
+
   return (
     <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
       <MobileNav className="mr-4" />
@@ -40,29 +50,48 @@ export function MainNav({ className, ...props }: MainNavProps) {
         <Icons.truck className="h-6 w-6" />
         <span className="hidden font-bold sm:inline-block">AutoSpot</span>
       </Link>
-      <nav className="hidden md:flex">
-        <NavLink href="/">
+      <nav className="hidden md:flex space-x-4">
+        <Link href="/" className={cn(
+          "text-sm font-medium transition-colors hover:text-foreground",
+          pathname === "/" ? "text-foreground" : "text-muted-foreground"
+        )}>
           Home
-        </NavLink>
-        <NavLink href="/shop">
+        </Link>
+        <Link href="/shop" className={cn(
+          "text-sm font-medium transition-colors hover:text-foreground",
+          pathname === "/shop" ? "text-foreground" : "text-muted-foreground"
+        )}>
           Shop
-        </NavLink>
-        <NavLink href="/cart">
+        </Link>
+        <Link href="/cart" className={cn(
+          "text-sm font-medium transition-colors hover:text-foreground",
+          pathname === "/cart" ? "text-foreground" : "text-muted-foreground"
+        )}>
           Cart
-        </NavLink>
-        <NavLink href="/checkout">
+        </Link>
+        <Link href="/checkout" className={cn(
+          "text-sm font-medium transition-colors hover:text-foreground",
+          pathname === "/checkout" ? "text-foreground" : "text-muted-foreground"
+        )}>
           Checkout
-        </NavLink>
+        </Link>
       </nav>
       <div className="ml-auto flex items-center space-x-4">
         <Button size="sm" variant="ghost">
           <Icons.search className="h-4 w-4" />
           <span className="sr-only">Search</span>
         </Button>
-        <Button size="sm" variant="ghost">
-          <Icons.shoppingCart className="h-4 w-4" />
-          <span className="sr-only">Cart</span>
-        </Button>
+        <Link href="/cart">
+          <Button size="sm" variant="ghost" className="relative">
+            <Icons.shoppingCart className="h-4 w-4" />
+            <span className="sr-only">Cart</span>
+            {cartItemCount > 0 && (
+              <Badge className="absolute -right-2 -top-2 rounded-full px-1 py-0.5 text-xs">
+                {cartItemCount}
+              </Badge>
+            )}
+          </Button>
+        </Link>
         <Avatar>
           <AvatarImage src="/examples/card-example.png" alt="avatar" />
           <AvatarFallback>OM</AvatarFallback>
