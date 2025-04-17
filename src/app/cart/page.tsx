@@ -5,6 +5,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {AutoPart} from "@/services/autoparts";
 import {useToast} from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -13,12 +14,19 @@ interface CartItem extends AutoPart {
 const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
-    // Load cart items from local storage on component mount
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
+    // Check login status from local storage
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      router.push('/auth/login');
+    } else {
+          // Load cart items from local storage on component mount
+          const storedCart = localStorage.getItem('cartItems');
+          if (storedCart) {
+            setCartItems(JSON.parse(storedCart));
+          }
     }
   }, []);
 

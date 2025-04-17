@@ -1,11 +1,22 @@
 "use client";
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
+import { useRouter } from 'next/navigation';
 
 const CheckoutPage = () => {
+    const router = useRouter();
+
+    useEffect(() => {
+        // Check login status from cookies
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        if (!isLoggedIn) {
+            router.push('/auth/login');
+        }
+    }, []);
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Checkout</h1>

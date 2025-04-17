@@ -32,7 +32,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
       setCartItemCount(0);
     }
 
-    // Check login status from local storage
+    // Check login status from cookies
     const storedLogin = localStorage.getItem('isLoggedIn');
     setIsLoggedIn(storedLogin === 'true');
   }, []);
