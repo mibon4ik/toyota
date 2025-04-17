@@ -1,8 +1,8 @@
 export const users = [
     {
         id: "user1",
-        email: "test@test.com",
-        password: "$2a$10$CwZZhLTqEwV9uFqFk60mMeo42ZgVf.Xh.B4K2RyJ1rGmRuKwyJ.a6"
+        email: "admin@admin.com",
+        password: "$2a$10$sALb8czV0/YGBc9BnrY8SeF629Eu47B1H3Z3hKRRzZ6lca/QrSfsS" // bcrypt hash of "admin"
     }
 ];
 
@@ -21,4 +21,3 @@ export const getUserById = async (id: string) => {
         return null;
     }
 };
-    
