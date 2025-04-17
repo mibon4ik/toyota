@@ -17,25 +17,14 @@ const CartPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check login status from local storage
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
-      router.push('/auth/login');
-    } else {
-          // Load cart items from local storage on component mount
-          const storedCart = localStorage.getItem('cartItems');
-          if (storedCart) {
-            setCartItems(JSON.parse(storedCart));
-          }
+    // Load cart items from local storage on component mount
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
     }
   }, []);
 
   useEffect(() => {
-    // Check login status from local storage
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    if (!isLoggedIn) {
-      router.push('/auth/login');
-    }
     // Save cart items to local storage whenever cartItems changes
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);

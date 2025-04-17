@@ -1,69 +1,58 @@
 "use client";
 
-import React, {useEffect} from 'react';
+import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
-import { useRouter } from 'next/navigation';
 
 const CheckoutPage = () => {
-    const router = useRouter();
-
-    useEffect(() => {
-        // Check login status from cookies
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        if (!isLoggedIn) {
-            router.push('/auth/login');
-        }
-    }, []);
-
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">Checkout</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">Оформление заказа</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
+          <CardTitle>Информация о покупателе</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Input type="text" placeholder="Name" />
-          <Input type="tel" placeholder="Phone Number" />
+          <Input type="text" placeholder="Имя" />
+          <Input type="tel" placeholder="Номер телефона" />
           <Input type="email" placeholder="Email" />
         </CardContent>
       </Card>
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Delivery Address</CardTitle>
+          <CardTitle>Адрес доставки</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <Input type="text" placeholder="City" />
-          <Input type="text" placeholder="Street" />
+          <Input type="text" placeholder="Город" />
+          <Input type="text" placeholder="Улица" />
           <div className="flex gap-4">
-            <Input type="text" placeholder="House Number" />
-            <Input type="text" placeholder="Apartment Number" />
+            <Input type="text" placeholder="Номер дома" />
+            <Input type="text" placeholder="Номер квартиры" />
           </div>
         </CardContent>
       </Card>
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Payment Method</CardTitle>
+          <CardTitle>Способ оплаты</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
           <select className="border rounded p-2">
-            <option>Online Payment</option>
-            <option>Cash on Delivery</option>
+            <option>Онлайн оплата</option>
+            <option>Оплата при получении</option>
           </select>
         </CardContent>
       </Card>
       <Card className="mt-8">
         <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
+          <CardTitle>Итоговый заказ</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Total: $XX.XX</p>
+          <p>Итого: $XX.XX</p>
         </CardContent>
       </Card>
       <div className="text-center mt-8">
-        <Button>Place Order</Button>
+        <Button>Оформить заказ</Button>
       </div>
     </div>
   );
