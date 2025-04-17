@@ -2,15 +2,35 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
 import { MobileNav } from "@/components/ui/mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { NavLink } from "@/components/ui/nav-link"
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
+
+interface NavLinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
+  href: string
+  children: React.ReactNode
+}
+
+function NavLink({ className, href, children, ...props }: NavLinkProps) {
+  const pathname = usePathname()
+
+  const active =
+    (pathname === href) ||
+    (pathname?.startsWith(`${href}/`) ?? false)
+
+  return (
+    <Link href={href} className={cn(active ? "font-semibold text-foreground" : "text-muted-foreground", className)} {...props}>
+      {children}
+    </Link>
+  )
+}
+
 
 export function MainNav({ className, ...props }: MainNavProps) {
   return (

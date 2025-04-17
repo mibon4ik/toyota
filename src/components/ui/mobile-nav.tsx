@@ -1,13 +1,35 @@
 "use client";
 import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { Icons } from "@/components/icons"
-import { NavLink } from "@/components/ui/nav-link"
 
 interface MobileNavProps extends React.HTMLAttributes<HTMLElement> {}
+
+
+interface NavLinkProps extends React.HTMLAttributes<HTMLAnchorElement> {
+  href: string
+  children: React.ReactNode
+}
+
+function NavLink({ className, href, children, ...props }: NavLinkProps) {
+  const pathname = usePathname()
+
+  const active =
+    (pathname === href) ||
+    (pathname?.startsWith(`${href}/`) ?? false)
+
+  return (
+    <Link href={href} className={cn(active ? "font-semibold text-foreground" : "text-muted-foreground", className)} {...props}>
+      {children}
+    </Link>
+  )
+}
+
 
 export function MobileNav({ className, ...props }: MobileNavProps) {
   return (
