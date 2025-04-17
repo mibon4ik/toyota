@@ -16,7 +16,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
   const handleAddToCart = () => {
     // Get existing cart items from local storage
     const existingCart = localStorage.getItem('cartItems');
-    let cartItems = existingCart ? JSON.parse(existingCart) : [];
+    let cartItems: any[] = existingCart ? JSON.parse(existingCart) : [];
 
     // Check if the item already exists in the cart
     const existingItemIndex = cartItems.findIndex((item: any) => item.id === product.id);

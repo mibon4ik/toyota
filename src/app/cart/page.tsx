@@ -31,6 +31,11 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
+    // Check login status from local storage
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    if (!isLoggedIn) {
+      router.push('/auth/login');
+    }
     // Save cart items to local storage whenever cartItems changes
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
