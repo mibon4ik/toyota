@@ -29,13 +29,13 @@ import {
   Filter,
   ChevronDown,
   ChevronUp,
-  Engine,
-  Aperture,
-  Disc,
-  Zap,
-  Box,
   Car,
-  Truck
+  Camera,
+  CircleDisc,
+  Lightning,
+  Box,
+  Truck,
+  X
 } from 'lucide-react';
 
 const Icons = {
@@ -71,10 +71,10 @@ const Icons = {
   filter: Filter,
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
-  engine: Engine,
-  suspension: Aperture,
-  brakes: Disc,
-  electrical: Zap,
+  engine: Car,
+  suspension: Camera,
+  brakes: CircleDisc,
+  electrical: Lightning,
   body: Box,
   accessories: Car,
   truck: Truck,

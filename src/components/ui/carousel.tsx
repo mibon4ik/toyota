@@ -2,59 +2,51 @@
 
 import * as React from "react"
 import * as SliderPrimitive from "@radix-ui/react-slider"
-import {
-  Carousel as CarouselPrimitive,
-  CarouselContent as CarouselContentPrimitive,
-  CarouselNext as CarouselNextPrimitive,
-  CarouselPrevious as CarouselPreviousPrimitive,
-  CarouselItem as CarouselItemPrimitive,
-} from "vaul-carousel"
-
 import { cn } from "@/lib/utils"
 
 const Carousel = React.forwardRef<
-  React.ElementRef<typeof CarouselPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CarouselPrimitive>
+  HTMLDivElement,
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
   <div className="relative">
-    <CarouselPrimitive
+    <div
       ref={ref}
       className={cn("w-full overflow-hidden", className)}
       {...props}
     />
   </div>
 ))
-Carousel.displayName = CarouselPrimitive.displayName
+Carousel.displayName = "Carousel"
 
 const CarouselContent = React.forwardRef<
-  React.ElementRef<typeof CarouselContentPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CarouselContentPrimitive>
+  HTMLDivElement,
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <CarouselContentPrimitive
+  <div
     ref={ref}
     className={cn("flex gap-1 md:gap-2", className)}
     {...props}
   />
 ))
-CarouselContent.displayName = CarouselContentPrimitive.displayName
+CarouselContent.displayName = "CarouselContent"
 
 const CarouselItem = React.forwardRef<
-  React.ElementRef<typeof CarouselItemPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CarouselItemPrimitive>
+  HTMLDivElement,
+  React.ComponentProps<"div">
 >(({ className, ...props }, ref) => (
-  <CarouselItemPrimitive
+  <div
     ref={ref}
     className={cn("basis-1/1 md:basis-1/2 lg:basis-1/3", className)}
     {...props}
   />
 ))
-CarouselItem.displayName = CarouselItemPrimitive.displayName
+CarouselItem.displayName = "CarouselItem"
 
 const CarouselPrevious = React.forwardRef<
-  React.ElementRef<typeof CarouselNextPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CarouselNextPrimitive>
+  HTMLButtonElement,
+  React.ComponentProps<"button">
 >(({ className, ...props }, ref) => (
-  <CarouselPreviousPrimitive
+  <button
     ref={ref}
     className={cn(
       "absolute left-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full bg-background shadow-md ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none data-[state=open]:bg-secondary",
@@ -63,13 +55,13 @@ const CarouselPrevious = React.forwardRef<
     {...props}
   />
 ))
-CarouselPrevious.displayName = CarouselPreviousPrimitive.displayName
+CarouselPrevious.displayName = "CarouselPrevious"
 
 const CarouselNext = React.forwardRef<
-  React.ElementRef<typeof CarouselNextPrimitive>,
-  React.ComponentPropsWithoutRef<typeof CarouselNextPrimitive>
+  HTMLButtonElement,
+  React.ComponentProps<"button">
 >(({ className, ...props }, ref) => (
-  <CarouselNextPrimitive
+  <button
     ref={ref}
     className={cn(
       "absolute right-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2 rounded-full bg-background shadow-md ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground disabled:pointer-events-none data-[state=open]:bg-secondary",
@@ -78,6 +70,6 @@ const CarouselNext = React.forwardRef<
     {...props}
   />
 ))
-CarouselNext.displayName = CarouselNextPrimitive.displayName
+CarouselNext.displayName = "CarouselNext"
 
 export { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious }
