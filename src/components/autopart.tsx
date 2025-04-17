@@ -13,31 +13,6 @@ interface AutopartProps {
 const Autopart: React.FC<AutopartProps> = ({ product }) => {
   const { toast } = useToast();
 
-  const handleAddToCart = () => {
-    // Get existing cart items from local storage
-    const storedCart = localStorage.getItem('cartItems');
-    let cartItems: any[] = storedCart ? JSON.parse(storedCart) : [];
-
-    // Check if the item already exists in the cart
-    const existingItemIndex = cartItems.findIndex((item: any) => item.id === product.id);
-
-    if (existingItemIndex > -1) {
-      // If item exists, update the quantity
-      cartItems[existingItemIndex].quantity = (cartItems[existingItemIndex].quantity || 0) + 1;
-    } else {
-      // If item doesn't exist, add it to the cart with quantity 1
-      cartItems.push({ ...product, quantity: 1 });
-    }
-
-    // Save the updated cart items back to local storage
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-    toast({
-      title: "Добавлено в корзину!",
-      description: `${product.name} был добавлен в вашу корзину.`,
-    });
-  };
-
   return (
     <Card className="w-80 product-card">
       
@@ -53,8 +28,6 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
           <p className="text-sm text-muted-foreground">{product.brand}</p>
           <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
         </CardContent>
-      
-      <Button onClick={handleAddToCart}>В корзину</Button>
     </Card>
   );
 };

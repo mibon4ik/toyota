@@ -15,7 +15,6 @@ const CartPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load cart items from local storage on component mount
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
       setCartItems(JSON.parse(storedCart));
@@ -23,7 +22,6 @@ const CartPage = () => {
   }, []);
 
   useEffect(() => {
-    // Save cart items to local storage whenever cartItems changes
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
