@@ -43,18 +43,25 @@ const ShopPage = () => {
     const existingItemIndex = cartItems.findIndex((item) => item.id === product.id);
 
     if (existingItemIndex > -1) {
+      // If item already exists in cart, increase the quantity
       const updatedCart = cartItems.map((item, index) =>
         index === existingItemIndex ? {...item, quantity: item.quantity + 1} : item
       );
       setCartItems(updatedCart);
+      localStorage.setItem('cartItems', JSON.stringify(updatedCart)); // Update local storage
     } else {
-      setCartItems([...cartItems, {...product, quantity: 1}]);
+      // If item is not in cart, add it with quantity 1
+      const newItem = {...product, quantity: 1};
+      setCartItems([...cartItems, newItem]);
+      localStorage.setItem('cartItems', JSON.stringify([...cartItems, newItem])); // Update local storage
     }
+
     toast({
       title: "Добавлено в корзину!",
       description: `${product.name} был добавлен в вашу корзину.`,
     });
   };
+
 
   return (
     <div className="container mx-auto py-8">

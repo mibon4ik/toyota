@@ -31,29 +31,34 @@ const CartPage = () => {
 
   const incrementQuantity = (id: string) => {
     setCartItems(currentItems => {
-      return currentItems.map(item => {
+      const updatedItems = currentItems.map(item => {
         if (item.id === id) {
           return { ...item, quantity: item.quantity + 1 };
         }
         return item;
       });
+      localStorage.setItem('cartItems', JSON.stringify(updatedItems)); // Update local storage
+      return updatedItems;
     });
   };
 
   const decrementQuantity = (id: string) => {
     setCartItems(currentItems => {
-      return currentItems.map(item => {
+      const updatedItems = currentItems.map(item => {
         if (item.id === id && item.quantity > 1) {
           return { ...item, quantity: item.quantity - 1 };
         }
         return item;
       });
+      localStorage.setItem('cartItems', JSON.stringify(updatedItems)); // Update local storage
+      return updatedItems;
     });
   };
 
   const removeItem = (id: string) => {
     setCartItems(currentItems => {
       const newItems = currentItems.filter(item => item.id !== id);
+      localStorage.setItem('cartItems', JSON.stringify(newItems)); // Update local storage
       toast({
         title: "Товар удален!",
         description: "Товар удален из корзины"
