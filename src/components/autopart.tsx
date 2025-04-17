@@ -19,7 +19,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
     let cartItems = existingCart ? JSON.parse(existingCart) : [];
 
     // Check if the item already exists in the cart
-    const existingItemIndex = cartItems.findIndex((item: AutoPart) => item.id === product.id);
+    const existingItemIndex = cartItems.findIndex((item: any) => item.id === product.id);
 
     if (existingItemIndex > -1) {
       // If item exists, update the quantity
