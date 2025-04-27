@@ -64,7 +64,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
             className="object-cover rounded-md mb-4 h-32 w-full"
           />
           <p className="text-sm text-muted-foreground">{product.brand}</p>
-          <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
+          <p className="text-lg font-semibold">{(product.price * 90).toFixed(2)} ₽</p>
            <Button onClick={handleAddToCart}>В корзину</Button>
         </CardContent>
     </Card>

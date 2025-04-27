@@ -82,7 +82,7 @@ const CartPage = () => {
               <CardContent className="flex items-center justify-between">
                 <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover rounded" />
                 <div>
-                  <p className="text-lg font-semibold">${item.price.toFixed(2)}</p>
+                  <p className="text-lg font-semibold">{(item.price * 90).toFixed(2)} ₽</p>
                   <div className="flex items-center">
                     <Button size="sm" onClick={() => decrementQuantity(item.id)}>-</Button>
                     <span className="mx-2">{item.quantity}</span>
@@ -90,14 +90,14 @@ const CartPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <p className="text-lg font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="text-lg font-semibold">{(item.price * item.quantity * 90).toFixed(2)} ₽</p>
                   <Button size="sm" variant="destructive" onClick={() => removeItem(item.id)}>Удалить</Button>
                 </div>
               </CardContent>
             </Card>
           ))}
           <div className="text-right">
-            <h2 className="text-2xl font-bold">Итого: ${calculateTotal()}</h2>
+            <h2 className="text-2xl font-bold">Итого: {(parseFloat(calculateTotal()) * 90).toFixed(2)} ₽</h2>
             <Button className="mt-4">Перейти к оформлению</Button>
           </div>
         </>

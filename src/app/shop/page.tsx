@@ -83,7 +83,7 @@ const ShopPage = () => {
                 className="object-cover rounded-md mb-4 h-32 w-full"
               />
               <p className="text-sm text-muted-foreground">{product.brand}</p>
-              <p className="text-lg font-semibold">${product.price.toFixed(2)}</p>
+              <p className="text-lg font-semibold">{(product.price * 90).toFixed(2)} ₽</p>
             </CardContent>
             <Button onClick={() => handleAddToCart(product)}>В корзину</Button>
           </Card>

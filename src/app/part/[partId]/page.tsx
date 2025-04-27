@@ -49,7 +49,7 @@ const PartDetailPage = () => {
             alt={part.name}
             className="object-cover rounded-md mb-4 h-64 w-full"
           />
-          <p className="text-lg font-semibold">${part.price.toFixed(2)}</p>
+          <p className="text-lg font-semibold">{(part.price * 90).toFixed(2)} ₽</p>
           <p className="text-md text-muted-foreground">{part.description}</p>
           <div className="mt-4">
             <Button onClick={handleAddToCart}>В корзину</Button>
