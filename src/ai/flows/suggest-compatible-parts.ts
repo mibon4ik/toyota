@@ -1,11 +1,11 @@
 'use server';
 /**
- * @fileOverview An AI agent that suggests compatible auto parts based on vehicle make and model.
+ * @fileOverview AI агент, предлагающий совместимые автозапчасти на основе марки и модели автомобиля.
  *
- * - suggestCompatibleParts - A function that handles the suggestion of compatible parts.
- *   It takes vehicle make and model as input and returns a list of compatible auto parts.
- * - SuggestCompatiblePartsInput - The input type for the suggestCompatibleParts function.
- * - SuggestCompatiblePartsOutput - The return type for the suggestCompatibleParts function.
+ * - suggestCompatibleParts - Функция, обрабатывающая предложение совместимых деталей.
+ *   Она принимает марку и модель автомобиля в качестве входных данных и возвращает список совместимых автозапчастей.
+ * - SuggestCompatiblePartsInput - Тип входных данных для функции suggestCompatibleParts.
+ * - SuggestCompatiblePartsOutput - Тип возвращаемых данных для функции suggestCompatibleParts.
  */
 
 import {ai} from '@/ai/ai-instance';
@@ -13,24 +13,24 @@ import {z} from 'genkit';
 import {AutoPart, searchAutoParts} from '@/services/autoparts';
 
 const SuggestCompatiblePartsInputSchema = z.object({
-  make: z.string().describe('The make of the vehicle.'),
-  model: z.string().describe('The model of the vehicle.'),
+  make: z.string().describe('Марка автомобиля.'),
+  model: z.string().describe('Модель автомобиля.'),
 });
 export type SuggestCompatiblePartsInput = z.infer<typeof SuggestCompatiblePartsInputSchema>;
 
 const SuggestCompatiblePartsOutputSchema = z.object({
   compatibleParts: z.array(
     z.object({
-      id: z.string().describe('The ID of the part.'),
-      name: z.string().describe('The name of the part.'),
-      brand: z.string().describe('The brand of the part.'),
-      price: z.number().describe('The price of the part.'),
-      imageUrl: z.string().describe('The URL of the part image.'),
-      description: z.string().describe('A description of the part.'),
-      category: z.string().describe('The category of the part.'),
-      compatibleVehicles: z.array(z.string()).describe('The vehicles that are compatible with the part.'),
+      id: z.string().describe('ID детали.'),
+      name: z.string().describe('Название детали.'),
+      brand: z.string().describe('Бренд детали.'),
+      price: z.number().describe('Цена детали.'),
+      imageUrl: z.string().describe('URL изображения детали.'),
+      description: z.string().describe('Описание детали.'),
+      category: z.string().describe('Категория детали.'),
+      compatibleVehicles: z.array(z.string()).describe('Транспортные средства, совместимые с деталью.'),
     })
-  ).describe('A list of compatible auto parts.'),
+  ).describe('Список совместимых автозапчастей.'),
 });
 export type SuggestCompatiblePartsOutput = z.infer<typeof SuggestCompatiblePartsOutputSchema>;
 
@@ -40,19 +40,19 @@ export async function suggestCompatibleParts(input: SuggestCompatiblePartsInput)
 
 const partSearchTool = ai.defineTool({
   name: 'searchAutoParts',
-  description: 'Search for auto parts based on a query.',
+  description: 'Поиск автозапчастей по запросу.',
   inputSchema: z.object({
-    query: z.string().describe('The search query to use to find auto parts.'),
+    query: z.string().describe('Поисковый запрос для поиска автозапчастей.'),
   }),
   outputSchema: z.array(z.object({
-    id: z.string().describe('The ID of the part.'),
-    name: z.string().describe('The name of the part.'),
-    brand: z.string().describe('The brand of the part.'),
-    price: z.number().describe('The price of the part.'),
-    imageUrl: z.string().describe('The URL of the part image.'),
-    description: z.string().describe('A description of the part.'),
-    category: z.string().describe('The category of the part.'),
-    compatibleVehicles: z.array(z.string()).describe('The vehicles that are compatible with the part.'),
+    id: z.string().describe('ID детали.'),
+    name: z.string().describe('Название детали.'),
+    brand: z.string().describe('Бренд детали.'),
+    price: z.number().describe('Цена детали.'),
+    imageUrl: z.string().describe('URL изображения детали.'),
+    description: z.string().describe('Описание детали.'),
+    category: z.string().describe('Категория детали.'),
+    compatibleVehicles: z.array(z.string()).describe('Транспортные средства, совместимые с деталью.'),
   })),
 }, async (input) => {
   return await searchAutoParts(input.query);
@@ -63,27 +63,27 @@ const prompt = ai.definePrompt({
   tools: [partSearchTool],
   input: {
     schema: z.object({
-      make: z.string().describe('The make of the vehicle.'),
-      model: z.string().describe('The model of the vehicle.'),
+      make: z.string().describe('Марка автомобиля.'),
+      model: z.string().describe('Модель автомобиля.'),
     }),
   },
   output: {
     schema: z.object({
       compatibleParts: z.array(
         z.object({
-          id: z.string().describe('The ID of the part.'),
-          name: z.string().describe('The name of the part.'),
-          brand: z.string().describe('The brand of the part.'),
-          price: z.number().describe('The price of the part.'),
-          imageUrl: z.string().describe('The URL of the part image.'),
-          description: z.string().describe('A description of the part.'),
-          category: z.string().describe('The category of the part.'),
-          compatibleVehicles: z.array(z.string()).describe('The vehicles that are compatible with the part.'),
+          id: z.string().describe('ID детали.'),
+          name: z.string().describe('Название детали.'),
+          brand: z.string().describe('Бренд детали.'),
+          price: z.number().describe('Цена детали.'),
+          imageUrl: z.string().describe('URL изображения детали.'),
+          description: z.string().describe('Описание детали.'),
+          category: z.string().describe('Категория детали.'),
+          compatibleVehicles: z.array(z.string()).describe('Транспортные средства, совместимые с деталью.'),
         })
-      ).describe('A list of compatible auto parts.'),
+      ).describe('Список совместимых автозапчастей.'),
     }),
   },
-  prompt: `You are an expert auto parts advisor. A user has the following vehicle: Make: {{{make}}}, Model: {{{model}}}.  Suggest compatible parts for this vehicle.  If you are unsure, use the searchAutoParts tool to find parts that are compatible with the vehicle. Return a list of parts that are compatible with the vehicle.
+  prompt: `Вы - эксперт-консультант по автозапчастям. У пользователя есть следующий автомобиль: Марка: {{{make}}}, Модель: {{{model}}}. Предложите совместимые запчасти для этого автомобиля. Если вы не уверены, используйте инструмент searchAutoParts, чтобы найти детали, совместимые с автомобилем. Верните список деталей, совместимых с автомобилем.
 `,
 });
 

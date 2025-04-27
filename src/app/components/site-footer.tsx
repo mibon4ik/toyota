@@ -18,21 +18,21 @@ export function SiteFooter({ className, ...props }: SiteFooterProps) {
             AutoSpot
           </Link>
           <p className="text-sm text-muted-foreground">
-            Built by Firebase Studio
+            Собрано на Firebase Studio
           </p>
         </div>
         <nav className="flex flex-wrap items-center space-x-6 text-sm">
           <Link href="/" className="hover:text-foreground">
-            Home
+            Главная
           </Link>
           <Link href="/shop" className="hover:text-foreground">
-            Shop
+            Магазин
           </Link>
           <Link href="/cart" className="hover:text-foreground">
-            Cart
+            Корзина
           </Link>
           <Link href="/checkout" className="hover:text-foreground">
-            Checkout
+            Оформление
           </Link>
         </nav>
       </div>

@@ -14,32 +14,32 @@ import {useToast} from "@/hooks/use-toast";
 
 const categories = [
   {
-    name: 'Engine',
+    name: 'Двигатель',
     icon: Icons.engine,
     href: '/shop?category=engine',
   },
   {
-    name: 'Suspension',
+    name: 'Подвеска',
     icon: Icons.suspension,
     href: '/shop?category=suspension',
   },
   {
-    name: 'Brakes',
+    name: 'Тормоза',
     icon: Icons.brakes,
     href: '/shop?category=brakes',
   },
   {
-    name: 'Electrical',
+    name: 'Электрика',
     icon: Icons.electrical,
     href: '/shop?category=electrical',
   },
   {
-    name: 'Body',
+    name: 'Кузов',
     icon: Icons.body,
     href: '/shop?category=body',
   },
   {
-    name: 'Accessories',
+    name: 'Аксессуары',
     icon: Icons.accessories,
     href: '/shop?category=accessories',
   },
@@ -48,95 +48,95 @@ const categories = [
 const popularProducts = [
   {
     id: 'pp1',
-    name: 'High-Performance Air Filter',
+    name: 'Высокопроизводительный воздушный фильтр',
     brand: 'K&N',
     price: 39.99,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Improve your engine\'s performance with this high-flow air filter.',
-    category: 'Filters',
-    compatibleVehicles: ['All vehicles'],
+    description: 'Улучшите производительность своего двигателя с помощью этого воздушного фильтра с высоким потоком.',
+    category: 'Фильтры',
+    compatibleVehicles: ['Все автомобили'],
   },
   {
     id: 'pp2',
-    name: 'Ceramic Brake Pads',
+    name: 'Керамические тормозные колодки',
     brand: 'Akebono',
     price: 65.00,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Enjoy quiet and smooth braking with these ceramic brake pads.',
-    category: 'Brakes',
-    compatibleVehicles: ['Sedans', 'SUVs'],
+    description: 'Наслаждайтесь тихим и плавным торможением с этими керамическими тормозными колодками.',
+    category: 'Тормоза',
+    compatibleVehicles: ['Седаны', 'Внедорожники'],
   },
 ];
 
 const newArrivals = [
   {
     id: 'na1',
-    name: 'LED Headlight Bulbs',
+    name: 'Светодиодные лампы для фар',
     brand: 'Philips',
     price: 45.50,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Upgrade your headlights with these bright and energy-efficient LED bulbs.',
-    category: 'Electrical',
-    compatibleVehicles: ['Cars', 'Trucks'],
+    description: 'Обновите свои фары с помощью этих ярких и энергоэффективных светодиодных ламп.',
+    category: 'Электрика',
+    compatibleVehicles: ['Легковые автомобили', 'Грузовики'],
   },
   {
     id: 'na2',
-    name: 'All-Weather Floor Mats',
+    name: 'Всепогодные коврики',
     brand: 'WeatherTech',
     price: 120.00,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Protect your vehicle\'s interior with these durable floor mats.',
-    category: 'Accessories',
-    compatibleVehicles: ['All vehicles'],
+    description: 'Защитите интерьер своего автомобиля с помощью этих прочных ковриков.',
+    category: 'Аксессуары',
+    compatibleVehicles: ['Все автомобили'],
   },
   {
     id: 'na3',
-    name: 'Synthetic Motor Oil',
+    name: 'Синтетическое моторное масло',
     brand: 'Mobil 1',
     price: 29.99,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Keep your engine running smoothly with this synthetic motor oil.',
-    category: 'Engine',
-    compatibleVehicles: ['Cars'],
+    description: 'Поддерживайте плавную работу двигателя с помощью этого синтетического моторного масла.',
+    category: 'Двигатель',
+    compatibleVehicles: ['Легковые автомобили'],
   },
   {
     id: 'na4',
-    name: 'Shock Absorbers',
+    name: 'Амортизаторы',
     brand: 'Bilstein',
     price: 89.00,
     imageUrl: 'https://picsum.photos/200/150',
-    description: 'Improve your vehicle\'s handling with these high-quality shock absorbers.',
-    category: 'Suspension',
-    compatibleVehicles: ['SUVs', 'Trucks'],
+    description: 'Улучшите управляемость своего автомобиля с помощью этих высококачественных амортизаторов.',
+    category: 'Подвеска',
+    compatibleVehicles: ['Внедорожники', 'Грузовики'],
   },
 ];
 
 const benefits = [
   {
-    title: 'Free Shipping',
-    description: 'Enjoy free shipping on orders over $99.',
+    title: 'Бесплатная доставка',
+    description: 'Наслаждайтесь бесплатной доставкой заказов на сумму свыше 99 долларов.',
     icon: Icons.truck,
   },
   {
-    title: 'Quality Guarantee',
-    description: 'We offer only high-quality auto parts.',
+    title: 'Гарантия качества',
+    description: 'Мы предлагаем только высококачественные автозапчасти.',
     icon: Icons.check,
   },
   {
-    title: '24/7 Support',
-    description: 'Our support team is available 24/7 to assist you.',
+    title: 'Круглосуточная поддержка',
+    description: 'Наша служба поддержки работает круглосуточно и готова помочь вам.',
     icon: Icons.help,
   },
 ];
 
 const blogPosts = [
   {
-    title: 'The Importance of Regular Oil Changes',
+    title: 'Важность регулярной замены масла',
     imageUrl: 'https://picsum.photos/400/200',
     href: '/blog/oil-changes',
   },
   {
-    title: 'Choosing the Right Brake Pads for Your Vehicle',
+    title: 'Выбор правильных тормозных колодок для вашего автомобиля',
     imageUrl: 'https://picsum.photos/400/200',
     href: '/blog/brake-pads',
   },
@@ -144,15 +144,15 @@ const blogPosts = [
 
 const banners = [
   {
-    title: 'Summer Sale - Up to 50% Off',
+    title: 'Летняя распродажа - скидки до 50%',
     imageUrl: 'https://picsum.photos/800/300',
-    buttonText: 'Shop Now',
+    buttonText: 'Купить сейчас',
     href: '/shop',
   },
   {
-    title: 'New Arrivals - Check Out the Latest Parts',
+    title: 'Новые поступления - ознакомьтесь с последними деталями',
     imageUrl: 'https://picsum.photos/800/300',
-    buttonText: 'View New Arrivals',
+    buttonText: 'Посмотреть новинки',
     href: '/shop',
   },
 ];
@@ -172,8 +172,8 @@ const HomePage = () => {
 
     if (!make || !model) {
       toast({
-        title: "Error",
-        description: "Please enter both make and model.",
+        title: "Ошибка",
+        description: "Пожалуйста, введите марку и модель.",
         variant: "destructive",
       });
       return;
@@ -213,28 +213,28 @@ const HomePage = () => {
       {/* Compatibility Checker */}
       <section className="py-12">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-8">Find Parts For Your Car</h2>
+          <h2 className="text-3xl font-bold mb-8">Найти детали для вашего автомобиля</h2>
           <form onSubmit={handleSubmit} className="flex flex-col md:flex-row items-center justify-center gap-4">
             <Input
               type="text"
-              placeholder="Make"
+              placeholder="Марка"
               value={make}
               onChange={(e) => setMake(e.target.value)}
               className="w-full md:w-48"
             />
             <Input
               type="text"
-              placeholder="Model"
+              placeholder="Модель"
               value={model}
               onChange={(e) => setModel(e.target.value)}
               className="w-full md:w-48"
             />
-            <Button type="submit">Find Compatible Parts</Button>
+            <Button type="submit">Найти совместимые детали</Button>
           </form>
 
           {compatibleParts && compatibleParts.compatibleParts && (
             <div className="mt-8">
-              <h3 className="text-2xl font-semibold mb-4">Compatible Parts</h3>
+              <h3 className="text-2xl font-semibold mb-4">Совместимые детали</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
                 {compatibleParts.compatibleParts.map((product) => (
                   <Autopart key={product.id} product={product} />
@@ -248,7 +248,7 @@ const HomePage = () => {
       {/* Popular Categories */}
       <section className="py-12">
         <div className="container mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-8">Popular Categories</h2>
+          <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 px-4">
             {categories.map((category) => (
               <Link href={category.href} key={category.name} className="flex flex-col items-center justify-center">
@@ -265,7 +265,7 @@ const HomePage = () => {
       {/* Hits of Sales */}
       <section className="py-12 bg-secondary">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">Hits of Sales</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">Хиты продаж</h2>
           <div className="flex overflow-x-auto px-4">
             {popularProducts.map((product) => (
               <Autopart key={product.id} product={product} />
@@ -277,7 +277,7 @@ const HomePage = () => {
       {/* New Arrivals */}
       <section className="py-12">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">New Arrivals</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">Новые поступления</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
             {newArrivals.map((product) => (
               <Autopart key={product.id} product={product}/>
@@ -289,7 +289,7 @@ const HomePage = () => {
       {/* Store Benefits */}
       <section className="py-12 bg-secondary">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">Why Choose Us?</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">Почему выбирают нас?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
             {benefits.map((benefit) => (
               <Card key={benefit.title} className="p-6 product-card">
@@ -305,7 +305,7 @@ const HomePage = () => {
       {/* Mini Blog */}
       <section className="py-12">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold mb-8 text-center">From Our Blog</h2>
+          <h2 className="text-3xl font-bold mb-8 text-center">Из нашего блога</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
             {blogPosts.map((post) => (
               <Card key={post.title} className="product-card">
@@ -313,7 +313,7 @@ const HomePage = () => {
                 <CardContent className="p-4">
                   <CardTitle className="text-xl font-semibold mb-2">{post.title}</CardTitle>
                   <Button asChild>
-                    <Link href={post.href}>Read More</Link>
+                    <Link href={post.href}>Читать далее</Link>
                   </Button>
                 </CardContent>
               </Card>

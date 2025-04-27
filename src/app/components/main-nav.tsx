@@ -67,25 +67,25 @@ export function MainNav({ className, ...props }: MainNavProps) {
           "text-sm font-medium transition-colors hover:text-foreground",
           pathname === "/" ? "text-foreground" : "text-muted-foreground"
         )}>
-          Home
+          Главная
         </Link>
         <Link href="/shop" className={cn(
           "text-sm font-medium transition-colors hover:text-foreground",
           pathname === "/shop" ? "text-foreground" : "text-muted-foreground"
         )}>
-          Shop
+          Магазин
         </Link>
         <Link href="/cart" className={cn(
           "text-sm font-medium transition-colors hover:text-foreground",
           pathname === "/cart" ? "text-foreground" : "text-muted-foreground"
         )}>
-          Cart
+          Корзина
         </Link>
         <Link href="/checkout" className={cn(
           "text-sm font-medium transition-colors hover:text-foreground",
           pathname === "/checkout" ? "text-foreground" : "text-muted-foreground"
         )}>
-          Checkout
+          Оформление
         </Link>
       </nav>
       <div className="ml-auto flex items-center space-x-4">
@@ -106,12 +106,12 @@ export function MainNav({ className, ...props }: MainNavProps) {
         </Link>
         {isLoggedIn ? (
           <Button size="sm" variant="ghost" onClick={handleLogout}>
-            Logout
+            Выйти
           </Button>
         ) : (
           <Link href="/auth/login">
             <Button size="sm" variant="ghost">
-              Login
+              Войти
             </Button>
           </Link>
         )}

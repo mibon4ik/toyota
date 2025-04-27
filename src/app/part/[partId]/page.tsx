@@ -52,7 +52,7 @@ const PartDetailPage = () => {
           <p className="text-lg font-semibold">${part.price.toFixed(2)}</p>
           <p className="text-md text-muted-foreground">{part.description}</p>
           <div className="mt-4">
-            <Button onClick={handleAddToCart}>Add to Cart</Button>
+            <Button onClick={handleAddToCart}>В корзину</Button>
           </div>
         </CardContent>
       </Card>
