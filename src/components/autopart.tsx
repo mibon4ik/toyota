@@ -5,6 +5,7 @@ import {Button} from "@/components/ui/button";
 import {AutoPart} from "@/services/autoparts";
 import {useToast} from "@/hooks/use-toast";
 import {useState, useEffect} from "react";
+import Link from "next/link";
 
 interface AutopartProps {
   product: AutoPart;
@@ -12,7 +13,7 @@ interface AutopartProps {
 
 const Autopart: React.FC<AutopartProps> = ({ product }) => {
   const { toast } = useToast();
-  const [cartItems, setCartItems] = useState(() => {
+  const [cartItems, setCartItems] = useState<AutoPart[]>(() => {
     // Initialize cartItems from local storage
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cartItems');
@@ -46,9 +47,19 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
     setCartItems(updatedCart);
 
     toast({
-      title: "Добавлено в корзину!",
+      title: "Товар добавлен в корзину!",
       description: `${product.name} был добавлен в вашу корзину.`,
     });
+  };
+
+  const formatPrice = (price: number): string => {
+    const exchangeRate = 500; // Курс доллара к тенге (пример)
+    const priceInTenge = price * exchangeRate;
+    return new Intl.NumberFormat('ru-KZ', {
+      style: 'currency',
+      currency: 'KZT',
+      minimumFractionDigits: 2,
+    }).format(priceInTenge);
   };
 
   return (
@@ -58,13 +69,15 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
           <CardTitle>{product.name}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="object-cover rounded-md mb-4 h-32 w-full"
-          />
+          <Link href={`/part/${product.id}`}>
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="object-cover rounded-md mb-4 h-32 w-full"
+            />
+          </Link>
           <p className="text-sm text-muted-foreground">{product.brand}</p>
-          <p className="text-lg font-semibold">{(product.price * 90).toFixed(2)} ₽</p>
+          <p className="text-lg font-semibold">{formatPrice(product.price)}</p>
            <Button onClick={handleAddToCart}>В корзину</Button>
         </CardContent>
     </Card>

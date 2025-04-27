@@ -164,7 +164,7 @@ async function getCompatibleParts(make: string, model: string) {
 const HomePage = () => {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
-  const [compatibleParts, setCompatibleParts] = useState(null);
+  const [compatibleParts, setCompatibleParts] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -179,8 +179,28 @@ const HomePage = () => {
       return;
     }
 
-    const parts = await getCompatibleParts(make, model);
-    setCompatibleParts(parts);
+    try {
+      const parts = await getCompatibleParts(make, model);
+      setCompatibleParts(parts);
+    } catch (error) {
+      console.error("Failed to fetch compatible parts:", error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось получить совместимые детали. Пожалуйста, попробуйте позже.",
+        variant: "destructive",
+      });
+      setCompatibleParts(null);
+    }
+  };
+
+  const formatPrice = (price: number): string => {
+    const exchangeRate = 500; // Курс доллара к тенге (пример)
+    const priceInTenge = price * exchangeRate;
+    return new Intl.NumberFormat('ru-KZ', {
+      style: 'currency',
+      currency: 'KZT',
+      minimumFractionDigits: 2,
+    }).format(priceInTenge);
   };
 
   return (
@@ -236,7 +256,7 @@ const HomePage = () => {
             <div className="mt-8">
               <h3 className="text-2xl font-semibold mb-4">Совместимые детали</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
-                {compatibleParts.compatibleParts.map((product) => (
+                {compatibleParts.compatibleParts.map((product: any) => (
                   <Autopart key={product.id} product={product} />
                 ))}
               </div>

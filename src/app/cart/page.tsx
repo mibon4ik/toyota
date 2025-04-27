@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AutoPart } from "@/services/autoparts";
 import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -26,7 +27,7 @@ const CartPage = () => {
   }, [cartItems]);
 
   const calculateTotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0).toFixed(2);
+    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
   };
 
   const incrementQuantity = (id: string) => {
@@ -67,6 +68,17 @@ const CartPage = () => {
     });
   };
 
+  const formatPrice = (price: number): string => {
+    const exchangeRate = 500; // Курс доллара к тенге (пример)
+    const priceInTenge = price * exchangeRate;
+    return new Intl.NumberFormat('ru-KZ', {
+      style: 'currency',
+      currency: 'KZT',
+      minimumFractionDigits: 2,
+    }).format(priceInTenge);
+  };
+
+
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
@@ -82,7 +94,7 @@ const CartPage = () => {
               <CardContent className="flex items-center justify-between">
                 <img src={item.imageUrl} alt={item.name} className="w-24 h-24 object-cover rounded" />
                 <div>
-                  <p className="text-lg font-semibold">{(item.price * 90).toFixed(2)} ₽</p>
+                  <p className="text-lg font-semibold">{formatPrice(item.price)}</p>
                   <div className="flex items-center">
                     <Button size="sm" onClick={() => decrementQuantity(item.id)}>-</Button>
                     <span className="mx-2">{item.quantity}</span>
@@ -90,15 +102,17 @@ const CartPage = () => {
                   </div>
                 </div>
                 <div className="flex flex-col items-end">
-                  <p className="text-lg font-semibold">{(item.price * item.quantity * 90).toFixed(2)} ₽</p>
+                  <p className="text-lg font-semibold">{formatPrice(item.price * item.quantity)}</p>
                   <Button size="sm" variant="destructive" onClick={() => removeItem(item.id)}>Удалить</Button>
                 </div>
               </CardContent>
             </Card>
           ))}
           <div className="text-right">
-            <h2 className="text-2xl font-bold">Итого: {(parseFloat(calculateTotal()) * 90).toFixed(2)} ₽</h2>
-            <Button className="mt-4">Перейти к оформлению</Button>
+            <h2 className="text-2xl font-bold">Итого: {formatPrice(parseFloat(calculateTotal()))}</h2>
+              <Link href="/checkout">
+                  <Button className="mt-4">Перейти к оформлению</Button>
+              </Link>
           </div>
         </>
       )}

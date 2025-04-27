@@ -36,6 +36,16 @@ const PartDetailPage = () => {
     return <div>Loading...</div>;
   }
 
+  const formatPrice = (price: number): string => {
+    const exchangeRate = 500; // Курс доллара к тенге (пример)
+    const priceInTenge = price * exchangeRate;
+    return new Intl.NumberFormat('ru-KZ', {
+      style: 'currency',
+      currency: 'KZT',
+      minimumFractionDigits: 2,
+    }).format(priceInTenge);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <Card className="w-full max-w-lg mx-auto">
@@ -49,7 +59,7 @@ const PartDetailPage = () => {
             alt={part.name}
             className="object-cover rounded-md mb-4 h-64 w-full"
           />
-          <p className="text-lg font-semibold">{(part.price * 90).toFixed(2)} ₽</p>
+          <p className="text-lg font-semibold">{formatPrice(part.price)}</p>
           <p className="text-md text-muted-foreground">{part.description}</p>
           <div className="mt-4">
             <Button onClick={handleAddToCart}>В корзину</Button>
