@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState} from 'react';
@@ -245,7 +246,8 @@ const HomePage = () => {
               onChange={(e) => setModel(e.target.value)}
               className="w-full md:w-48"
             />
-             <Input
+             
+            <Input
               type="text"
               placeholder="VIN-код"
               value={vinCode}
