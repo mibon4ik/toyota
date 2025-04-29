@@ -81,7 +81,7 @@ const LoginPage = () => {
               </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
-            <Button type="submit" className="w-full italic">
+            <Button type="submit" className="w-full">
               Войти
             </Button>
           </form>
@@ -89,7 +89,7 @@ const LoginPage = () => {
           <div className="mt-4 text-center">
             <p>Еще нет аккаунта?</p>
             <Link href="/auth/register">
-              <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90">Зарегистрироваться</Button>
+              <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 italic">Зарегистрироваться</Button>
             </Link>
           </div>
         </CardContent>
