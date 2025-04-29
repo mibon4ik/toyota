@@ -11,8 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -20,23 +20,39 @@ const LoginPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
 
-    if (email === 'admin@admin.com' && password === 'admin') {
-      localStorage.setItem('isLoggedIn', 'true');
-      const user = {
-        firstName: 'Admin',
-        lastName: 'User',
-        email: 'admin@admin.com',
-      };
-      localStorage.setItem('loggedInUser', JSON.stringify(user));
-      toast({
-        title: "Вход выполнен!",
-        description: "Вы успешно вошли в систему.",
-      });
-      router.push(email === 'admin@admin.com' ? '/admin' : '/');
-    } else {
+    // Retrieve users from local storage
+    const storedUsers = localStorage.getItem('users');
+    if (!storedUsers) {
       setError('Неверные учетные данные');
+      return;
     }
+
+    const users = JSON.parse(storedUsers);
+    // Find user by email
+    const user = users.find((u: any) => u.email === email);
+
+    if (!user) {
+      setError('Неверные учетные данные');
+      return;
+    }
+
+    // Check password
+    if (user.password !== password) {
+      setError('Неверные учетные данные');
+      return;
+    }
+
+    // Login successful
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    toast({
+      title: "Вход выполнен!",
+      description: "Вы успешно вошли в систему.",
+    });
+    router.push(email === 'admin@admin.com' ? '/admin' : '/');
+
   };
 
   return (
@@ -76,7 +92,7 @@ const LoginPage = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                  {showPassword ? <Icons.eyeOff /> : <Icons.eye />}
                 </Button>
               </div>
             </div>
