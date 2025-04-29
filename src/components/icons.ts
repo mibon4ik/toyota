@@ -33,7 +33,9 @@ import {
   Camera,
   Box,
   Truck,
-  X
+  X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 
 const Icons = {
@@ -76,6 +78,8 @@ const Icons = {
   body: Box,
   accessories: Car,
   truck: Truck,
+  eye: Eye,
+  eyeOff: EyeOff,
 };
 
 export {Icons};

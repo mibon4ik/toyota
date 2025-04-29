@@ -8,7 +8,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-// import * as Icons from "@/components/icons"; // Remove the import
+import { Icons } from "@/components/icons";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('admin@admin.com');
@@ -60,14 +60,25 @@ const LoginPage = () => {
             </div>
             <div>
               <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                </Button>
+              </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
             <Button type="submit" className="w-full">
