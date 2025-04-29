@@ -9,10 +9,11 @@ import {Label} from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
+import { setCookie } from 'cookies-next';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -21,6 +22,18 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Hardcoded admin credentials
+    if (email === 'admin@admin.com' && password === 'admin') {
+      setCookie('isLoggedIn', 'true');
+      setCookie('loggedInUser', JSON.stringify({ email: 'admin@admin.com', isAdmin: true, firstName: 'Admin', lastName: 'User' }));
+      toast({
+        title: "Вход выполнен!",
+        description: "Вы успешно вошли в систему как администратор.",
+      });
+      router.push('/');
+      return;
+    }
 
     const storedUsers = localStorage.getItem('users');
     if (!storedUsers) {
@@ -36,8 +49,8 @@ const LoginPage = () => {
       return;
     }
 
-    localStorage.setItem('isLoggedIn', 'true');
-    localStorage.setItem('loggedInUser', JSON.stringify(user));
+    setCookie('isLoggedIn', 'true');
+    setCookie('loggedInUser', JSON.stringify({ ...user, isAdmin: false }));
 
     toast({
       title: "Вход выполнен!",
@@ -96,7 +109,7 @@ const LoginPage = () => {
           <div className="mt-4 text-center">
             <p>Еще нет аккаунта?</p>
             <Link href="/auth/register">
-              <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 italic">Зарегистрироваться</Button>
+              <Button variant="secondary" className="bg-[#535353ff] text-primary-foreground hover:bg-[#535353ff]/90 italic">Зарегистрироваться</Button>
             </Link>
           </div>
         </CardContent>
