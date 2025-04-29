@@ -7,6 +7,7 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Icons } from "@/components/icons";
 
 const RegistrationPage = () => {
   const [firstName, setFirstName] = useState('');
@@ -20,7 +21,9 @@ const RegistrationPage = () => {
   const [vinCode, setVinCode] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-    const { toast } = useToast();
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,23 +38,23 @@ const RegistrationPage = () => {
       return;
     }
 
-      if (vinCode.length !== 17) {
-          setError('VIN-код должен содержать 17 символов.');
-          return;
-      }
-      if (!/^[A-Za-z0-9]+$/.test(vinCode)) {
-          setError('VIN-код должен содержать только латинские буквы и цифры.');
-          return;
-      }
+    if (vinCode.length !== 17) {
+      setError('VIN-код должен содержать 17 символов.');
+      return;
+    }
+    if (!/^[A-Za-z0-9]+$/.test(vinCode)) {
+      setError('VIN-код должен содержать только латинские буквы и цифры.');
+      return;
+    }
 
     if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
-          setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
-          return;
-      }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          setError('Неверный формат электронной почты.');
-          return;
-      }
+      setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Неверный формат электронной почты.');
+      return;
+    }
 
     // Store user data in localStorage
     let users = [];
@@ -88,8 +91,8 @@ const RegistrationPage = () => {
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
     toast({
-        title: "Регистрация успешна!",
-        description: "Вы будете перенаправлены на страницу входа",
+      title: "Регистрация успешна!",
+      description: "Вы будете перенаправлены на страницу входа",
     });
 
     try {
@@ -190,25 +193,47 @@ const RegistrationPage = () => {
             </div>
             <div>
               <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                </Button>
+              </div>
             </div>
             <div>
               <Label htmlFor="confirmPassword">Подтверждение пароля</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Подтверждение пароля"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Подтверждение пароля"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <Icons.shield /> : <Icons.user />}
+                </Button>
+              </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
             <Button type="submit" className="w-full">
