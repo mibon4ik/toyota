@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
@@ -18,32 +18,10 @@ const LoginPage = () => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    // Pre-populate users in localStorage for initial setup
-      let users = [];
-      const storedUsers = localStorage.getItem('users');
-      if (!storedUsers) {
-          // Add the admin user
-          const adminUser = {
-              firstName: 'Admin',
-              lastName: 'User',
-              email: 'admin@admin.com',
-              phoneNumber: '123-456-7890',
-              password: 'admin',
-              carMake: 'Toyota',
-              carModel: 'AdminCar',
-              vinCode: 'ADMIN1234567890',
-          };
-          users.push(adminUser);
-          localStorage.setItem('users', JSON.stringify(users));
-      }
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Retrieve users from local storage
     const storedUsers = localStorage.getItem('users');
     if (!storedUsers) {
       setError('Неверные учетные данные');
@@ -51,29 +29,21 @@ const LoginPage = () => {
     }
 
     const users = JSON.parse(storedUsers);
-    // Find user by email
-    const user = users.find((u: any) => u.email === email);
+    const user = users.find((u: any) => u.email === email && u.password === password);
 
     if (!user) {
       setError('Неверные учетные данные');
       return;
     }
 
-    // Check password
-    if (user.password !== password) {
-      setError('Неверные учетные данные');
-      return;
-    }
-
-    // Login successful
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('loggedInUser', JSON.stringify(user));
+
     toast({
       title: "Вход выполнен!",
       description: "Вы успешно вошли в систему.",
     });
     router.push(email === 'admin@admin.com' ? '/admin' : '/cart');
-
   };
 
   return (
