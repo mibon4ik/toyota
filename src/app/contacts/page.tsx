@@ -6,10 +6,23 @@ const ContactsPage = () => {
       <h1 className="text-3xl font-bold text-center mb-8">Контакты</h1>
       <div className="bg-white shadow-md rounded-md p-8">
         <h2 className="text-2xl font-semibold mb-4">Toyota</h2>
-        <p className="text-gray-700">
+        <p className="text-gray-700 mb-2">
           <strong>Адрес:</strong> пр-т. Шакарим Кудайбердиулы 6, Астана 010000
         </p>
-        <p className="text-gray-700">
+        {/* Google Maps Embed */}
+        <div className="map-responsive">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2444.789259743356!2d71.41479737284614!3d51.16861957164614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424581d4a47500c1%3A0x60650c1ef9d84a8f!2z0YPQuy4g0LXRgNC10LzQvdGL0Lkg0JrQu9Cw0LPQvtGA0LDRgtC40YHRgtCw0L0sIDY!5e0!3m2!1sru!2skz!4v1716767155720!5m2!1sru!2skz"
+            width="600"
+            height="450"
+            style={{ border: 0 }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="w-full h-96"
+          ></iframe>
+        </div>
+        <p className="text-gray-700 mt-2">
           <strong>Контакты для связи:</strong> Техническая поддержка 8 (7172) 27 02 00
         </p>
         <p className="text-gray-700">
