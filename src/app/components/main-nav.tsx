@@ -110,7 +110,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
             <Icons.shoppingCart className="h-4 w-4" />
             <span className="sr-only">Cart</span>
             {cartItemCount > 0 && (
-              <Badge className="absolute -right-2 -top-2 rounded-full px-1 py-0.5 text-xs">
+              <Badge className="absolute -right-2 -top-2 rounded-full px-1 py-0.5 text-xs" style={{ backgroundColor: '#8dc572' }}>
                 {cartItemCount}
               </Badge>
             )}
@@ -141,6 +141,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
     </div>
   )
 }
+
 
 
 
