@@ -63,6 +63,10 @@ export function MainNav({ className, ...props }: MainNavProps) {
     router.push('/auth/login');
   };
 
+  const navigateToCart = () => {
+    router.push('/cart');
+  };
+
   return (
     <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
       <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -102,8 +106,8 @@ export function MainNav({ className, ...props }: MainNavProps) {
           <Icons.search className="h-4 w-4" />
           <span className="sr-only">Search</span>
         </Button>
-        <Link href="/cart">
-          <Button size="sm" variant="ghost" className="relative">
+        
+          <Button size="sm" variant="ghost" className="relative" onClick={navigateToCart}>
             <Icons.shoppingCart className="h-4 w-4" />
             <span className="sr-only">Cart</span>
             {cartItemCount > 0 && (
@@ -112,7 +116,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
               </Badge>
             )}
           </Button>
-        </Link>
+        
         {isLoggedIn ? (
           <>
             <span>{loggedInUser?.firstName} {loggedInUser?.lastName}</span>
@@ -142,4 +146,5 @@ export function MainNav({ className, ...props }: MainNavProps) {
     </div>
   )
 }
+
 
