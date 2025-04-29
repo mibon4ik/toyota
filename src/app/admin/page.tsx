@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -8,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getCookie, deleteCookie } from 'cookies-next';
 import type { User } from '@/types/user'; // Import User type
 import { UserList } from './components/UserList'; // Import UserList component
+import { AddProductForm } from './components/AddProductForm'; // Import AddProductForm component
 import { getAllUsers } from '@/lib/auth';
 
 const AdminPage = () => {
@@ -62,6 +64,32 @@ const AdminPage = () => {
          }
      } else {
          console.log("AdminPage: Auth cookies not found or incomplete.");
+         // Optionally check localStorage as a backup for session restoration if cookies are missing
+         const localIsLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isLoggedIn') : null;
+         const localUser = typeof window !== 'undefined' ? localStorage.getItem('loggedInUser') : null;
+         if (localIsLoggedIn === 'true' && localUser) {
+             console.log("AdminPage: Attempting login state restoration from localStorage.");
+              try {
+                 loggedInUser = JSON.parse(localUser);
+                 isAdmin = !!loggedInUser?.isAdmin;
+                  if (isAdmin) {
+                     console.log("AdminPage: Restored admin session from localStorage.");
+                     // Optionally re-set cookies if missing but localStorage is valid
+                     // setCookie(...)
+                  } else {
+                     console.log("AdminPage: User from localStorage is not admin.");
+                  }
+              } catch (e) {
+                  console.error("AdminPage: Error parsing localStorage user data:", e);
+                  isAdmin = false;
+                  // Clear potentially corrupted localStorage
+                   if (typeof window !== 'undefined') {
+                     localStorage.removeItem('isLoggedIn');
+                     localStorage.removeItem('loggedInUser');
+                     window.dispatchEvent(new Event('authStateChanged'));
+                   }
+              }
+         }
      }
 
      // --- Decision & Action ---
@@ -141,8 +169,8 @@ const AdminPage = () => {
    if (!isMounted || isLoading) {
         // console.log("AdminPage: Not mounted or loading, returning loading state for SSR/initial render/fetch.");
         return (
-            <div className="flex justify-center items-start min-h-screen pt-8">
-                <Card className="w-full max-w-4xl p-4">
+            <div className="container mx-auto py-8">
+                <Card className="w-full p-4">
                     <CardHeader>
                         <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
                     </CardHeader>
@@ -157,16 +185,27 @@ const AdminPage = () => {
 
 
   return (
-    <div className="flex justify-center items-start min-h-screen pt-8">
-      <Card className="w-full max-w-4xl p-4">
+    <div className="container mx-auto py-8"> {/* Use container for consistent padding */}
+      <Card className="w-full p-4"> {/* Remove max-w-4xl to use full container width */}
         <CardHeader>
-          <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
+          <CardTitle className="text-2xl text-center mb-6">Панель администратора</CardTitle>
         </CardHeader>
-        <CardContent>
-           {/* Pass isLoading=false here, as the outer loading state handles it */}
+        <CardContent className="space-y-8"> {/* Add spacing between sections */}
+           {/* User List Section */}
            <UserList users={users} isLoading={false} error={error} />
+
+           {/* Add Product Form Section */}
+           <AddProductForm />
+
+           {/* TODO: Add Order Management Section */}
+            {/* <div>
+                <h2 className="text-xl font-semibold mb-4">Управление заказами:</h2>
+                 Display orders list/management components here
+                <p className="text-muted-foreground">Функционал управления заказами будет добавлен позже.</p>
+            </div> */}
+
         </CardContent>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-8 flex justify-center"> {/* Increased margin-top */}
             <Button onClick={handleLogout} variant="outline">Выйти</Button>
           </div>
       </Card>

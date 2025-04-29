@@ -1,8 +1,9 @@
+
 'use client';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { AutoPart } from "@/services/autoparts"; // Ensure AutoPart type is imported
+import type { AutoPart } from "@/types/autopart"; // Corrected import path
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
@@ -79,18 +80,17 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
     });
 
 
-  }, [product, toast]); // Add product and toast as dependencies
+  }, [product, toast, cartItems]); // Add cartItems to dependencies
 
   const formatPrice = (price: number): string => {
-    const exchangeRate = 500; // Курс доллара к тенге (пример)
-    const priceInTenge = price * exchangeRate;
-    return new Intl.NumberFormat('ru-KZ', {
-      style: 'currency',
-      currency: 'KZT',
-      minimumFractionDigits: 0,
-       maximumFractionDigits: 0,
-    }).format(priceInTenge);
-  };
+      // Assuming price is already in Tenge (KZT) as per services/autoparts.ts
+      return new Intl.NumberFormat('ru-KZ', {
+        style: 'currency',
+        currency: 'KZT',
+        minimumFractionDigits: 0, // Tenge usually doesn't show fractions
+        maximumFractionDigits: 0,
+      }).format(price);
+    };
 
   // Avoid rendering the button interaction part on the server
   if (!isMounted) {

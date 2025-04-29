@@ -1,12 +1,14 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AutoPart } from "@/services/autoparts"; // Assuming AutoPart type includes price
+import type { AutoPart } from "@/types/autopart"; // Corrected import path
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import { Trash2 } from 'lucide-react'; // Import trash icon
 
 // Define CartItem extending AutoPart with quantity
 interface CartItem extends AutoPart {
@@ -92,50 +94,59 @@ const CartPage = () => {
     });
   }, [toast]); // Add toast as dependency
 
-  const formatPrice = (price: number): string => {
-    // Use a fixed exchange rate for demonstration
-    // In a real app, fetch this dynamically or use a library
-    const exchangeRate = 500; // Example: 1 USD = 500 KZT
-    const priceInTenge = price * exchangeRate;
-    return new Intl.NumberFormat('ru-KZ', { // Use Kazakh locale for KZT formatting
-      style: 'currency',
-      currency: 'KZT', // ISO 4217 code for Kazakhstani Tenge
-      minimumFractionDigits: 0, // Typically Tenge doesn't use fractional units in display
-      maximumFractionDigits: 0,
-    }).format(priceInTenge);
-  };
+   const formatPrice = useCallback((price: number): string => {
+      // Assuming price is already in Tenge (KZT)
+      return new Intl.NumberFormat('ru-KZ', {
+        style: 'currency',
+        currency: 'KZT',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(price);
+    }, []); // No dependencies needed
+
 
   // Render nothing on the server to avoid hydration issues with localStorage
   if (!isMounted) {
-    return null;
+    return (
+        <div className="container mx-auto py-8">
+            <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
+             <p className="text-center text-muted-foreground">Загрузка корзины...</p>
+             {/* You could add skeleton loaders here */}
+        </div>
+    );
   }
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
       {cartItems.length === 0 ? (
-        <p className="text-center text-muted-foreground">Ваша корзина пуста.</p>
+        <div className="text-center py-10">
+            <p className="text-muted-foreground mb-4">Ваша корзина пуста.</p>
+             <Link href="/shop" passHref>
+                <Button>Перейти в магазин</Button>
+            </Link>
+        </div>
       ) : (
         <>
           <div className="space-y-4">
             {cartItems.map((item) => (
               <Card key={item.id} className="overflow-hidden">
                 <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
                     <img
                       src={item.imageUrl || 'https://picsum.photos/100/100'} // Fallback image
                       alt={item.name}
-                      className="w-20 h-20 object-cover rounded-md flex-shrink-0"
+                      className="w-20 h-20 object-cover rounded-md flex-shrink-0 border" // Added border
                       onError={(e) => (e.currentTarget.src = 'https://picsum.photos/100/100')} // Handle image load errors
                     />
                     <div className="flex-grow">
-                      <CardTitle className="text-lg mb-1">{item.name}</CardTitle>
+                      <CardTitle className="text-lg mb-1 line-clamp-2">{item.name}</CardTitle> {/* Added line-clamp */}
                       <p className="text-sm text-muted-foreground">{item.brand}</p>
                       <p className="text-sm font-semibold">{formatPrice(item.price)} / шт.</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0"> {/* Added flex-shrink-0 */}
                      <div className="flex items-center border rounded-md">
                        <Button
                          variant="ghost"
@@ -149,7 +160,7 @@ const CartPage = () => {
                        </Button>
                        <Input
                          type="number"
-                         className="h-8 w-12 text-center border-l border-r rounded-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                         className="h-8 w-12 text-center border-l border-r-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // Hide spinners
                          value={item.quantity}
                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
                          min="1"
@@ -158,7 +169,7 @@ const CartPage = () => {
                        <Button
                          variant="ghost"
                          size="icon"
-                         className="h-8 w-8 rounded-l-none"
+                         className="h-8 w-8 rounded-l-none border-l" // Added border-l
                          onClick={() => incrementQuantity(item.id)}
                          aria-label={`Увеличить количество ${item.name}`}
                        >
@@ -166,18 +177,18 @@ const CartPage = () => {
                        </Button>
                      </div>
 
-                     <p className="text-lg font-semibold w-24 text-right">
+                     <p className="text-lg font-semibold w-28 text-right"> {/* Increased width */}
                        {formatPrice(item.price * item.quantity)}
                      </p>
 
                     <Button
-                      size="sm"
+                      size="icon" // Changed to icon size
                       variant="ghost" // More subtle removal button
-                      className="text-red-500 hover:bg-red-100 hover:text-red-600 px-2"
+                      className="text-destructive hover:bg-destructive/10 h-8 w-8" // Use destructive color
                       onClick={() => removeItem(item.id)}
                       aria-label={`Удалить ${item.name} из корзины`}
                     >
-                      Удалить
+                     <Trash2 className="h-4 w-4" /> {/* Use Trash icon */}
                     </Button>
                   </div>
                 </CardContent>
@@ -185,8 +196,12 @@ const CartPage = () => {
             ))}
           </div>
 
-          <div className="mt-8 pt-4 border-t flex flex-col sm:flex-row justify-between items-center">
-            <h2 className="text-2xl font-bold mb-4 sm:mb-0">
+          <div className="mt-8 pt-4 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
+             {/* Optional: Add a "Clear Cart" button */}
+             {/* <Button variant="outline" size="sm" onClick={() => setCartItems([])} className="text-destructive border-destructive hover:bg-destructive/10">
+                Очистить корзину
+             </Button> */}
+            <h2 className="text-2xl font-bold">
               Итого: {formatPrice(calculateTotal())}
             </h2>
             <Link href="/checkout" passHref>

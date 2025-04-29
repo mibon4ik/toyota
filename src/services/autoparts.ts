@@ -1,153 +1,202 @@
-/**
- * Represents an auto part with its details.
- */
-export interface AutoPart {
-  /** The unique identifier for the auto part. */
-  id: string;
-  /** The name of the auto part. */
-  name: string;
-  /** The brand of the auto part. */
-  brand: string;
-  /** The price of the auto part in a base currency (e.g., USD, to be formatted later). */
-  price: number;
-  /** The URL of the image of the auto part. */
-  imageUrl: string;
-  /** A description of the auto part. */
-  description: string;
-  /** The category of the auto part. */
-  category: string;
-  /** A list of compatible vehicle makes and models or VIN prefixes. */
-  compatibleVehicles: string[];
-  /** Optional: Stock keeping unit */
-  sku?: string;
-   /** Optional: Current stock level */
-  stock?: number;
-  /** Optional: Rating out of 5 */
-  rating?: number;
-   /** Optional: Number of reviews */
-  reviewCount?: number;
-   /** Optional: Quantity for cart items */
-  quantity?: number;
+
+'use server'; // Indicate this module can run on the server
+
+import fs from 'fs/promises';
+import path from 'path';
+import type { AutoPart } from '@/types/autopart'; // Assuming type is moved
+
+const partsFilePath = path.join(process.cwd(), 'src', 'data', 'autoparts.json');
+const dataDir = path.dirname(partsFilePath);
+
+// --- File System Operations ---
+
+/** Ensures the data directory exists. */
+const ensureDataDirExists = async (): Promise<void> => {
+  try {
+    await fs.access(dataDir);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      await fs.mkdir(dataDir, { recursive: true });
+      console.log(`Created data directory: ${dataDir}`);
+    } else {
+      console.error("Error accessing data directory:", error);
+      throw new Error("Could not access data directory.");
+    }
+  }
+};
+
+/** Reads auto part data from the JSON file. */
+async function readPartsFile(): Promise<AutoPart[]> {
+  await ensureDataDirExists();
+  try {
+    const data = await fs.readFile(partsFilePath, 'utf-8');
+    return JSON.parse(data || '[]'); // Return empty array if file is empty or malformed
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.log("autoparts.json not found, initializing with empty array.");
+      await writePartsFile([]); // Create the file if it doesn't exist
+      return []; // File doesn't exist, return empty array
+    }
+     if (error instanceof SyntaxError) {
+        console.error("Error parsing autoparts.json:", error);
+        // Handle corrupted file (e.g., backup, log, return empty, or throw)
+        console.warn("Autoparts data file appears corrupted. Returning empty array.");
+        // Consider backing up the corrupted file here
+        // await fs.copyFile(partsFilePath, `${partsFilePath}.corrupted.${Date.now()}`);
+        // await writePartsFile([]); // Recreate with empty array
+        return []; // Or throw new Error("Autoparts data file is corrupted.");
+    }
+    console.error("Error reading autoparts file:", error);
+    throw new Error("Could not read autoparts data.");
+  }
+}
+
+/** Writes auto part data to the JSON file. */
+async function writePartsFile(parts: AutoPart[]): Promise<void> {
+  await ensureDataDirExists();
+  try {
+     if (!Array.isArray(parts)) {
+        console.error("Invalid parts data provided to writePartsFile:", parts);
+        throw new Error("Attempted to write invalid parts data.");
+      }
+    await fs.writeFile(partsFilePath, JSON.stringify(parts, null, 2), 'utf-8');
+  } catch (error) {
+    console.error("Error writing autoparts file:", error);
+    throw new Error("Could not save autoparts data.");
+  }
 }
 
 
-// --- Placeholder Data ---
-// Simulates a database or API response
-const allParts: AutoPart[] = [
-  {
-    id: 'bps-001',
-    name: 'Передние тормозные колодки',
-    brand: 'Toyota Genuine',
-    price: 75.50, // Base price (e.g., USD)
-    imageUrl: 'https://picsum.photos/seed/bps001/300/200',
-    description: 'Оригинальные передние тормозные колодки для превосходного торможения.',
-    category: 'Тормоза',
-    compatibleVehicles: ['Toyota Camry 2018+', 'Toyota RAV4 2019+'],
-    sku: 'TG-8901-F',
-    stock: 50,
-    rating: 4.8,
-    reviewCount: 120,
-  },
-  {
-    id: 'afl-002',
-    name: 'Воздушный фильтр двигателя',
-    brand: 'Denso',
-    price: 18.00,
-    imageUrl: 'https://picsum.photos/seed/afl002/300/200',
-    description: 'Высококачественный воздушный фильтр для оптимальной работы двигателя.',
-    category: 'Фильтры',
-    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota Highlander 2017+'],
-    sku: 'DN-17801',
-    stock: 150,
-    rating: 4.5,
-    reviewCount: 85,
-  },
-   {
-    id: 'oil-003',
-    name: 'Синтетическое моторное масло 0W-20',
-    brand: 'Mobil 1',
-    price: 35.00, // Price for a standard container, e.g., 5 quarts
-    imageUrl: 'https://picsum.photos/seed/oil003/300/200',
-    description: 'Полностью синтетическое масло для улучшенной защиты и производительности.',
-    category: 'Двигатель',
-    compatibleVehicles: ['Большинство моделей Toyota'], // General compatibility
-    sku: 'M1-0W20-5Q',
-    stock: 80,
-    rating: 4.9,
-    reviewCount: 210,
-  },
-    {
-    id: 'shk-004',
-    name: 'Задние амортизаторы',
-    brand: 'KYB',
-    price: 120.00, // Price per pair or single? Assume single for now
-    imageUrl: 'https://picsum.photos/seed/shk004/300/200',
-    description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
-    category: 'Подвеска',
-    compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
-    sku: 'KYB-349041',
-    stock: 30,
-    rating: 4.6,
-    reviewCount: 55,
-  },
-   {
-    id: 'lhd-005',
-    name: 'Светодиодная лампа для фары (H11)',
-    brand: 'Philips',
-    price: 49.99, // Price per bulb or pair? Assume pair
-    imageUrl: 'https://picsum.photos/seed/lhd005/300/200',
-    description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
-    category: 'Электрика',
-    compatibleVehicles: ['Различные модели Toyota/Lexus'], // Broad compatibility
-    sku: 'PH-H11LED-X2',
-    stock: 75,
-     rating: 4.7,
-    reviewCount: 92,
-  },
-   {
-    id: 'acc-006',
-    name: 'Всесезонные коврики (комплект)',
-    brand: 'WeatherTech',
-    price: 150.00,
-    imageUrl: 'https://picsum.photos/seed/acc006/300/200',
-    description: 'Прочные коврики для защиты салона от грязи и влаги.',
-    category: 'Аксессуары',
-    compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'], // Often model-specific
-    sku: 'WT-441301-441302', // Example front/rear SKU
-    stock: 40,
-     rating: 4.9,
-     reviewCount: 150,
-  },
-  // Add more placeholder parts...
-   {
-    id: 'bdy-007',
-    name: 'Крышка зеркала (левая, окрашенная)',
-    brand: 'Toyota Genuine',
-    price: 65.00,
-    imageUrl: 'https://picsum.photos/seed/bdy007/300/200',
-    description: 'Оригинальная крышка зеркала, окрашенная в цвет кузова (требуется указание цвета).',
-    category: 'Кузов',
-    compatibleVehicles: ['Toyota Camry 2018-2021'],
-    sku: 'TG-87945-VAR', // VAR indicates color variation needed
-    stock: 25,
-    rating: 4.5,
-    reviewCount: 15,
-   },
-    {
-    id: 'flt-008',
-    name: 'Салонный фильтр (угольный)',
-    brand: 'Bosch',
-    price: 22.50,
-    imageUrl: 'https://picsum.photos/seed/flt008/300/200',
-    description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
-    category: 'Фильтры',
-    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
-    sku: 'BSH-6055C',
-    stock: 120,
-    rating: 4.6,
-    reviewCount: 70,
-  },
-];
+// --- Placeholder Data Initialization (Run once if file is empty) ---
+async function initializePartsDataIfNeeded(): Promise<void> {
+    try {
+        await fs.access(partsFilePath);
+        // File exists, do nothing
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            console.log("Initializing autoparts.json with placeholder data.");
+            const initialParts: AutoPart[] = [
+                 {
+                    id: 'bps-001',
+                    name: 'Передние тормозные колодки',
+                    brand: 'Toyota Genuine',
+                    price: 75.50 * 500, // Convert base price to Tenge
+                    imageUrl: 'https://picsum.photos/seed/bps001/300/200',
+                    description: 'Оригинальные передние тормозные колодки для превосходного торможения.',
+                    category: 'Тормоза',
+                    compatibleVehicles: ['Toyota Camry 2018+', 'Toyota RAV4 2019+'],
+                    sku: 'TG-8901-F',
+                    stock: 50,
+                    rating: 4.8,
+                    reviewCount: 120,
+                  },
+                  {
+                    id: 'afl-002',
+                    name: 'Воздушный фильтр двигателя',
+                    brand: 'Denso',
+                    price: 18.00 * 500,
+                    imageUrl: 'https://picsum.photos/seed/afl002/300/200',
+                    description: 'Высококачественный воздушный фильтр для оптимальной работы двигателя.',
+                    category: 'Фильтры',
+                    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota Highlander 2017+'],
+                    sku: 'DN-17801',
+                    stock: 150,
+                    rating: 4.5,
+                    reviewCount: 85,
+                  },
+                   {
+                    id: 'oil-003',
+                    name: 'Синтетическое моторное масло 0W-20',
+                    brand: 'Mobil 1',
+                    price: 35.00 * 500,
+                    imageUrl: 'https://picsum.photos/seed/oil003/300/200',
+                    description: 'Полностью синтетическое масло для улучшенной защиты и производительности.',
+                    category: 'Двигатель',
+                    compatibleVehicles: ['Большинство моделей Toyota'],
+                    sku: 'M1-0W20-5Q',
+                    stock: 80,
+                    rating: 4.9,
+                    reviewCount: 210,
+                  },
+                    {
+                    id: 'shk-004',
+                    name: 'Задние амортизаторы',
+                    brand: 'KYB',
+                    price: 120.00 * 500,
+                    imageUrl: 'https://picsum.photos/seed/shk004/300/200',
+                    description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
+                    category: 'Подвеска',
+                    compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
+                    sku: 'KYB-349041',
+                    stock: 30,
+                    rating: 4.6,
+                    reviewCount: 55,
+                  },
+                   {
+                    id: 'lhd-005',
+                    name: 'Светодиодная лампа для фары (H11)',
+                    brand: 'Philips',
+                    price: 49.99 * 500,
+                    imageUrl: 'https://picsum.photos/seed/lhd005/300/200',
+                    description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
+                    category: 'Электрика',
+                    compatibleVehicles: ['Различные модели Toyota/Lexus'],
+                    sku: 'PH-H11LED-X2',
+                    stock: 75,
+                     rating: 4.7,
+                    reviewCount: 92,
+                  },
+                   {
+                    id: 'acc-006',
+                    name: 'Всесезонные коврики (комплект)',
+                    brand: 'WeatherTech',
+                    price: 150.00 * 500,
+                    imageUrl: 'https://picsum.photos/seed/acc006/300/200',
+                    description: 'Прочные коврики для защиты салона от грязи и влаги.',
+                    category: 'Аксессуары',
+                    compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
+                    sku: 'WT-441301-441302',
+                    stock: 40,
+                     rating: 4.9,
+                     reviewCount: 150,
+                  },
+                   {
+                    id: 'bdy-007',
+                    name: 'Крышка зеркала (левая, окрашенная)',
+                    brand: 'Toyota Genuine',
+                    price: 65.00 * 500,
+                    imageUrl: 'https://picsum.photos/seed/bdy007/300/200',
+                    description: 'Оригинальная крышка зеркала, окрашенная в цвет кузова (требуется указание цвета).',
+                    category: 'Кузов',
+                    compatibleVehicles: ['Toyota Camry 2018-2021'],
+                    sku: 'TG-87945-VAR',
+                    stock: 25,
+                    rating: 4.5,
+                    reviewCount: 15,
+                   },
+                    {
+                    id: 'flt-008',
+                    name: 'Салонный фильтр (угольный)',
+                    brand: 'Bosch',
+                    price: 22.50 * 500,
+                    imageUrl: 'https://picsum.photos/seed/flt008/300/200',
+                    description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
+                    category: 'Фильтры',
+                    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
+                    sku: 'BSH-6055C',
+                    stock: 120,
+                    rating: 4.6,
+                    reviewCount: 70,
+                  },
+            ];
+            await writePartsFile(initialParts);
+        } else {
+            console.error("Error checking autoparts.json existence:", error);
+             throw new Error("Could not initialize autoparts data.");
+        }
+    }
+}
+
 
 // --- Service Functions ---
 
@@ -169,6 +218,7 @@ function simulateApiCall<T>(data: T, delay = 300): Promise<T> {
  * @returns A promise that resolves to an array of matching AutoPart objects.
  */
 export async function searchAutoParts(query: string): Promise<AutoPart[]> {
+  const allParts = await readPartsFile(); // Read current parts
   const lowerCaseQuery = query.toLowerCase();
   if (!query) {
     return simulateApiCall([]); // Return empty array if query is empty
@@ -193,6 +243,7 @@ export async function searchAutoParts(query: string): Promise<AutoPart[]> {
  * @returns A promise that resolves to an array of AutoPart objects.
  */
 export async function getAutoPartsByCategory(category: string | null | undefined): Promise<AutoPart[]> {
+   const allParts = await readPartsFile(); // Read current parts
   const lowerCaseCategory = category?.toLowerCase();
 
   if (!lowerCaseCategory || lowerCaseCategory === 'all') {
@@ -210,6 +261,7 @@ export async function getAutoPartsByCategory(category: string | null | undefined
  * @returns A promise that resolves to the AutoPart object or null if not found.
  */
 export async function getAutoPartById(partId: string): Promise<AutoPart | null> {
+   const allParts = await readPartsFile(); // Read current parts
   const part = allParts.find(p => p.id === partId);
   return simulateApiCall(part || null);
 }
@@ -224,6 +276,7 @@ export async function getAutoPartById(partId: string): Promise<AutoPart | null> 
  * @returns A promise that resolves to an array of compatible AutoPart objects.
  */
 export async function getPartsByVin(vinCode: string): Promise<AutoPart[]> {
+    const allParts = await readPartsFile(); // Read current parts
    // Basic validation
   if (!vinCode || vinCode.length !== 17) {
     console.warn("getPartsByVin: Invalid VIN code provided.");
@@ -265,6 +318,7 @@ export async function getPartsByVin(vinCode: string): Promise<AutoPart[]> {
  * @returns A promise that resolves to an array of compatible AutoPart objects.
  */
 export async function getPartsByMakeModel(make: string, model: string): Promise<AutoPart[]> {
+   const allParts = await readPartsFile(); // Read current parts
   if (!make || !model) {
     return simulateApiCall([]);
   }
@@ -282,3 +336,58 @@ export async function getPartsByMakeModel(make: string, model: string): Promise<
   console.log(`getPartsByMakeModel: Found ${results.length} potentially compatible parts for ${make} ${model}`);
   return simulateApiCall(results);
 }
+
+
+/**
+ * Adds a new auto part to the database (JSON file).
+ *
+ * @param newPartData The data for the new part (without an ID).
+ * @returns A promise that resolves to the newly created AutoPart object (with ID).
+ */
+export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<AutoPart> {
+  if (!newPartData || typeof newPartData !== 'object' || !newPartData.name) {
+    throw new Error("Некорректные данные для добавления товара.");
+  }
+
+  const allParts = await readPartsFile();
+
+  // Basic validation (e.g., check for duplicate SKU if provided)
+  if (newPartData.sku && allParts.some(part => part.sku === newPartData.sku)) {
+    throw new Error(`Товар с артикулом (SKU) "${newPartData.sku}" уже существует.`);
+  }
+
+  // Generate a simple unique ID (replace with a more robust method in production)
+  const newId = `part-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+
+  const newPart: AutoPart = {
+    ...newPartData,
+    id: newId,
+     // Ensure optional fields have defaults if needed (might be handled by form)
+    rating: newPartData.rating ?? undefined,
+    reviewCount: newPartData.reviewCount ?? undefined,
+    stock: newPartData.stock ?? 0,
+    // Make sure compatibleVehicles is an array
+    compatibleVehicles: Array.isArray(newPartData.compatibleVehicles) ? newPartData.compatibleVehicles : [],
+  };
+
+  allParts.push(newPart);
+  await writePartsFile(allParts);
+
+  console.log(`Added new part: ${newPart.name} (ID: ${newId})`);
+  return newPart; // Return the full part object with the generated ID
+}
+
+
+// --- Initialization ---
+// Ensure the parts data file exists and is initialized if needed.
+(async () => {
+    try {
+        console.log("Ensuring autoparts data is initialized...");
+        await initializePartsDataIfNeeded();
+        console.log("Autoparts data initialization check complete.");
+    } catch (error) {
+        console.error("FATAL: Failed to initialize autoparts data:", error);
+        // Decide if the application can continue without parts data
+        // process.exit(1);
+    }
+})();
