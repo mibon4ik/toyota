@@ -9,6 +9,7 @@ import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
+import { getCookie, deleteCookie } from 'cookies-next';
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
 
@@ -20,6 +21,24 @@ export function MainNav({ className, ...props }: MainNavProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Check login status from cookies
+    const loggedInCookie = getCookie('isLoggedIn');
+    const userCookie = getCookie('loggedInUser');
+
+    if (loggedInCookie === 'true' && userCookie) {
+        setIsLoggedIn(true);
+        try {
+            setLoggedInUser(JSON.parse(userCookie));
+        } catch (e) {
+            console.error("Error parsing loggedInUser cookie:", e);
+            // Handle invalid cookie data, e.g., by logging out
+            handleLogout();
+        }
+    } else {
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+    }
+
     // Load cart items from local storage on component mount
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
@@ -30,35 +49,46 @@ export function MainNav({ className, ...props }: MainNavProps) {
     } else {
       setCartItemCount(0);
     }
-
-    // Check login status from local storage
-    const storedLogin = localStorage.getItem('isLoggedIn');
-    setIsLoggedIn(storedLogin === 'true');
-
-    // Load logged-in user data from localStorage
-    const storedUser = localStorage.getItem('loggedInUser');
-    if (storedUser) {
-      setLoggedInUser(JSON.parse(storedUser));
-    }
   }, []);
 
   useEffect(() => {
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
-      const cartItems = JSON.parse(storedCart);
-      // Calculate total quantity of items in the cart
-      const totalCount = cartItems.reduce((total: number, item: any) => total + item.quantity, 0);
-      setCartItemCount(totalCount);
-    } else {
-      setCartItemCount(0);
-    }
-  }, [cartItemCount]);
+    // Listen for storage events to update cart count across tabs/windows
+    const handleStorageChange = () => {
+        const storedCart = localStorage.getItem('cartItems');
+        if (storedCart) {
+            try {
+                const cartItems = JSON.parse(storedCart);
+                const totalCount = cartItems.reduce((total: number, item: any) => total + item.quantity, 0);
+                setCartItemCount(totalCount);
+            } catch (e) {
+                console.error("Error parsing cartItems from storage:", e);
+                setCartItemCount(0);
+            }
+        } else {
+            setCartItemCount(0);
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Initial cart count check in case localStorage updated before listener attached
+    handleStorageChange();
+
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+}, []);
+
 
   const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('loggedInUser');
+    deleteCookie('isLoggedIn');
+    deleteCookie('loggedInUser');
+    localStorage.removeItem('isLoggedIn'); // Also clear localStorage if used
+    localStorage.removeItem('loggedInUser'); // Also clear localStorage if used
+    localStorage.removeItem('cartItems'); // Clear cart on logout
     setIsLoggedIn(false);
     setLoggedInUser(null);
+    setCartItemCount(0); // Reset cart count on logout
     router.push('/auth/login');
   };
 
@@ -101,12 +131,8 @@ export function MainNav({ className, ...props }: MainNavProps) {
           </Link>
       </nav>
       <div className="ml-auto flex items-center space-x-4">
-        <Button size="sm" variant="ghost">
-          <Icons.search className="h-4 w-4" />
-          <span className="sr-only">Search</span>
-        </Button>
-        
-          <Button size="sm" variant="ghost" className="relative" onClick={navigateToCart}>
+        {/* Search button removed */}
+        <Button size="sm" variant="ghost" className="relative" onClick={navigateToCart}>
             <Icons.shoppingCart className="h-4 w-4" />
             <span className="sr-only">Cart</span>
             {cartItemCount > 0 && (
@@ -115,7 +141,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
               </Badge>
             )}
           </Button>
-        
+
         {isLoggedIn ? (
           <>
             <span>{loggedInUser?.firstName} {loggedInUser?.lastName}</span>
