@@ -40,28 +40,41 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
           <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="pr-0">
-        <NavLink href="/">
-          Home
-        </NavLink>
-        <NavLink href="/shop">
-          Shop
-        </NavLink>
-        <NavLink href="/cart">
-          Cart
-        </NavLink>
-        <NavLink href="/checkout">
-          Checkout
-        </NavLink>
-        <SheetClose asChild>
-          <Button variant="ghost" className="absolute right-4 top-4">
-            <Icons.close className="h-6 w-6" />
-            <span className="sr-only">Close</span>
-          </Button>
-        </SheetClose>
+      <SheetContent side="left" className="pr-0 flex flex-col justify-start">
+          
+            <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <Icons.close className="h-6 w-6 text-black" />
+              <span className="sr-only">Закрыть</span>
+            </SheetClose>
+            <div className="mt-24 flex flex-col space-y-3">
+              <NavLink href="/" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                  <Icons.home className="mr-2 h-4 w-4" />
+                  Главная
+              </NavLink>
+              <NavLink href="/shop" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                  <Icons.truck className="mr-2 h-4 w-4" />
+                  Магазин
+              </NavLink>
+              <NavLink href="/cart" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                  <Icons.shoppingCart className="mr-2 h-4 w-4" />
+                  Корзина
+              </NavLink>
+              <NavLink href="/checkout" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                  <Icons.check className="mr-2 h-4 w-4" />
+                  Оформление
+              </NavLink>
+                <NavLink href="/contacts" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                    <Icons.check className="mr-2 h-4 w-4" />
+                    Контакты
+                </NavLink>
+              <div className="border-t border-gray-200 my-2" />
+              <Link href="/auth/login" className="py-2">
+                  <Button variant="ghost" className="justify-start font-bold text-black bg-white rounded-md hover:bg-gray-100 transition-colors">
+                      Войти
+                  </Button>
+              </Link>
+            </div>
       </SheetContent>
     </Sheet>
   )
 }
-
-
