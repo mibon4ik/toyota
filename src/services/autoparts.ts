@@ -67,137 +67,6 @@ async function writePartsFile(parts: AutoPart[]): Promise<void> {
 }
 
 
-// --- Placeholder Data Initialization (Run once if file is empty) ---
-async function initializePartsDataIfNeeded(): Promise<void> {
-    try {
-        await fs.access(partsFilePath);
-        // File exists, do nothing
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            console.log("Initializing autoparts.json with placeholder data.");
-            const initialParts: AutoPart[] = [
-                 {
-                    id: 'bps-001',
-                    name: 'Передние тормозные колодки',
-                    brand: 'Toyota Genuine',
-                    price: 75.50 * 500, // Convert base price to Tenge
-                    imageUrl: 'https://picsum.photos/seed/bps001/300/200',
-                    description: 'Оригинальные передние тормозные колодки для превосходного торможения.',
-                    category: 'Тормоза',
-                    compatibleVehicles: ['Toyota Camry 2018+', 'Toyota RAV4 2019+'],
-                    sku: 'TG-8901-F',
-                    stock: 50,
-                    rating: 4.8,
-                    reviewCount: 120,
-                  },
-                  {
-                    id: 'afl-002',
-                    name: 'Воздушный фильтр двигателя',
-                    brand: 'Denso',
-                    price: 18.00 * 500,
-                    imageUrl: 'https://picsum.photos/seed/afl002/300/200',
-                    description: 'Высококачественный воздушный фильтр для оптимальной работы двигателя.',
-                    category: 'Фильтры',
-                    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota Highlander 2017+'],
-                    sku: 'DN-17801',
-                    stock: 150,
-                    rating: 4.5,
-                    reviewCount: 85,
-                  },
-                   {
-                    id: 'oil-003',
-                    name: 'Синтетическое моторное масло 0W-20',
-                    brand: 'Mobil 1',
-                    price: 35.00 * 500,
-                    imageUrl: 'https://picsum.photos/seed/oil003/300/200',
-                    description: 'Полностью синтетическое масло для улучшенной защиты и производительности.',
-                    category: 'Двигатель',
-                    compatibleVehicles: ['Большинство моделей Toyota'],
-                    sku: 'M1-0W20-5Q',
-                    stock: 80,
-                    rating: 4.9,
-                    reviewCount: 210,
-                  },
-                    {
-                    id: 'shk-004',
-                    name: 'Задние амортизаторы',
-                    brand: 'KYB',
-                    price: 120.00 * 500,
-                    imageUrl: 'https://picsum.photos/seed/shk004/300/200',
-                    description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
-                    category: 'Подвеска',
-                    compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
-                    sku: 'KYB-349041',
-                    stock: 30,
-                    rating: 4.6,
-                    reviewCount: 55,
-                  },
-                   {
-                    id: 'lhd-005',
-                    name: 'Светодиодная лампа для фары (H11)',
-                    brand: 'Philips',
-                    price: 49.99 * 500,
-                    imageUrl: 'https://picsum.photos/seed/lhd005/300/200',
-                    description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
-                    category: 'Электрика',
-                    compatibleVehicles: ['Различные модели Toyota/Lexus'],
-                    sku: 'PH-H11LED-X2',
-                    stock: 75,
-                     rating: 4.7,
-                    reviewCount: 92,
-                  },
-                   {
-                    id: 'acc-006',
-                    name: 'Всесезонные коврики (комплект)',
-                    brand: 'WeatherTech',
-                    price: 150.00 * 500,
-                    imageUrl: 'https://picsum.photos/seed/acc006/300/200',
-                    description: 'Прочные коврики для защиты салона от грязи и влаги.',
-                    category: 'Аксессуары',
-                    compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
-                    sku: 'WT-441301-441302',
-                    stock: 40,
-                     rating: 4.9,
-                     reviewCount: 150,
-                  },
-                   {
-                    id: 'bdy-007',
-                    name: 'Крышка зеркала (левая, окрашенная)',
-                    brand: 'Toyota Genuine',
-                    price: 65.00 * 500,
-                    imageUrl: 'https://picsum.photos/seed/bdy007/300/200',
-                    description: 'Оригинальная крышка зеркала, окрашенная в цвет кузова (требуется указание цвета).',
-                    category: 'Кузов',
-                    compatibleVehicles: ['Toyota Camry 2018-2021'],
-                    sku: 'TG-87945-VAR',
-                    stock: 25,
-                    rating: 4.5,
-                    reviewCount: 15,
-                   },
-                    {
-                    id: 'flt-008',
-                    name: 'Салонный фильтр (угольный)',
-                    brand: 'Bosch',
-                    price: 22.50 * 500,
-                    imageUrl: 'https://picsum.photos/seed/flt008/300/200',
-                    description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
-                    category: 'Фильтры',
-                    compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
-                    sku: 'BSH-6055C',
-                    stock: 120,
-                    rating: 4.6,
-                    reviewCount: 70,
-                  },
-            ];
-            await writePartsFile(initialParts);
-        } else {
-            console.error("Error checking autoparts.json existence:", error);
-             throw new Error("Could not initialize autoparts data.");
-        }
-    }
-}
-
-
 // --- Service Functions ---
 
 /**
@@ -380,14 +249,14 @@ export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<Au
 
 // --- Initialization ---
 // Ensure the parts data file exists and is initialized if needed.
-(async () => {
-    try {
-        console.log("Ensuring autoparts data is initialized...");
-        await initializePartsDataIfNeeded();
-        console.log("Autoparts data initialization check complete.");
-    } catch (error) {
-        console.error("FATAL: Failed to initialize autoparts data:", error);
-        // Decide if the application can continue without parts data
-        // process.exit(1);
-    }
-})();
+// (async () => {
+//     try {
+//         console.log("Ensuring autoparts data is initialized...");
+//         // await initializePartsDataIfNeeded(); // Removed this call
+//         console.log("Autoparts data initialization check complete.");
+//     } catch (error) {
+//         console.error("FATAL: Failed to initialize autoparts data:", error);
+//         // Decide if the application can continue without parts data
+//         // process.exit(1);
+//     }
+// })();
