@@ -47,7 +47,6 @@ const AdminPage = () => {
           <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button className="mt-4" onClick={handleLogout}>Выйти</Button>
           <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
           {users.length > 0 ? (
             <div className="overflow-x-auto">
@@ -80,6 +79,7 @@ const AdminPage = () => {
             <p>Пользователи не найдены.</p>
           )}
         </CardContent>
+          <Button className="mt-4" onClick={handleLogout}>Выйти</Button>
       </Card>
     </div>
   );
