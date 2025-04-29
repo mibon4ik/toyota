@@ -37,7 +37,7 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="mr-2">
           <Icons.menu className="h-4 w-4" />
-          <span className="sr-only">Открыть меню</span>
+          <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="pr-0 flex flex-col justify-start">
@@ -63,6 +63,10 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
                   <Icons.check className="mr-2 h-4 w-4" />
                   Оформление
               </NavLink>
+                <NavLink href="/contacts" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors flex items-center">
+                    <Icons.check className="mr-2 h-4 w-4" />
+                    Контакты
+                </NavLink>
               <div className="border-t border-gray-200 my-2" />
               <Link href="/auth/login" className="py-2">
                   <Button variant="ghost" className="justify-start font-bold text-black bg-white rounded-md hover:bg-gray-100 transition-colors">
@@ -74,3 +78,6 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
     </Sheet>
   )
 }
+
+
+

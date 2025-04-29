@@ -99,6 +99,12 @@ export function MainNav({ className, ...props }: MainNavProps) {
         )}>
           Оформление
         </Link>
+          <Link href="/contacts" className={cn(
+              "text-sm font-medium transition-colors hover:text-foreground",
+              pathname === "/contacts" ? "text-foreground" : "text-muted-foreground"
+          )}>
+            Контакты
+          </Link>
       </nav>
       <div className="ml-auto flex items-center space-x-4">
         <Button size="sm" variant="ghost">
@@ -141,6 +147,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
     </div>
   )
 }
+
 
 
 
