@@ -9,10 +9,21 @@ const ContactsPage = () => {
         <p className="text-gray-700">
           <strong>Контакты для связи:</strong> Техническая поддержка 8 (7172) 27 02 00
         </p>
+        <p className="text-gray-700">
+          <strong>Часы работы:</strong>
+        </p>
+        <p className="text-gray-700">
+          ПН 8:00-20:00<br />
+          ВТ 8:00-20:00<br />
+          СР 8:00-20:00<br />
+          ЧТ 8:00-20:00<br />
+          ПТ 8:00-20:00<br />
+          СБ 8:00-20:00<br />
+          ВС 8:00-20:00
+        </p>
       </div>
     </div>
   );
 };
 
 export default ContactsPage;
-
