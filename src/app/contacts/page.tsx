@@ -13,8 +13,8 @@ const ContactsPage = () => {
         <div className="map-responsive">
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1769.2255870400402!2d71.48380544895878!3d51.162631248800054!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x42458172b2474f81%3A0x97568c826f427d2a!2z0KLQvtC50L7RgtCwINCm0LXQvdGC0YAg0JDRgdGC0LDQvdCw!5e0!3m2!1sru!2skz!4v1745910033312!5m2!1sru!2skz"
-            width="600"
-            height="300"
+            width="400"
+            height="350"
             style={{ border: 0 }}
             allowFullScreen=""
             loading="lazy"
