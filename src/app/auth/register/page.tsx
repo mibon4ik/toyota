@@ -236,7 +236,7 @@ const RegistrationPage = () => {
               </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
-            <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button type="submit" className="w-full  hover:bg-primary/90 italic">
               Зарегистрироваться
             </Button>
           </form>

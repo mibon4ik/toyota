@@ -81,7 +81,7 @@ const LoginPage = () => {
               </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full italic">
               Войти
             </Button>
           </form>
@@ -99,4 +99,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-
