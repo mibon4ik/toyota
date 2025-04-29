@@ -39,8 +39,17 @@ const RegistrationPage = () => {
           setError('VIN-код должен содержать 17 символов.');
           return;
       }
-      if (!/^\d+$/.test(vinCode)) {
-          setError('VIN-код должен содержать только цифры.');
+      if (!/^[A-Za-z0-9]+$/.test(vinCode)) {
+          setError('VIN-код должен содержать только латинские буквы и цифры.');
+          return;
+      }
+
+    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
+          setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
+          return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          setError('Неверный формат электронной почты.');
           return;
       }
 
@@ -156,7 +165,7 @@ const RegistrationPage = () => {
               <Label htmlFor="vinCode">VIN-код автомобиля</Label>
               <Input
                 id="vinCode"
-                type="number"
+                type="text"
                 placeholder="VIN-код автомобиля"
                 value={vinCode}
                 onChange={(e) => setVinCode(e.target.value)}
