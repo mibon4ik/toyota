@@ -36,6 +36,7 @@ import {
   X,
   Eye,
   EyeOff,
+  Aperture,
 } from 'lucide-react';
 
 const Icons = {
@@ -80,6 +81,7 @@ const Icons = {
   truck: Truck,
   eye: Eye,
   eyeOff: EyeOff,
+  aperture: Aperture,
 };
 
 export {Icons};
