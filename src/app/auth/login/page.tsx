@@ -89,7 +89,7 @@ const LoginPage = () => {
           <div className="mt-4 text-center">
             <p>Еще нет аккаунта?</p>
             <Link href="/auth/register">
-              <Button variant="secondary">Зарегистрироваться</Button>
+              <Button variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90">Зарегистрироваться</Button>
             </Link>
           </div>
         </CardContent>
@@ -99,3 +99,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
