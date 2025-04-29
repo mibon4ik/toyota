@@ -60,6 +60,20 @@ const RegistrationPage = () => {
       users = JSON.parse(storedUsers);
     }
 
+    // Check if email already exists
+    const emailExists = users.some((user: any) => user.email === email);
+    if (emailExists) {
+      setError('Этот адрес электронной почты уже зарегистрирован.');
+      return;
+    }
+
+    // Check if VIN code already exists
+    const vinCodeExists = users.some((user: any) => user.vinCode === vinCode);
+    if (vinCodeExists) {
+      setError('Этот VIN-код уже зарегистрирован.');
+      return;
+    }
+
     const newUser = {
       firstName,
       lastName,
