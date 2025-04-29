@@ -107,7 +107,8 @@ const ShopPage = () => {
     } catch (err) {
       console.error("Failed to fetch products:", err);
       setError("Не удалось загрузить товары.");
-      toast({ title: "Ошибка", description: "Не удалось загрузить товары.", variant: "destructive" });
+      // Defer toast call slightly to avoid state update during render
+      setTimeout(() => toast({ title: "Ошибка", description: "Не удалось загрузить товары.", variant: "destructive" }), 0);
     } finally {
       setIsLoading(false);
     }
@@ -124,27 +125,35 @@ const ShopPage = () => {
     setCartItems(currentItems => {
       const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
       let updatedCart;
+      let toastTitle = "";
+      let toastDescription = "";
+
 
       if (existingItemIndex > -1) {
         // If item exists, increment quantity
         updatedCart = currentItems.map((item, index) =>
           index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item // Ensure quantity exists
         );
-         toast({
-             title: "Количество обновлено!",
-             description: `Количество ${product.name} в корзине увеличено.`,
-         });
+         toastTitle = "Количество обновлено!";
+         toastDescription = `Количество ${product.name} в корзине увеличено.`;
       } else {
         // If item doesn't exist, add it with quantity 1
         updatedCart = [...currentItems, { ...product, quantity: 1 }];
-         toast({
-             title: "Товар добавлен в корзину!",
-             description: `${product.name} был добавлен в вашу корзину.`,
-         });
+         toastTitle = "Товар добавлен в корзину!";
+         toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
+
+       // Schedule the toast to appear after the current state update cycle
+       setTimeout(() => {
+            toast({
+                title: toastTitle,
+                description: toastDescription,
+            });
+       }, 0);
+
       return updatedCart;
     });
-  }, [toast, isMounted]); // Add isMounted
+  }, [toast, isMounted, setCartItems]); // Add isMounted and setCartItems
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,8 +215,8 @@ const ShopPage = () => {
        {/* Product Grid */}
         {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"> {/* Adjusted grid columns and gap */}
-                {/* Skeleton Loaders */}
-                {[...Array(10)].map((_, index) => ( // Show 10 skeletons
+                {/* Skeleton Loaders - Adjusted number to 8 */}
+                {[...Array(8)].map((_, index) => (
                     <Card key={index} className="w-full">
                         <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
                         <CardContent className="flex flex-col items-center p-4"> {/* Adjusted padding */}
@@ -236,3 +245,4 @@ const ShopPage = () => {
 };
 
 export default ShopPage;
+

@@ -31,6 +31,17 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
       }).format(price);
     }, []); // No dependencies needed
 
+   const handleButtonClick = () => {
+       onAddToCart(product);
+       // Defer toast call slightly
+       // setTimeout(() => {
+       //   toast({
+       //     title: "Добавлено в корзину!",
+       //     description: `${product.name} был добавлен в вашу корзину.`,
+       //   });
+       // }, 0);
+   };
+
 
   // Avoid rendering the button interaction part on the server
   if (!isMounted) {
@@ -81,7 +92,7 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
          {/* Footer for the button, pushed to the bottom */}
          <div className="p-4 pt-0 mt-auto"> {/* Adjusted padding */}
              {/* Call the passed-in onAddToCart function */}
-            <Button onClick={() => onAddToCart(product)} className="w-full h-9">В корзину</Button> {/* Adjusted height */}
+            <Button onClick={handleButtonClick} className="w-full h-9">В корзину</Button> {/* Adjusted height */}
         </div>
     </Card>
   );
