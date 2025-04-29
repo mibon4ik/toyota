@@ -31,7 +31,6 @@ import {
   ChevronUp,
   Car,
   Camera,
-  CloudLightning,
   Box,
   Truck,
   X
@@ -73,11 +72,10 @@ const Icons = {
   engine: Car,
   suspension: Camera,
   brakes: Circle,
-  electrical: CloudLightning,
+  electrical: Truck,
   body: Box,
   accessories: Car,
   truck: Truck,
 };
 
 export {Icons};
-
