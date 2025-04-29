@@ -55,30 +55,30 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
           <span className="sr-only">Открыть меню</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="pr-0 flex flex-col">
-        <NavLink href="/" className="py-2">
-          Главная
-        </NavLink>
-        <NavLink href="/shop" className="py-2">
-          Магазин
-        </NavLink>
-        <NavLink href="/cart" className="py-2">
-          Корзина
-        </NavLink>
-        <NavLink href="/checkout" className="py-2">
-          Оформление
-        </NavLink>
-          {isLoggedIn ? (
-              <Button variant="ghost" onClick={handleLogout} className="py-2 justify-start">
-                  Выйти
-              </Button>
-          ) : (
-              <Link href="/auth/login" className="py-2">
-                  <Button variant="ghost" className="justify-start">
-                      Войти
-                  </Button>
-              </Link>
-          )}
+        <SheetContent side="left" className="pr-0 flex flex-col">
+            <NavLink href="/" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
+                Главная
+            </NavLink>
+            <NavLink href="/shop" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
+                Магазин
+            </NavLink>
+            <NavLink href="/cart" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
+                Корзина
+            </NavLink>
+            <NavLink href="/checkout" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
+                Оформление
+            </NavLink>
+            {isLoggedIn ? (
+                <Button variant="ghost" onClick={handleLogout} className="py-2 justify-start text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
+                    Выйти
+                </Button>
+            ) : (
+                <Link href="/auth/login" className="py-2">
+                    <Button variant="ghost" className="justify-start font-bold text-black bg-white rounded-md hover:bg-gray-100 transition-colors">
+                        Войти
+                    </Button>
+                </Link>
+            )}
         <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
           <Icons.close className="h-6 w-6" />
           <span className="sr-only">Закрыть</span>
@@ -87,5 +87,3 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
     </Sheet>
   )
 }
-
-MobileNav.displayName = "MobileNav";
