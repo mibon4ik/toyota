@@ -13,8 +13,9 @@ import {z} from 'genkit';
 import {AutoPart, searchAutoParts} from '@/services/autoparts';
 
 const SuggestCompatiblePartsInputSchema = z.object({
-  make: z.string().describe('Марка автомобиля.'),
-  model: z.string().describe('Модель автомобиля.'),
+  make: z.string().optional().describe('Марка автомобиля.'),
+  model: z.string().optional().describe('Модель автомобиля.'),
+  vinCode: z.string().optional().describe('VIN-код автомобиля.'),
 });
 export type SuggestCompatiblePartsInput = z.infer<typeof SuggestCompatiblePartsInputSchema>;
 
@@ -63,8 +64,9 @@ const prompt = ai.definePrompt({
   tools: [partSearchTool],
   input: {
     schema: z.object({
-      make: z.string().describe('Марка автомобиля.'),
-      model: z.string().describe('Модель автомобиля.'),
+      make: z.string().optional().describe('Марка автомобиля.'),
+      model: z.string().optional().describe('Модель автомобиля.'),
+      vinCode: z.string().optional().describe('VIN-код автомобиля.'),
     }),
   },
   output: {
@@ -83,7 +85,20 @@ const prompt = ai.definePrompt({
       ).describe('Список совместимых автозапчастей.'),
     }),
   },
-  prompt: `Вы - эксперт-консультант по автозапчастям. У пользователя есть следующий автомобиль: Марка: {{{make}}}, Модель: {{{model}}}. Предложите совместимые запчасти для этого автомобиля. Если вы не уверены, используйте инструмент searchAutoParts, чтобы найти детали, совместимые с автомобилем. Верните список деталей, совместимых с автомобилем.
+  prompt: `Вы - эксперт-консультант по автозапчастям.
+
+  {{~#if vinCode}}
+  У пользователя есть следующий VIN-код автомобиля: {{{vinCode}}}.
+  Предложите запчасти, совместимые с автомобилем с этим VIN-кодом.
+  Если вы не уверены, используйте инструмент searchAutoParts, чтобы найти детали, совместимые с автомобилем.
+  {{~else if make && model}}
+  У пользователя есть следующий автомобиль: Марка: {{{make}}}, Модель: {{{model}}}.
+  Предложите совместимые запчасти для этого автомобиля.
+  Если вы не уверены, используйте инструмент searchAutoParts, чтобы найти детали, совместимые с автомобилем.
+  {{~else}}
+  Пожалуйста, запросите либо VIN-код, либо марку и модель автомобиля.
+  {{~/if}}
+  Верните список деталей, совместимых с автомобилем.
 `,
 });
 

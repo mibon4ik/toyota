@@ -156,30 +156,31 @@ const banners = [
   },
 ];
 
-async function getCompatibleParts(make: string, model: string) {
-  return await suggestCompatibleParts({make: make, model: model});
+async function getCompatibleParts(make: string, model: string, vinCode: string) {
+  return await suggestCompatibleParts({make: make, model: model, vinCode: vinCode});
 }
 
 const HomePage = () => {
   const [make, setMake] = useState('');
   const [model, setModel] = useState('');
+  const [vinCode, setVinCode] = useState('');
   const [compatibleParts, setCompatibleParts] = useState<any>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!make || !model) {
+    if (!make && !model && !vinCode) {
       toast({
         title: "Ошибка",
-        description: "Пожалуйста, введите марку и модель.",
+        description: "Пожалуйста, введите марку и модель или VIN-код.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      const parts = await getCompatibleParts(make, model);
+      const parts = await getCompatibleParts(make, model, vinCode);
       setCompatibleParts(parts);
     } catch (error) {
       console.error("Failed to fetch compatible parts:", error);
@@ -242,6 +243,13 @@ const HomePage = () => {
               placeholder="Модель"
               value={model}
               onChange={(e) => setModel(e.target.value)}
+              className="w-full md:w-48"
+            />
+             <Input
+              type="text"
+              placeholder="VIN-код"
+              value={vinCode}
+              onChange={(e) => setVinCode(e.target.value)}
               className="w-full md:w-48"
             />
             <Button type="submit">Найти совместимые детали</Button>
