@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { AutoPart } from "@/services/autoparts";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
+import { getCookie, hasCookie } from 'cookies-next';
+import { useRouter } from "next/navigation";
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -14,6 +16,7 @@ interface CartItem extends AutoPart {
 const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+    const router = useRouter();
 
   useEffect(() => {
     const storedCart = localStorage.getItem('cartItems');
@@ -25,6 +28,18 @@ const CartPage = () => {
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  useEffect(() => {
+    const authToken = getCookie('authToken');
+
+    if (!authToken || authToken === undefined) {
+      router.push('/auth/login');
+      toast({
+        title: "Требуется аутентификация!",
+        description: "Пожалуйста, войдите, чтобы просмотреть корзину.",
+      });
+    }
+  }, [router, toast]);
 
   const calculateTotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);

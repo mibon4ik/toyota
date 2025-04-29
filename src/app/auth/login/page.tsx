@@ -9,7 +9,7 @@ import {Label} from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
-import { setCookie } from 'cookies-next';
+import {setCookie} from 'cookies-next';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -19,14 +19,27 @@ const LoginPage = () => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
+  const generateToken = (user: any) => {
+    // Simple token generation (replace with a more secure method in production)
+    const userData = {
+      id: user.id || user.email, // Use a unique user identifier
+      email: user.email,
+      isAdmin: user.isAdmin,
+    };
+    return btoa(JSON.stringify(userData)); // Base64 encode for simplicity
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     // Hardcoded admin credentials
     if (email === 'admin@admin.com' && password === 'admin') {
+      const adminUser = { email: 'admin@admin.com', isAdmin: true, firstName: 'Admin', lastName: 'User', id: 'admin' };
+      const token = generateToken(adminUser);
+      setCookie('authToken', token);
       setCookie('isLoggedIn', 'true');
-      setCookie('loggedInUser', JSON.stringify({ email: 'admin@admin.com', isAdmin: true, firstName: 'Admin', lastName: 'User' }));
+      setCookie('loggedInUser', JSON.stringify(adminUser));
       toast({
         title: "Вход выполнен!",
         description: "Вы успешно вошли в систему как администратор.",
@@ -48,7 +61,8 @@ const LoginPage = () => {
       setError('Неверные учетные данные');
       return;
     }
-
+    const token = generateToken(user);
+    setCookie('authToken', token);
     setCookie('isLoggedIn', 'true');
     setCookie('loggedInUser', JSON.stringify({ ...user, isAdmin: false }));
 
