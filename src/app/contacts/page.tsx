@@ -19,7 +19,7 @@ const ContactsPage = () => {
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="w-full h-64"
+            className="w-full h-48"
           ></iframe>
         </div>
         <p className="text-gray-700 mt-2">
