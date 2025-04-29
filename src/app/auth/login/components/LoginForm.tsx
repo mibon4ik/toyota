@@ -70,18 +70,21 @@ export const LoginForm = () => {
           // sameSite: 'lax', // Recommended
         };
 
+        // Prepare user data for cookie (omit password)
+        const { password: _omittedPassword, ...userToStore } = user;
+
         // Set cookies
         console.log("Setting cookies...");
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
-        setCookie('loggedInUser', JSON.stringify(user), cookieOptions);
+        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store user without password
         console.log("Cookies set.");
 
          // Set localStorage AFTER ensuring window exists
          if (typeof window !== 'undefined') {
              console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
-             localStorage.setItem('loggedInUser', JSON.stringify(user));
+             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store user without password
              console.log("localStorage set.");
 
              // Dispatch event to notify other components (like nav bar) immediately
@@ -96,29 +99,22 @@ export const LoginForm = () => {
 
         toast({
             title: "Вход выполнен!",
-            description: user.isAdmin ? "Вы успешно вошли в систему как администратор." : "Вы успешно вошли в систему.",
+            description: user.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
 
-        // Redirect based on role AFTER state updates are likely processed
-        console.log("Redirecting in 150ms...");
-        setTimeout(() => {
-            if (user.isAdmin) {
-                console.log("Redirecting admin to /admin");
-                router.push('/admin'); // Redirect admin to admin page
-            } else {
-                 console.log("Redirecting user to /");
-                router.push('/'); // Redirect regular user to home page
-            }
-             console.log("Redirection initiated.");
-        }, 150);
+        // Redirect all users to the home page after login
+        console.log("Redirecting to / after login...");
+        // Use replace to avoid pushing the login page onto the history stack
+        router.replace('/');
+        console.log("Redirection initiated.");
+
 
     } catch (err) {
         console.error("Login error:", err);
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');
-    } finally {
-        // Don't set isLoading false immediately before redirect
-        // setIsLoading(false);
+        setIsLoading(false); // Ensure loading is set to false on error
     }
+    // We don't need finally here as redirect happens inside the try block
   };
 
     // Prevent rendering on server to avoid hydration errors with localStorage

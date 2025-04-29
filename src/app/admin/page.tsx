@@ -12,7 +12,7 @@ import { getAllUsers } from '@/lib/auth';
 
 const AdminPage = () => {
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Start loading until checks complete
   const [error, setError] = useState<string | null>(null); // For displaying errors
   const router = useRouter();
   const { toast } = useToast();
@@ -44,12 +44,13 @@ const AdminPage = () => {
          console.log("AdminPage: Found auth cookies.");
          try {
              loggedInUser = JSON.parse(userCookie);
-             isAdmin = !!loggedInUser?.isAdmin; // Check if isAdmin is true
+             // Explicitly check isAdmin property for true
+             isAdmin = !!loggedInUser?.isAdmin;
              if (!isAdmin) console.log("AdminPage: User from cookie is not admin.");
          } catch (e) {
              console.error("AdminPage: Error parsing loggedInUser cookie:", e);
              isAdmin = false; // Treat parse error as not admin
-             // Clear corrupted cookies
+             // Clear potentially corrupted cookies
              deleteCookie('authToken', { path: '/' });
              deleteCookie('isLoggedIn', { path: '/' });
              deleteCookie('loggedInUser', { path: '/' });
@@ -81,7 +82,9 @@ const AdminPage = () => {
              window.dispatchEvent(new Event('authStateChanged'));
           }
           router.push('/auth/login');
-         return; // Stop execution if not admin
+          // Stop loading after redirect decision, even if it's an error case for non-admins
+          setIsLoading(false);
+          return; // Stop execution if not admin
      }
 
      // --- Fetch Users (Only if Admin) ---
@@ -100,7 +103,7 @@ const AdminPage = () => {
         });
      } finally {
          setIsLoading(false);
-         console.log("AdminPage: Finished fetching users, loading state set to false.");
+         console.log("AdminPage: Finished fetching users or encountered error, loading state set to false.");
      }
   }, [isMounted, router, toast]); // Dependencies for the callback
 
@@ -134,9 +137,9 @@ const AdminPage = () => {
   }, [router]); // Only depends on router
 
 
-   // Prevent rendering interactive parts on server
-   if (!isMounted) {
-        console.log("AdminPage: Not mounted, returning loading state for SSR/initial render.");
+   // Show loading state until client-side checks are complete
+   if (!isMounted || isLoading) {
+        // console.log("AdminPage: Not mounted or loading, returning loading state for SSR/initial render/fetch.");
         return (
             <div className="flex justify-center items-start min-h-screen pt-8">
                 <Card className="w-full max-w-4xl p-4">
@@ -144,7 +147,8 @@ const AdminPage = () => {
                         <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-center text-muted-foreground">Загрузка...</p>
+                        <p className="text-center text-muted-foreground">Загрузка данных...</p>
+                         {/* Optionally add more specific skeleton here if UserList takes time */}
                     </CardContent>
                 </Card>
             </div>
@@ -159,7 +163,8 @@ const AdminPage = () => {
           <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
         </CardHeader>
         <CardContent>
-           <UserList users={users} isLoading={isLoading} error={error} />
+           {/* Pass isLoading=false here, as the outer loading state handles it */}
+           <UserList users={users} isLoading={false} error={error} />
         </CardContent>
           <div className="mt-6 flex justify-center">
             <Button onClick={handleLogout} variant="outline">Выйти</Button>

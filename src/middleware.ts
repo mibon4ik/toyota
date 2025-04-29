@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import type { User } from '@/types/user'; // Import User type for parsing
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   console.log(`Middleware: Processing request for path: ${path}`);
 
-  // Check for the existence of the authToken cookie directly from the request
+  // --- Get Cookies ---
   const authTokenCookie = request.cookies.get('authToken')?.value;
-  const isLoggedInCookie = request.cookies.get('isLoggedIn')?.value; // Check isLoggedIn cookie
+  const isLoggedInCookie = request.cookies.get('isLoggedIn')?.value;
+  const userCookie = request.cookies.get('loggedInUser')?.value;
+
   const isLoggedIn = !!authTokenCookie && isLoggedInCookie === 'true'; // User is logged in if authToken exists AND isLoggedIn cookie is 'true'
 
   console.log(`Middleware: isLoggedIn check - authToken: ${!!authTokenCookie}, isLoggedInCookie: ${isLoggedInCookie}, derived isLoggedIn: ${isLoggedIn}`);
@@ -26,19 +29,18 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    // If logged in (cookie verified), check admin status from the 'loggedInUser' cookie
-    const userCookie = request.cookies.get('loggedInUser')?.value;
+    // If logged in, check admin status from the 'loggedInUser' cookie
     let isAdmin = false;
     if (userCookie) {
       try {
-        const user = JSON.parse(userCookie);
-        isAdmin = user.isAdmin === true; // Explicitly check for true
-        console.log(`Middleware: Parsed user cookie for admin check. isAdmin: ${isAdmin}`, user);
+        const user: User = JSON.parse(userCookie); // Use User type for better validation
+        // Explicitly check if the 'isAdmin' property is exactly true
+        isAdmin = user.isAdmin === true;
+        console.log(`Middleware: Parsed user cookie for admin check. User: ${user.username}, isAdmin: ${isAdmin}`);
       } catch (e) {
         console.error("Middleware: Error parsing user cookie for admin check:", e);
-        // Consider invalid cookie as not admin, redirect to login to force re-auth
+        // Invalid cookie -> not admin, force re-login by redirecting and clearing cookies
         console.log(`Middleware: Invalid user cookie found while checking admin. Redirecting to /auth/login and clearing cookies.`);
-        // Prepare response to clear cookies
         const response = NextResponse.redirect(new URL('/auth/login', request.url));
          response.cookies.delete('authToken', { path: '/' });
          response.cookies.delete('isLoggedIn', { path: '/' });
@@ -46,7 +48,7 @@ export function middleware(request: NextRequest) {
         return response;
       }
     } else {
-         // If loggedIn cookie is set but user cookie is missing, it's an inconsistent state
+         // If isLoggedIn cookie exists but userCookie is missing -> inconsistent state
          console.log(`Middleware: Inconsistent auth state (loggedIn but no user data). Redirecting to /auth/login and clearing cookies.`);
          const response = NextResponse.redirect(new URL('/auth/login', request.url));
           response.cookies.delete('authToken', { path: '/' });
@@ -57,23 +59,18 @@ export function middleware(request: NextRequest) {
 
     if (!isAdmin) {
       console.log(`Middleware: Non-admin user accessing /admin. Redirecting to /`);
-      return NextResponse.redirect(new URL('/', request.url)); // Redirect non-admins away
+      // Redirect non-admins away from admin section, maybe to home or a specific 'access denied' page
+      return NextResponse.redirect(new URL('/', request.url));
     }
 
     console.log(`Middleware: Admin user granted access to /admin.`);
   }
 
-  // --- Cart and Checkout Route (Protected) ---
-  // Require login for cart and checkout
-   if (path.startsWith('/cart') || path.startsWith('/checkout')) {
-        console.log(`Middleware: Accessing protected route: ${path}`);
-        if (!isLoggedIn) {
-          console.log(`Middleware: Unauthenticated user accessing ${path}. Redirecting to /auth/login`);
-          return NextResponse.redirect(new URL('/auth/login?redirect=' + encodeURIComponent(path), request.url)); // Redirect to login, preserving intended destination
-        }
-         console.log(`Middleware: Authenticated user allowed access to ${path}.`);
-    }
-
+  // --- Cart and Checkout Route (No longer strictly protected by middleware) ---
+  // Authentication check for these routes can be handled client-side or on the page itself
+  // if (path.startsWith('/cart') || path.startsWith('/checkout')) {
+  //   // Logic removed as per requirement for cart to work without login
+  // }
 
   // Allow the request to proceed if none of the above conditions were met
   console.log(`Middleware: Allowing request for ${path} to proceed.`);
