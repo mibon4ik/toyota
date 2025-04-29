@@ -90,6 +90,8 @@ const RegistrationPage = () => {
 
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(newUser));
     toast({
       title: "Регистрация успешна!",
       description: "Вы будете перенаправлены на страницу входа",
@@ -98,7 +100,7 @@ const RegistrationPage = () => {
     try {
       console.log('Регистрация успешна!');
       setError('');
-      router.push('/auth/login');
+      router.push('/cart');
     } catch (err) {
       setError('Ошибка при регистрации. Пожалуйста, попробуйте позже.');
     }

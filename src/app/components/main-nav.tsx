@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-import { MobileNav } from "@/app/components/mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
@@ -66,7 +65,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
   return (
     <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-      <MobileNav className="mr-4" />
       <Link href="/" className="mr-6 flex items-center space-x-2">
         <Icons.truck className="h-6 w-6" />
         <span className="hidden font-bold sm:inline-block">
@@ -144,3 +142,4 @@ export function MainNav({ className, ...props }: MainNavProps) {
     </div>
   )
 }
+
