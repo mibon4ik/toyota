@@ -7,32 +7,35 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import { Icons } from "@/components/icons";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@admin.com');
+  const [password, setPassword] = useState('admin');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Retrieve user data from localStorage
-    const storedUsers = localStorage.getItem('users');
-    if (storedUsers) {
-      const users = JSON.parse(storedUsers);
-      // Find user by email
-      const user = users.find((u: any) => u.email === email && u.password === password);
-
-      if (user) {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', JSON.stringify(user));
-        router.push('/');
-      } else {
-        setError('Неверные учетные данные');
-      }
+    if (email === 'admin@admin.com' && password === 'admin') {
+      localStorage.setItem('isLoggedIn', 'true');
+      const user = {
+        firstName: 'Admin',
+        lastName: 'User',
+        email: 'admin@admin.com',
+      };
+      localStorage.setItem('loggedInUser', JSON.stringify(user));
+      toast({
+        title: "Вход выполнен!",
+        description: "Вы успешно вошли в систему.",
+      });
+      router.push('/');
     } else {
-      setError('Пользователь не найден');
+      setError('Неверные учетные данные');
     }
   };
 
@@ -57,14 +60,25 @@ const LoginPage = () => {
             </div>
             <div>
               <Label htmlFor="password">Пароль</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Пароль"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Пароль"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                </Button>
+              </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
             <Button type="submit" className="w-full">
