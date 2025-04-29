@@ -7,7 +7,7 @@ const ContactsPage = () => {
       <div className="bg-white shadow-md rounded-md p-8">
         <h2 className="text-2xl font-semibold mb-4">Toyota</h2>
         <p className="text-gray-700">
-          <strong>Контакты для связи:</strong> Техническая поддержка 8 707 123 4567
+          <strong>Контакты для связи:</strong> Техническая поддержка 8 (7172) 27 02 00
         </p>
       </div>
     </div>
@@ -15,3 +15,4 @@ const ContactsPage = () => {
 };
 
 export default ContactsPage;
+
