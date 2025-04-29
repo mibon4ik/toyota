@@ -266,7 +266,7 @@ const HomePage = () => {
             </div>
           )}
         </div>
-      </section>
+       </section>
 
       {/* Popular Categories */}
       <section className="py-12">
@@ -347,7 +347,8 @@ const HomePage = () => {
         </div>
        </section>
      </div>
-   );
- };
+    );
+  };
 
- export default HomePage;
+  export default HomePage;
+  
