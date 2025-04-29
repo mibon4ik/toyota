@@ -22,7 +22,7 @@ const ContactsPage = () => {
             className="w-full h-48"
           ></iframe>
         </div>
-        <p className="text-gray-700 mt-2">
+        <p className="text-gray-700 mb-2">
           <strong>Контакты для связи:</strong> Техническая поддержка 8 (7172) 27 02 00
         </p>
         <p className="text-gray-700">
