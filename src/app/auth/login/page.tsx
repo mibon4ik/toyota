@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
@@ -11,12 +11,31 @@ import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@admin.com');
+  const [password, setPassword] = useState('admin');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    // Pre-populate users in localStorage for initial setup
+    if (!localStorage.getItem('users')) {
+      const initialUsers = [
+        {
+          firstName: 'Admin',
+          lastName: 'User',
+          email: 'admin@admin.com',
+          phoneNumber: '123-456-7890',
+          password: 'admin',
+          carMake: 'Toyota',
+          carModel: 'Camry',
+          vinCode: '1234567890ABCDEFG',
+        },
+      ];
+      localStorage.setItem('users', JSON.stringify(initialUsers));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
