@@ -113,7 +113,7 @@ const newArrivals = [
 const benefits = [
   {
     title: 'Бесплатная доставка',
-    description: 'Наслаждайтесь бесплатной доставкой заказов на сумму свыше 99 долларов.',
+    description: 'Наслаждайтесь бесплатной доставкой заказов на сумму свыше 50.000 тенге.',
     icon: Icons.truck,
   },
   {
@@ -208,8 +208,7 @@ const HomePage = () => {
       {/* Banner Carousel */}
         <div>
             {banners.map((banner, index) => (
-                <div key={index}>
-                  <Card>
+                <Card key={index}>
                     <CardHeader>
                       <CardTitle>{banner.title}</CardTitle>
                     </CardHeader>
@@ -222,7 +221,6 @@ const HomePage = () => {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
             ))}
         </div>
 
@@ -258,7 +256,7 @@ const HomePage = () => {
           </form>
 
           {compatibleParts && compatibleParts.compatibleParts && (
-            <div className="mt-8">
+            <div>
               <h3 className="text-2xl font-semibold mb-4">Совместимые детали</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-4">
                 {compatibleParts.compatibleParts.map((product: any) => (
@@ -276,7 +274,7 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 px-4">
             {categories.map((category) => (
-              <Link href={category.href} key={category.name} className="flex flex-col items-center justify-center">
+              <Link key={category.name} href={category.href}>
                 <Card className="w-full p-4 product-card">
                   {React.createElement(category.icon, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' }})}
                   <CardTitle className="text-sm font-semibold">{category.name}</CardTitle>
@@ -317,7 +315,7 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8 text-center">Почему выбирают нас?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
             {benefits.map((benefit) => (
-              <Card key={benefit.title} className="p-6 product-card">
+              <Card key={benefit.title}>
                 {React.createElement(benefit.icon, {className: "w-10 h-10 mb-4", style: { color: '#535353ff' }})}
                 <CardTitle className="text-xl font-semibold mb-2">{benefit.title}</CardTitle>
                 <CardDescription>{benefit.description}</CardDescription>
@@ -333,21 +331,23 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8 text-center">Из нашего блога</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
             {blogPosts.map((post) => (
-              <Card key={post.title} className="product-card">
-                <img src={post.imageUrl} alt={post.title} className="rounded-md"/>
-                <CardContent className="p-4">
-                  <CardTitle className="text-xl font-semibold mb-2">{post.title}</CardTitle>
-                  <Button asChild>
-                    <Link href={post.href}>Читать далее</Link>
-                  </Button>
-                </CardContent>
+              <Card key={post.title}>
+                
+                  <img src={post.imageUrl} alt={post.title} className="rounded-md"/>
+                  <CardContent className="p-4">
+                    <CardTitle className="text-xl font-semibold mb-2">{post.title}</CardTitle>
+                    <Button asChild>
+                      <Link href={post.href}>Читать далее</Link>
+                    </Button>
+                  </CardContent>
+                
               </Card>
             ))}
           </div>
         </div>
-      </section>
-    </div>
-  );
-};
+       </section>
+     </div>
+   );
+ };
 
-export default HomePage;
+ export default HomePage;
