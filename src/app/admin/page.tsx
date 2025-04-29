@@ -13,11 +13,23 @@ const AdminPage = () => {
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]); // State to hold users (password omitted)
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+        setIsMounted(true); // Indicate component has mounted on client
+    }, []);
+
+  useEffect(() => {
+    if (!isMounted) return; // Don't run on server
+
     const checkAdminStatusAndFetchUsers = async () => {
-        const loggedInUserCookie = getCookie('loggedInUser');
+        let loggedInUserCookie: string | undefined;
         let isAdmin = false;
+
+        if (typeof window !== 'undefined') {
+            loggedInUserCookie = getCookie('loggedInUser');
+        }
+
 
         if (loggedInUserCookie) {
             try {
@@ -46,15 +58,26 @@ const AdminPage = () => {
     };
 
     checkAdminStatusAndFetchUsers();
-}, [router]);
+  }, [router, isMounted]); // Depend on isMounted
 
 
   const handleLogout = () => {
-    deleteCookie('authToken');
-    deleteCookie('isLoggedIn');
-    deleteCookie('loggedInUser');
+    if (typeof window !== 'undefined') {
+        deleteCookie('authToken');
+        deleteCookie('isLoggedIn');
+        deleteCookie('loggedInUser');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('loggedInUser');
+        window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
+    }
     router.push('/auth/login');
   };
+
+   // Prevent rendering on server to avoid hydration errors
+    if (!isMounted) {
+        return null;
+    }
+
 
   return (
     <div className="flex justify-center items-start min-h-screen pt-8">
@@ -72,8 +95,8 @@ const AdminPage = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>ID</TableHead>
+                    <TableHead>Логин</TableHead> {/* Changed from Email */}
                     <TableHead>Имя</TableHead>
-                    <TableHead>Email</TableHead>
                     <TableHead>Телефон</TableHead>
                     <TableHead>Марка</TableHead>
                     <TableHead>Модель</TableHead>
@@ -85,8 +108,8 @@ const AdminPage = () => {
                   {users.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>{user.id}</TableCell>
+                      <TableCell>{user.username}</TableCell> {/* Display username */}
                       <TableCell>{user.firstName} {user.lastName}</TableCell>
-                      <TableCell>{user.email}</TableCell>
                       <TableCell>{user.phoneNumber}</TableCell>
                       <TableCell>{user.carMake}</TableCell>
                       <TableCell>{user.carModel}</TableCell>

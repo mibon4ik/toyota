@@ -2,9 +2,10 @@
 [
   {
     "id": "admin-user",
+    "username": "admin",
     "firstName": "Admin",
     "lastName": "User",
-    "email": "admin@admin.com",
+    "email": "admin@example.com",
     "phoneNumber": "0000000000",
     "password": "$2a$10$k48w.aM9e2fF0P/k9Z7rA.b0G.H/w.fG/xL/v9R3l/k4l/m0J/d6G",
     "carMake": "AdminCar",

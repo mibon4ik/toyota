@@ -13,6 +13,7 @@ import { setCookie } from 'cookies-next';
 import type { User } from '@/types/user';
 
 const RegistrationPage = () => {
+  const [username, setUsername] = useState(''); // Added username state
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -33,7 +34,7 @@ const RegistrationPage = () => {
       // Simple token generation (replace with a more secure method like JWT in production)
       const userData = {
           id: user.id,
-          email: user.email,
+          username: user.username, // Use username
           firstName: user.firstName,
           lastName: user.lastName,
           isAdmin: user.isAdmin || false, // Default to false if not present
@@ -47,13 +48,14 @@ const RegistrationPage = () => {
     setIsLoading(true);
 
     // Client-side validation
-    if (!firstName || !lastName || !email || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) {
+    if (!username || !firstName || !lastName || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) { // Added username check
       setError('Пожалуйста, заполните все поля.');
       setIsLoading(false);
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // Optional email validation if email is entered
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Неверный формат электронной почты.');
       setIsLoading(false);
       return;
@@ -79,9 +81,10 @@ const RegistrationPage = () => {
 
     try {
       const newUserPayload = {
+        username, // Include username
         firstName,
         lastName,
-        email,
+        email: email || undefined, // Send email only if provided
         phoneNumber,
         password, // Send raw password, hashing happens server-side
         carMake,
@@ -90,11 +93,17 @@ const RegistrationPage = () => {
       };
       const registeredUser = await createUser(newUserPayload);
 
-      // Set auth cookie
+      // Set auth cookie and localStorage
        const token = generateToken(registeredUser);
        setCookie('authToken', token, { maxAge: 60 * 60 * 24 * 7 }); // Expires in 7 days
        setCookie('isLoggedIn', 'true', { maxAge: 60 * 60 * 24 * 7 });
        setCookie('loggedInUser', JSON.stringify(registeredUser), { maxAge: 60 * 60 * 24 * 7 });
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('loggedInUser', JSON.stringify(registeredUser));
+             window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
+        }
+
 
       toast({
         title: 'Регистрация успешна!',
@@ -117,6 +126,18 @@ const RegistrationPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleRegistration} className="space-y-4">
+             <div>
+              <Label htmlFor="username">Логин</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="Логин"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
             <div>
               <Label htmlFor="firstName">Имя</Label>
               <Input
@@ -142,14 +163,14 @@ const RegistrationPage = () => {
               />
             </div>
             <div>
-              <Label htmlFor="email">Адрес электронной почты</Label>
+              <Label htmlFor="email">Адрес электронной почты (необязательно)</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                // removed required attribute
                 disabled={isLoading}
               />
             </div>
@@ -229,6 +250,7 @@ const RegistrationPage = () => {
                    disabled={isLoading}
                 >
                   {showPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
+                   <span className="sr-only">{showPassword ? 'Скрыть пароль' : 'Показать пароль'}</span>
                 </Button>
               </div>
             </div>
@@ -253,6 +275,7 @@ const RegistrationPage = () => {
                    disabled={isLoading}
                 >
                    {showConfirmPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
+                    <span className="sr-only">{showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}</span>
                 </Button>
               </div>
             </div>

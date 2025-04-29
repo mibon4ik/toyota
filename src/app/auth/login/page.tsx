@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
@@ -14,19 +14,25 @@ import { verifyPassword } from '@/lib/auth'; // Use the new auth function
 import type { User } from '@/types/user'; // Import the User type
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState(''); // Changed from email to username
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+   const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
 
   const generateToken = (user: User) => {
     // Simple token generation (replace with a more secure method like JWT in production)
     const userData = {
       id: user.id,
-      email: user.email,
+      username: user.username, // Use username
       firstName: user.firstName,
       lastName: user.lastName,
       isAdmin: user.isAdmin || false, // Default to false if not present
@@ -40,7 +46,7 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-        const user = await verifyPassword(email, password);
+        const user = await verifyPassword(username, password); // Use username instead of email
 
         if (!user) {
           setError('Неверные учетные данные');
@@ -53,6 +59,13 @@ const LoginPage = () => {
         setCookie('authToken', token, { maxAge: 60 * 60 * 24 * 7 }); // Expires in 7 days
         setCookie('isLoggedIn', 'true', { maxAge: 60 * 60 * 24 * 7 });
         setCookie('loggedInUser', JSON.stringify(user), { maxAge: 60 * 60 * 24 * 7 });
+
+         if (typeof window !== 'undefined') {
+             localStorage.setItem('isLoggedIn', 'true');
+             localStorage.setItem('loggedInUser', JSON.stringify(user));
+             window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
+         }
+
 
         toast({
             title: "Вход выполнен!",
@@ -74,6 +87,12 @@ const LoginPage = () => {
     }
   };
 
+  // Prevent rendering on server to avoid hydration errors with localStorage
+    if (!isMounted) {
+        return null;
+    }
+
+
   return (
     <div className="flex justify-center items-center h-screen">
       <Card className="w-full max-w-md">
@@ -83,13 +102,13 @@ const LoginPage = () => {
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Адрес электронной почты</Label>
+              <Label htmlFor="username">Логин</Label> {/* Changed from email to username */}
               <Input
-                id="email"
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text" // Changed from email to text
+                placeholder="Логин" // Changed placeholder
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
               />
@@ -115,6 +134,7 @@ const LoginPage = () => {
                   disabled={isLoading}
                 >
                   {showPassword ? <Icons.eyeOff className="h-4 w-4" /> : <Icons.eye className="h-4 w-4" />}
+                   <span className="sr-only">{showPassword ? 'Скрыть пароль' : 'Показать пароль'}</span>
                 </Button>
               </div>
             </div>
