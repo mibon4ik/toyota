@@ -52,37 +52,40 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="mr-2">
           <Icons.menu className="h-4 w-4" />
-          <span className="sr-only">Открыть меню</span>
+          <span className="sr-only">Open menu</span>
         </Button>
       </SheetTrigger>
-        <SheetContent side="left" className="pr-0 flex flex-col">
-            <NavLink href="/" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
-                Главная
-            </NavLink>
-            <NavLink href="/shop" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
-                Магазин
-            </NavLink>
-            <NavLink href="/cart" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
-                Корзина
-            </NavLink>
-            <NavLink href="/checkout" className="py-2 text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
-                Оформление
-            </NavLink>
-            {isLoggedIn ? (
-                <Button variant="ghost" onClick={handleLogout} className="py-2 justify-start text-white bg-primary rounded-md hover:bg-primary/80 transition-colors">
-                    Выйти
-                </Button>
-            ) : (
-                <Link href="/auth/login" className="py-2">
-                    <Button variant="ghost" className="justify-start font-bold text-black bg-white rounded-md hover:bg-gray-100 transition-colors">
-                        Войти
-                    </Button>
-                </Link>
-            )}
-        <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-          <Icons.close className="h-6 w-6" />
-          <span className="sr-only">Закрыть</span>
-        </SheetClose>
+        <SheetContent side="left" className="pr-0 flex flex-col justify-start">
+          
+            <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+              <Icons.close className="h-6 w-6" />
+              <span className="sr-only">Close</span>
+            </SheetClose>
+            <div className="mt-16 flex flex-col space-y-2">
+              <NavLink href="/" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors">
+                  Главная
+              </NavLink>
+              <NavLink href="/shop" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors">
+                  Магазин
+              </NavLink>
+              <NavLink href="/cart" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors">
+                  Корзина
+              </NavLink>
+              <NavLink href="/checkout" className="py-2 text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors">
+                  Оформление
+              </NavLink>
+              {isLoggedIn ? (
+                  <Button variant="ghost" onClick={handleLogout} className="py-2 justify-start text-white bg-blue-500 rounded-md hover:bg-blue-700 transition-colors">
+                      Выйти
+                  </Button>
+              ) : (
+                  <Link href="/auth/login" className="py-2">
+                      <Button variant="ghost" className="justify-start font-bold text-black bg-white rounded-md hover:bg-gray-100 transition-colors">
+                          Войти
+                      </Button>
+                  </Link>
+              )}
+            </div>
       </SheetContent>
     </Sheet>
   )
