@@ -76,7 +76,7 @@ const LoginPage = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                  {showPassword ? <Icons.eyeOff /> : <Icons.eye />}
                 </Button>
               </div>
             </div>
