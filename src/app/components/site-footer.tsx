@@ -34,8 +34,12 @@ export function SiteFooter({ className, ...props }: SiteFooterProps) {
           <Link href="/checkout" className="hover:text-foreground">
             Оформление
           </Link>
+          <Link href="/contacts" className="hover:text-foreground">
+            Контакты
+          </Link>
         </nav>
       </div>
     </footer>
   )
 }
+
