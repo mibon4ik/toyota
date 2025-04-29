@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useState} from 'react';
@@ -20,7 +19,7 @@ const categories = [
   },
   {
     name: 'Подвеска',
-    icon: Icons.suspension,
+    icon: Icons.zap,
     href: '/shop?category=suspension',
   },
   {
@@ -151,7 +150,7 @@ const banners = [
   },
   {
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-    imageUrl: '/images/new-arrivals.jpg',
+     imageUrl: '/images/new-arrivals.jpg',
     buttonText: 'Посмотреть новинки',
     href: '/shop',
   },
@@ -253,6 +252,7 @@ const HomePage = () => {
               value={vinCode}
               onChange={(e) => setVinCode(e.target.value)}
               className="w-full md:w-48"
+              maxLength={17}
             />
             <Button type="submit">Найти совместимые детали</Button>
           </form>
