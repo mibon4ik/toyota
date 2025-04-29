@@ -43,7 +43,7 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
       <SheetContent side="left" className="pr-0 flex flex-col justify-start">
           
             <SheetClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-              <Icons.close className="h-6 w-6" />
+              <Icons.close className="h-6 w-6 text-black" />
               <span className="sr-only">Закрыть</span>
             </SheetClose>
             <div className="mt-24 flex flex-col space-y-3">
