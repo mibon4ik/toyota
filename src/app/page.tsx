@@ -212,7 +212,7 @@ const HomePage = () => {
                     <CardHeader>
                       <CardTitle>{banner.title}</CardTitle>
                     </CardHeader>
-                    <CardContent className="flex flex-col items-center">
+                    <CardContent className="flex flex-col items-start">
                       <img src={banner.imageUrl} alt={banner.title} className="rounded-md"/>
                       <div className="mt-4">
                         <Button asChild>
