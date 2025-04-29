@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 import { setCookie } from 'cookies-next';
-import { verifyPassword } from '@/lib/auth'; // Use the new auth function
+import { verifyPassword } from '@/lib/auth'; // Use the updated auth function
 import type { User } from '@/types/user'; // Import the User type
 
 const LoginPage = () => {
@@ -24,7 +24,7 @@ const LoginPage = () => {
    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        setIsMounted(true);
+        setIsMounted(true); // Indicate component has mounted on client
     }, []);
 
 
@@ -54,16 +54,23 @@ const LoginPage = () => {
           return;
         }
 
-        // Credentials are valid, generate token and set cookies
+        // Credentials are valid, generate token and set cookies/localStorage
         const token = generateToken(user);
-        setCookie('authToken', token, { maxAge: 60 * 60 * 24 * 7 }); // Expires in 7 days
-        setCookie('isLoggedIn', 'true', { maxAge: 60 * 60 * 24 * 7 });
-        setCookie('loggedInUser', JSON.stringify(user), { maxAge: 60 * 60 * 24 * 7 });
+        const cookieOptions = { maxAge: 60 * 60 * 24 * 7 }; // Expires in 7 days
 
+        // Set cookies
+        setCookie('authToken', token, cookieOptions);
+        setCookie('isLoggedIn', 'true', cookieOptions);
+        setCookie('loggedInUser', JSON.stringify(user), cookieOptions);
+
+         // Set localStorage AFTER ensuring window exists
          if (typeof window !== 'undefined') {
              localStorage.setItem('isLoggedIn', 'true');
              localStorage.setItem('loggedInUser', JSON.stringify(user));
-             window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
+             // Dispatch event to notify other components (like nav bar) immediately
+             window.dispatchEvent(new Event('authStateChanged'));
+         } else {
+             console.warn("localStorage is not available. Auth state might not persist across tabs immediately.");
          }
 
 
@@ -72,7 +79,7 @@ const LoginPage = () => {
             description: user.isAdmin ? "Вы успешно вошли в систему как администратор." : "Вы успешно вошли в систему.",
         });
 
-        // Redirect based on role
+        // Redirect based on role AFTER state updates are likely processed
         if (user.isAdmin) {
             router.push('/admin'); // Redirect admin to admin page
         } else {
