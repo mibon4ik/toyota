@@ -14,6 +14,7 @@ interface User {
   carMake: string;
   carModel: string;
   vinCode: string;
+  password?: string;
 }
 
 const AdminPage = () => {
@@ -59,6 +60,7 @@ const AdminPage = () => {
                     <TableHead>Марка машины</TableHead>
                     <TableHead>Модель машины</TableHead>
                     <TableHead>VIN-код</TableHead>
+                    <TableHead>Пароль</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -70,6 +72,7 @@ const AdminPage = () => {
                       <TableCell>{user.carMake}</TableCell>
                       <TableCell>{user.carModel}</TableCell>
                       <TableCell>{user.vinCode}</TableCell>
+                      <TableCell>{user.password}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -79,7 +82,9 @@ const AdminPage = () => {
             <p>Пользователи не найдены.</p>
           )}
         </CardContent>
-          <Button className="mt-4" onClick={handleLogout}>Выйти</Button>
+          <div className="mt-4 flex justify-center">
+            <Button onClick={handleLogout}>Выйти</Button>
+          </div>
       </Card>
     </div>
   );
