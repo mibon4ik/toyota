@@ -4,9 +4,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { AutoPart } from '@/types/autopart'; // Assuming type is moved
+import type { Vehicle } from '@/types/vehicle'; // Import Vehicle type
 
 const partsFilePath = path.join(process.cwd(), 'src', 'data', 'autoparts.json');
-const dataDir = path.dirname(partsFilePath);
+const vehiclesFilePath = path.join(process.cwd(), 'src', 'data', 'vehicles.json');
+const dataDir = path.dirname(partsFilePath); // Assume both files are in the same directory
 
 // --- File System Operations ---
 
@@ -39,11 +41,7 @@ async function readPartsFile(): Promise<AutoPart[]> {
     }
      if (error instanceof SyntaxError) {
         console.error("Error parsing autoparts.json:", error);
-        // Handle corrupted file (e.g., backup, log, return empty, or throw)
         console.warn("Autoparts data file appears corrupted. Returning empty array.");
-        // Consider backing up the corrupted file here
-        // await fs.copyFile(partsFilePath, `${partsFilePath}.corrupted.${Date.now()}`);
-        // await writePartsFile([]); // Recreate with empty array
         return []; // Or throw new Error("Autoparts data file is corrupted.");
     }
     console.error("Error reading autoparts file:", error);
@@ -65,6 +63,27 @@ async function writePartsFile(parts: AutoPart[]): Promise<void> {
     throw new Error("Could not save autoparts data.");
   }
 }
+
+/** Reads vehicle data from the JSON file. */
+async function readVehiclesFile(): Promise<Vehicle[]> {
+    await ensureDataDirExists();
+    try {
+      const data = await fs.readFile(vehiclesFilePath, 'utf-8');
+      return JSON.parse(data || '[]');
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        console.log("vehicles.json not found, returning empty array.");
+        return [];
+      }
+      if (error instanceof SyntaxError) {
+          console.error("Error parsing vehicles.json:", error);
+          console.warn("Vehicles data file appears corrupted. Returning empty array.");
+          return [];
+      }
+      console.error("Error reading vehicles file:", error);
+      throw new Error("Could not read vehicle data.");
+    }
+  }
 
 
 // --- Service Functions ---
@@ -137,57 +156,32 @@ export async function getAutoPartById(partId: string): Promise<AutoPart | null> 
 
 
 /**
- * Retrieves auto parts compatible with a specific VIN code (simulated).
- * In a real application, this would involve decoding the VIN and querying a database.
- * This simulation checks if the VIN starts with a known prefix.
+ * Retrieves auto parts compatible with a specific VIN code by looking up the vehicle first.
  *
  * @param vinCode The VIN code of the vehicle.
  * @returns A promise that resolves to an array of compatible AutoPart objects.
  */
 export async function getPartsByVin(vinCode: string): Promise<AutoPart[]> {
-    const allParts = await readPartsFile(); // Read current parts
-   // Basic validation
-  if (!vinCode || vinCode.length !== 17) {
-    console.warn("getPartsByVin: Invalid VIN code provided.");
-    return simulateApiCall([]);
+  const vehicle = await getVehicleByVin(vinCode); // Find the vehicle by VIN
+  if (!vehicle) {
+    console.log(`getPartsByVin: No vehicle found for VIN ${vinCode}.`);
+    return simulateApiCall([]); // No vehicle found, return empty parts list
   }
-
-  const upperVin = vinCode.toUpperCase();
-  let compatibleParts: AutoPart[] = [];
-
-  // --- Simulation Logic ---
-  // Example: VIN starting with 'JT' might be a Toyota car
-  if (upperVin.startsWith('JT')) {
-    compatibleParts = allParts.filter(part =>
-        part.compatibleVehicles.some(v => v.toLowerCase().includes('toyota')) ||
-        part.compatibleVehicles.some(v => v.toLowerCase().includes('большинство моделей')) ||
-        part.compatibleVehicles.some(v => v.toLowerCase().includes('различные модели'))
-    );
-  }
-  // Example: VIN starting with '2T' might be a Toyota truck/SUV built in North America
-  else if (upperVin.startsWith('2T')) {
-     compatibleParts = allParts.filter(part =>
-       part.compatibleVehicles.some(v => v.toLowerCase().includes('rav4') || v.toLowerCase().includes('highlander') || v.toLowerCase().includes('sienna')) ||
-        part.compatibleVehicles.some(v => v.toLowerCase().includes('большинство моделей')) ||
-         part.compatibleVehicles.some(v => v.toLowerCase().includes('различные модели'))
-     );
-  }
-  // Add more simulation rules as needed
-  // --- End Simulation Logic ---
-
-  console.log(`getPartsByVin: Found ${compatibleParts.length} potentially compatible parts for VIN starting with ${upperVin.substring(0, 3)}...`);
-  return simulateApiCall(compatibleParts);
+   console.log(`getPartsByVin: Found vehicle ${vehicle.make} ${vehicle.model} for VIN ${vinCode}. Fetching parts...`);
+   // Now use the found make and model to get parts
+   return getPartsByMakeModel(vehicle.make, vehicle.model);
 }
 
 /**
- * Retrieves auto parts compatible with a specific make and model (simulated).
+ * Retrieves auto parts compatible with a specific make and model.
+ * This function now directly filters parts based on the make/model.
  *
  * @param make The make of the vehicle (e.g., 'Toyota').
  * @param model The model of the vehicle (e.g., 'Camry').
  * @returns A promise that resolves to an array of compatible AutoPart objects.
  */
 export async function getPartsByMakeModel(make: string, model: string): Promise<AutoPart[]> {
-   const allParts = await readPartsFile(); // Read current parts
+   const allParts = await readPartsFile();
   if (!make || !model) {
     return simulateApiCall([]);
   }
@@ -197,9 +191,8 @@ export async function getPartsByMakeModel(make: string, model: string): Promise<
   const results = allParts.filter(part =>
     part.compatibleVehicles.some(v => {
       const lowerV = v.toLowerCase();
-      // Simple check, refine as needed (e.g., year ranges)
       return lowerV.includes(lowerMake) && lowerV.includes(lowerModel);
-    }) || part.compatibleVehicles.some(v => v.toLowerCase().includes('большинство моделей') || v.toLowerCase().includes('различные модели')) // Include general parts
+    }) || part.compatibleVehicles.some(v => v.toLowerCase().includes('большинство моделей') || v.toLowerCase().includes('различные модели'))
   );
 
   console.log(`getPartsByMakeModel: Found ${results.length} potentially compatible parts for ${make} ${model}`);
@@ -220,22 +213,18 @@ export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<Au
 
   const allParts = await readPartsFile();
 
-  // Basic validation (e.g., check for duplicate SKU if provided)
   if (newPartData.sku && allParts.some(part => part.sku === newPartData.sku)) {
     throw new Error(`Товар с артикулом (SKU) "${newPartData.sku}" уже существует.`);
   }
 
-  // Generate a simple unique ID (replace with a more robust method in production)
   const newId = `part-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
   const newPart: AutoPart = {
     ...newPartData,
     id: newId,
-     // Ensure optional fields have defaults if needed (might be handled by form)
     rating: newPartData.rating ?? undefined,
     reviewCount: newPartData.reviewCount ?? undefined,
     stock: newPartData.stock ?? 0,
-    // Make sure compatibleVehicles is an array
     compatibleVehicles: Array.isArray(newPartData.compatibleVehicles) ? newPartData.compatibleVehicles : [],
   };
 
@@ -243,20 +232,54 @@ export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<Au
   await writePartsFile(allParts);
 
   console.log(`Added new part: ${newPart.name} (ID: ${newId})`);
-  return newPart; // Return the full part object with the generated ID
+  return newPart;
 }
 
 
-// --- Initialization ---
-// Ensure the parts data file exists and is initialized if needed.
+// --- Vehicle Specific Functions ---
+
+/**
+ * Retrieves a vehicle by its VIN code from the vehicles data file.
+ *
+ * @param vinCode The VIN code to search for (case-insensitive).
+ * @returns A promise that resolves to the Vehicle object or null if not found.
+ */
+export async function getVehicleByVin(vinCode: string): Promise<Vehicle | null> {
+  if (!vinCode) return simulateApiCall(null);
+  const vehicles = await readVehiclesFile();
+  const upperVin = vinCode.toUpperCase();
+  const vehicle = vehicles.find(v => v.vin.toUpperCase() === upperVin);
+  return simulateApiCall(vehicle || null);
+}
+
+/**
+ * Retrieves a vehicle by its make and model from the vehicles data file.
+ * Returns the first match found (case-insensitive).
+ *
+ * @param make The make of the vehicle.
+ * @param model The model of the vehicle.
+ * @returns A promise that resolves to the Vehicle object or null if not found.
+ */
+export async function getVehicleByMakeModel(make: string, model: string): Promise<Vehicle | null> {
+  if (!make || !model) return simulateApiCall(null);
+  const vehicles = await readVehiclesFile();
+  const lowerMake = make.toLowerCase();
+  const lowerModel = model.toLowerCase();
+  const vehicle = vehicles.find(v =>
+    v.make.toLowerCase() === lowerMake && v.model.toLowerCase() === lowerModel
+  );
+  return simulateApiCall(vehicle || null);
+}
+
+// --- Initialization (Optional, if needed) ---
 // (async () => {
 //     try {
-//         console.log("Ensuring autoparts data is initialized...");
-//         // await initializePartsDataIfNeeded(); // Removed this call
-//         console.log("Autoparts data initialization check complete.");
+//         console.log("Ensuring data files exist on startup...");
+//         await readPartsFile(); // Ensures file exists or is created
+//         await readVehiclesFile(); // Ensures file exists or is created
+//         console.log("Data file checks complete.");
 //     } catch (error) {
-//         console.error("FATAL: Failed to initialize autoparts data:", error);
-//         // Decide if the application can continue without parts data
-//         // process.exit(1);
+//         console.error("FATAL: Failed to initialize data files:", error);
 //     }
 // })();
+

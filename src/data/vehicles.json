@@ -1,0 +1,103 @@
+
+[
+  {
+    "vin": "JTDKN3DU8J0001111",
+    "make": "Toyota",
+    "model": "Camry"
+  },
+  {
+    "vin": "1HGCM82699A111222",
+    "make": "Honda",
+    "model": "Accord"
+  },
+  {
+    "vin": "3FA6P0HD5JR222333",
+    "make": "Ford",
+    "model": "Fusion"
+  },
+  {
+    "vin": "JN1AZ08A7BW333444",
+    "make": "Nissan",
+    "model": "Altima"
+  },
+  {
+    "vin": "2T1BURHE2JC444555",
+    "make": "Toyota",
+    "model": "RAV4"
+  },
+  {
+    "vin": "1G1RC6E45F9555666",
+    "make": "Chevrolet",
+    "model": "Equinox"
+  },
+  {
+    "vin": "5NPE24ABXKH666777",
+    "make": "Hyundai",
+    "model": "Tucson"
+  },
+  {
+    "vin": "JTMEP7BF9L0777888",
+    "make": "Lexus",
+    "model": "RX350"
+  },
+  {
+    "vin": "WBAJU7C5XKB888999",
+    "make": "BMW",
+    "model": "X3"
+  },
+  {
+    "vin": "4USDT1CA7NE999000",
+    "make": "Mercedes-Benz",
+    "model": "GLC 300"
+  },
+  {
+    "vin": "JTDKARBH6J5001122",
+    "make": "Toyota",
+    "model": "Corolla"
+  },
+  {
+    "vin": "1HGFC2F53JA112233",
+    "make": "Honda",
+    "model": "Civic"
+  },
+  {
+    "vin": "3FA6P0H7XJR223344",
+    "make": "Ford",
+    "model": "Focus"
+  },
+  {
+    "vin": "JN1AF07A8BW334455",
+    "make": "Nissan",
+    "model": "Sentra"
+  },
+  {
+    "vin": "2T1BFREV0JC445566",
+    "make": "Toyota",
+    "model": "Highlander"
+  },
+  {
+    "vin": "1G1RC6SD9F9556677",
+    "make": "Chevrolet",
+    "model": "Traverse"
+  },
+  {
+    "vin": "5NPE24AB8KH667788",
+    "make": "Hyundai",
+    "model": "Santa Fe"
+  },
+  {
+    "vin": "JTMEY7BX7L0778899",
+    "make": "Lexus",
+    "model": "NX300"
+  },
+  {
+    "vin": "WBAJU7C51KB889900",
+    "make": "BMW",
+    "model": "X5"
+  },
+  {
+    "vin": "4USDT1CA8NE990011",
+    "make": "Mercedes-Benz",
+    "model": "GLE 350"
+  }
+]

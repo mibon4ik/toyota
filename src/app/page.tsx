@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState, useEffect, useCallback} from 'react';
@@ -7,7 +8,7 @@ import {Icons} from "@/components/icons";
 import {cn} from "@/lib/utils";
 import Autopart from "@/app/components/autopart"; // Corrected import path
 import Link from "next/link";
-import {suggestCompatibleParts} from '@/ai/flows/suggest-compatible-parts'; // Import the AI flow
+import { getPartsByVin, getPartsByMakeModel } from '@/services/autoparts'; // Import part search functions
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart'; // Ensure correct path
@@ -183,7 +184,7 @@ const banners = [
 ];
 
 // Type for the state holding the suggested parts
-type CompatiblePartsResult = { compatibleParts: AutoPart[] } | null;
+type CompatiblePartsResult = AutoPart[] | null;
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -242,7 +243,7 @@ const HomePage = () => {
       }
       return updatedCart;
     });
-  }, [toast, isMounted]);
+  }, [toast, isMounted, setCartItems]);
 
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -250,53 +251,72 @@ const HomePage = () => {
     setIsLoadingSuggestions(true); // Start loading
     setCompatibleParts(null); // Clear previous results
 
-    // Basic validation: Either Make+Model or VIN should be provided
-    if (!vinCode && (!make || !model)) {
+    let partsResult: AutoPart[] = [];
+    let searchPerformed = false;
+
+    // 1. Try searching by VIN if provided and valid
+    if (vinCode && vinCode.length === 17 && /^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
+      try {
+        console.log(`Searching parts by VIN: ${vinCode}`);
+        partsResult = await getPartsByVin(vinCode.toUpperCase());
+        searchPerformed = true;
+        console.log(`Found ${partsResult.length} parts by VIN.`);
+      } catch (error) {
+        console.error("Error fetching parts by VIN:", error);
+        // Don't show toast yet, might fallback to make/model
+      }
+    } else if (vinCode) {
+       // Invalid VIN format
+       toast({
+         title: "Ошибка",
+         description: "VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.",
+         variant: "destructive",
+       });
+       setIsLoadingSuggestions(false);
+       return;
+    }
+
+    // 2. If VIN search didn't run or returned no results, AND make/model are provided, try searching by make/model
+    if ((!searchPerformed || partsResult.length === 0) && make && model) {
+        if (!searchPerformed) console.log("VIN not provided or invalid, searching by Make/Model...");
+        else console.log("No parts found by VIN, falling back to Make/Model search...");
+      try {
+        console.log(`Searching parts by Make: ${make}, Model: ${model}`);
+        partsResult = await getPartsByMakeModel(make, model);
+        searchPerformed = true;
+        console.log(`Found ${partsResult.length} parts by Make/Model.`);
+      } catch (error) {
+        console.error("Error fetching parts by Make/Model:", error);
+        toast({
+          title: "Ошибка",
+          description: "Не удалось получить совместимые детали. Пожалуйста, попробуйте позже.",
+          variant: "destructive",
+        });
+        setCompatibleParts(null);
+        setIsLoadingSuggestions(false);
+        return; // Stop if make/model search also fails
+      }
+    }
+
+    // 3. Handle results or lack thereof
+    if (!searchPerformed) {
+      // If neither VIN nor Make/Model were valid/provided
       toast({
         title: "Ошибка",
-        description: "Пожалуйста, введите Марку и Модель или VIN-код.",
+        description: "Пожалуйста, введите Марку и Модель или корректный VIN-код.",
         variant: "destructive",
       });
-       setIsLoadingSuggestions(false); // Stop loading
-      return;
-    }
-    // VIN validation (basic length and pattern check)
-     if (vinCode && (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode))) {
-        toast({
-            title: "Ошибка",
-            description: "VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.",
-            variant: "destructive",
-        });
-         setIsLoadingSuggestions(false); // Stop loading
-        return;
-    }
-
-
-    try {
-      // Call the AI flow with the provided inputs
-      const partsResult = await suggestCompatibleParts({
-         make: make || undefined, // Pass undefined if empty
-         model: model || undefined,
-         vinCode: vinCode || undefined,
-      });
-      setCompatibleParts(partsResult);
-      if (partsResult.compatibleParts.length === 0) {
+    } else if (partsResult.length === 0) {
         toast({
             title: "Детали не найдены",
             description: "Не удалось найти совместимые детали для вашего запроса.",
         });
-      }
-    } catch (error) {
-      console.error("Failed to fetch compatible parts:", error);
-      toast({
-        title: "Ошибка",
-        description: "Не удалось получить совместимые детали. Пожалуйста, попробуйте позже.",
-        variant: "destructive",
-      });
-      setCompatibleParts(null);
-    } finally {
-       setIsLoadingSuggestions(false); // Stop loading
+        setCompatibleParts([]); // Set to empty array to show message
+    } else {
+        setCompatibleParts(partsResult);
     }
+
+    setIsLoadingSuggestions(false); // Stop loading
   };
 
    const formatPrice = useCallback((price: number): string => {
@@ -388,12 +408,12 @@ const HomePage = () => {
                    Ищем подходящие детали...
                 </div>
             )}
-           {!isLoadingSuggestions && compatibleParts && compatibleParts.compatibleParts && (
+           {!isLoadingSuggestions && compatibleParts && (
             <div className="mt-8">
               <h3 className="text-xl font-semibold mb-4">Предложенные детали:</h3>
-              {compatibleParts.compatibleParts.length > 0 ? (
+              {compatibleParts.length > 0 ? (
                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {compatibleParts.compatibleParts.map((product) => (
+                    {compatibleParts.map((product) => (
                     <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
                     ))}
                  </div>
@@ -411,12 +431,11 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {categories.map((category) => {
-              const IconComponent = category.icon; // Assign icon component to a variable
+              const IconComponent = category.icon || Icons.box; // Default to Box icon if none provided
                return (
                  <Link key={category.name} href={category.href} passHref legacyBehavior>
                    <a className="block">
                      <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                        {/* Render the icon component if it exists */}
                         {IconComponent && <IconComponent className="w-8 h-8 mb-2" style={{ color: '#535353ff' }} />}
                         <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
                      </Card>
@@ -508,3 +527,4 @@ const HomePage = () => {
   };
 
   export default HomePage;
+
