@@ -9,31 +9,58 @@ import {useToast} from "@/hooks/use-toast";
 
 const PartDetailPage = () => {
   const [part, setPart] = useState<AutoPart | null>(null);
-  const {partId} = useParams();
-    const { toast } = useToast();
+  const params = useParams<{ partId: string }>(); // Explicitly type params
+  const partId = params?.partId; // Safely access partId
+  const { toast } = useToast();
+  const [cartItems, setCartItems] = useState<any[]>([]); // Added cartItems state
+
+  // Load cart items from local storage on mount
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
+  }, []);
 
   useEffect(() => {
     const fetchPart = async () => {
-      if (partId) {
-        const partData = await getAutoPartById(partId as string);
+      if (partId) { // Check if partId exists
+        const partData = await getAutoPartById(partId); // Use the potentially typed partId
         setPart(partData);
       }
     };
 
     fetchPart();
-  }, [partId]);
+  }, [partId]); // Keep partId in dependency array
 
-    const handleAddToCart = () => {
-        if (part) {
-            toast({
-                title: "Added to cart!",
-                description: `${part.name} has been added to your shopping cart.`,
-            });
-        }
-    };
+  // Add item to cart
+  const handleAddToCart = () => {
+    if (part) {
+      const existingItemIndex = cartItems.findIndex((item) => item.id === part.id);
+      let updatedCart;
+
+      if (existingItemIndex > -1) {
+        // If item exists, increment quantity
+        updatedCart = cartItems.map((item, index) =>
+          index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+        );
+      } else {
+        // If item doesn't exist, add it with quantity 1
+        updatedCart = [...cartItems, { ...part, quantity: 1 }];
+      }
+
+      setCartItems(updatedCart);
+      localStorage.setItem('cartItems', JSON.stringify(updatedCart)); // Save to local storage
+
+      toast({
+          title: "Добавлено в корзину!",
+          description: `${part.name} был добавлен в вашу корзину.`,
+      });
+    }
+  };
 
   if (!part) {
-    return <div>Loading...</div>;
+    return <div>Загрузка...</div>;
   }
 
   const formatPrice = (price: number): string => {
