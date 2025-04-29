@@ -42,7 +42,7 @@ const AdminPage = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen">
-      <Card className="w-full max-w-4xl p-4">
+      <Card className="w-full max-w-4xl p-4 mt-8">
         <CardHeader>
           <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
         </CardHeader>
