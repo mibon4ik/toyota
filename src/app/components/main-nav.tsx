@@ -75,12 +75,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         </span>
       </Link>
       <nav className="hidden md:flex space-x-4">
-        <Link href="/" className={cn(
-          "text-sm font-medium transition-colors hover:text-foreground",
-          pathname === "/" ? "text-foreground" : "text-muted-foreground"
-        )}>
-          Главная
-        </Link>
         <Link href="/shop" className={cn(
           "text-sm font-medium transition-colors hover:text-foreground",
           pathname === "/shop" ? "text-foreground" : "text-muted-foreground"
@@ -147,6 +141,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
     </div>
   )
 }
+
 
 
 
