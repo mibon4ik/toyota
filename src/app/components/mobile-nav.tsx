@@ -33,19 +33,19 @@ function NavLink({ className, href, children, ...props }: NavLinkProps) {
 
 
 export function MobileNav({ className, ...props }: MobileNavProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const router = useRouter();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const router = useRouter();
 
-  useEffect(() => {
-    const storedLogin = localStorage.getItem('isLoggedIn');
-    setIsLoggedIn(storedLogin === 'true');
-  }, []);
+    useEffect(() => {
+        const storedLogin = localStorage.getItem('isLoggedIn');
+        setIsLoggedIn(storedLogin === 'true');
+    }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('isLoggedIn');
-    setIsLoggedIn(false);
-    router.push('/auth/login');
-  };
+    const handleLogout = () => {
+        localStorage.removeItem('isLoggedIn');
+        setIsLoggedIn(false);
+        router.push('/auth/login');
+    };
 
   return (
     <Sheet>
@@ -89,5 +89,3 @@ export function MobileNav({ className, ...props }: MobileNavProps) {
 }
 
 MobileNav.displayName = "MobileNav";
-"
-    
