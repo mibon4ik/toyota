@@ -21,11 +21,11 @@ const LoginPage = () => {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-   const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-    useEffect(() => {
-        setIsMounted(true); // Indicate component has mounted on client
-    }, []);
+  useEffect(() => {
+    setIsMounted(true); // Indicate component has mounted on client
+  }, []);
 
 
   const generateToken = (user: User) => {
@@ -37,39 +37,63 @@ const LoginPage = () => {
       lastName: user.lastName,
       isAdmin: user.isAdmin || false, // Default to false if not present
     };
-    return btoa(JSON.stringify(userData)); // Base64 encode for simplicity
+    // Basic Base64 encode - In real app use JWT or similar
+    try {
+      return btoa(JSON.stringify(userData));
+    } catch (e) {
+      console.error("Error generating token:", e);
+      return `error-${Date.now()}`; // Fallback token
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
+    console.log("Login attempt with username:", username); // Log username
 
     try {
         const user = await verifyPassword(username, password); // Use username instead of email
 
         if (!user) {
+          console.log("Login failed: Invalid credentials for username:", username);
           setError('Неверные учетные данные');
           setIsLoading(false);
           return;
         }
 
+        console.log("Login successful for user:", user.username, "Is Admin:", user.isAdmin);
+
         // Credentials are valid, generate token and set cookies/localStorage
         const token = generateToken(user);
-        const cookieOptions = { maxAge: 60 * 60 * 24 * 7 }; // Expires in 7 days
+        // Explicitly set path and secure options if needed (adjust secure based on HTTPS)
+        const cookieOptions = {
+          maxAge: 60 * 60 * 24 * 7, // Expires in 7 days
+          path: '/',
+          // secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+          // sameSite: 'lax', // Recommended
+        };
 
         // Set cookies
+        console.log("Setting cookies...");
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
         setCookie('loggedInUser', JSON.stringify(user), cookieOptions);
+        console.log("Cookies set.");
 
          // Set localStorage AFTER ensuring window exists
          if (typeof window !== 'undefined') {
+             console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
              localStorage.setItem('loggedInUser', JSON.stringify(user));
+             console.log("localStorage set.");
+
              // Dispatch event to notify other components (like nav bar) immediately
-             // Ensure this event is dispatched reliably
-             setTimeout(() => window.dispatchEvent(new Event('authStateChanged')), 0);
+             console.log("Dispatching authStateChanged event...");
+             // Ensure this event is dispatched reliably after state is set
+             window.dispatchEvent(new Event('authStateChanged'));
+             console.log("authStateChanged event dispatched.");
+
          } else {
              console.warn("localStorage is not available. Auth state might not persist across tabs immediately.");
          }
@@ -81,20 +105,26 @@ const LoginPage = () => {
         });
 
         // Redirect based on role AFTER state updates are likely processed
-        // Add a small delay before redirecting to allow state updates to propagate
+        // Add a small delay before redirecting to allow state updates and cookie setting to propagate
+        console.log("Redirecting in 150ms...");
         setTimeout(() => {
             if (user.isAdmin) {
+                console.log("Redirecting admin to /admin");
                 router.push('/admin'); // Redirect admin to admin page
             } else {
+                 console.log("Redirecting user to /");
                 router.push('/'); // Redirect regular user to home page
             }
-        }, 100); // Small delay (e.g., 100ms)
+             console.log("Redirection initiated.");
+        }, 150); // Slightly increased delay
 
     } catch (err) {
         console.error("Login error:", err);
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');
     } finally {
-        setIsLoading(false);
+        // Don't set isLoading false immediately before redirect
+        // It will be handled by the page transition
+        // setIsLoading(false);
     }
   };
 

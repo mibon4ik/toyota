@@ -16,106 +16,124 @@ const AdminPage = () => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+        console.log("AdminPage: Component mounting...");
         setIsMounted(true); // Indicate component has mounted on client
+        console.log("AdminPage: Component mounted.");
     }, []);
 
   useEffect(() => {
-    if (!isMounted) return; // Don't run on server
+    if (!isMounted) {
+      console.log("AdminPage: Skipping effect run on server.");
+      return; // Don't run on server
+    }
+    console.log("AdminPage: Running auth check effect (client-side).");
 
     const checkAdminStatusAndFetchUsers = async () => {
+        console.log("AdminPage: Starting admin status check...");
         let isAdmin = false;
+        let loggedInUser: User | null = null; // Define here for broader scope
 
-        // Prioritize checking cookies for auth state
+        // --- Cookie Check (Primary) ---
         const authTokenCookie = getCookie('authToken');
         const isLoggedInCookie = getCookie('isLoggedIn');
         const userCookie = getCookie('loggedInUser');
 
+        console.log("AdminPage: Cookie values - authToken:", !!authTokenCookie, "isLoggedIn:", isLoggedInCookie, "userCookie:", !!userCookie);
+
         if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
+            console.log("AdminPage: Found auth cookies.");
             try {
-                const loggedInUser: User = JSON.parse(userCookie);
-                isAdmin = loggedInUser.isAdmin === true;
+                loggedInUser = JSON.parse(userCookie);
+                if (loggedInUser && typeof loggedInUser === 'object' && loggedInUser.isAdmin === true) {
+                    isAdmin = true;
+                    console.log("AdminPage: User is admin (from cookie).", loggedInUser);
+                } else {
+                    console.log("AdminPage: User found in cookie, but not admin or invalid data.", loggedInUser);
+                     isAdmin = false; // Ensure isAdmin is false if validation fails
+                }
             } catch (e) {
-                console.error("Admin Page: Error parsing loggedInUser cookie:", e);
-                // If cookie is invalid, treat as not admin and potentially clear cookies
-                 deleteCookie('authToken');
-                 deleteCookie('isLoggedIn');
-                 deleteCookie('loggedInUser');
-                 localStorage.removeItem('isLoggedIn'); // Clear localStorage too
-                 localStorage.removeItem('loggedInUser');
-                 window.dispatchEvent(new Event('authStateChanged'));
+                console.error("AdminPage: Error parsing loggedInUser cookie:", e);
+                // If cookie is invalid, treat as not admin and clear cookies
+                 deleteCookie('authToken', { path: '/' });
+                 deleteCookie('isLoggedIn', { path: '/' });
+                 deleteCookie('loggedInUser', { path: '/' });
+                 if (typeof window !== 'undefined') {
+                    localStorage.removeItem('isLoggedIn'); // Clear localStorage too
+                    localStorage.removeItem('loggedInUser');
+                    window.dispatchEvent(new Event('authStateChanged'));
+                 }
+                 console.log("AdminPage: Redirecting to login due to invalid user cookie.");
                  router.push('/auth/login');
                  return;
             }
         } else {
-            // Fallback to localStorage check ONLY if cookies are missing/invalid
-            const loggedInLocalStorage = localStorage.getItem('isLoggedIn');
-            const userLocalStorage = localStorage.getItem('loggedInUser');
-
-            if (loggedInLocalStorage === 'true' && userLocalStorage) {
-                try {
-                    const loggedInUser: User = JSON.parse(userLocalStorage);
-                    isAdmin = loggedInUser.isAdmin === true;
-                     // If localStorage is valid but cookies were missing, maybe redirect to login
-                     // to force cookie setting, or proceed if admin status is confirmed here.
-                     if (!isAdmin) {
-                        console.log("Admin Page: User logged in via localStorage but not admin.");
-                     } else {
-                         console.log("Admin Page: Admin status confirmed via localStorage fallback.");
-                     }
-                } catch (e) {
-                    console.error("Admin Page: Error parsing loggedInUser localStorage:", e);
-                    // If localStorage is also invalid, definitely redirect
-                    localStorage.removeItem('isLoggedIn');
-                    localStorage.removeItem('loggedInUser');
-                    window.dispatchEvent(new Event('authStateChanged'));
-                    router.push('/auth/login');
-                    return;
-                }
-            }
+             console.log("AdminPage: Auth cookies not found or incomplete.");
+             // Consider localStorage as a fallback ONLY if cookies are missing/invalid,
+             // but generally rely on cookies set by login.
+             // If middleware relies on cookies, this fallback might be less relevant.
+              console.log("AdminPage: Skipping localStorage check for now, relying on cookie state.");
         }
 
-
+        // --- Decision & Action ---
         if (!isAdmin) {
-            console.log("Admin Page: User is not admin or not logged in. Redirecting.");
-            router.push('/auth/login');
+            console.log("AdminPage: User is not admin or not logged in based on cookie check. Redirecting to login.");
+             // Clear potentially inconsistent storage just in case
+             deleteCookie('authToken', { path: '/' });
+             deleteCookie('isLoggedIn', { path: '/' });
+             deleteCookie('loggedInUser', { path: '/' });
+             if (typeof window !== 'undefined') {
+                 localStorage.removeItem('isLoggedIn');
+                 localStorage.removeItem('loggedInUser');
+                 window.dispatchEvent(new Event('authStateChanged'));
+             }
+             router.push('/auth/login');
             return; // Stop execution if not admin
         }
 
-        // Fetch users ONLY if admin status is confirmed
-        console.log("Admin Page: Admin access granted. Fetching users...");
+        // --- Fetch Users (Only if Admin) ---
+        console.log("AdminPage: Admin access granted. Fetching users...");
         try {
             const fetchedUsers = await getAllUsers();
+            console.log("AdminPage: Fetched users:", fetchedUsers.length);
             setUsers(fetchedUsers);
         } catch (error) {
-            console.error("Failed to fetch users:", error);
-            // Optionally show an error message to the user
+            console.error("AdminPage: Failed to fetch users:", error);
+            // Optionally show an error message to the user via toast or state
+             setError("Не удалось загрузить список пользователей."); // Assuming setError state exists
         } finally {
             setIsLoading(false);
+             console.log("AdminPage: Finished fetching users, loading state set to false.");
         }
     };
 
     checkAdminStatusAndFetchUsers();
-  }, [router, isMounted]); // Depend on isMounted
+  }, [router, isMounted]); // Depend on router and isMounted
 
 
   const handleLogout = () => {
+      console.log("AdminPage: Logout initiated.");
       // Clear cookies first
-      deleteCookie('authToken');
-      deleteCookie('isLoggedIn');
-      deleteCookie('loggedInUser');
+      deleteCookie('authToken', { path: '/' });
+      deleteCookie('isLoggedIn', { path: '/' });
+      deleteCookie('loggedInUser', { path: '/' });
+      console.log("AdminPage: Cookies cleared.");
 
       // Clear localStorage
       if (typeof window !== 'undefined') {
           localStorage.removeItem('isLoggedIn');
           localStorage.removeItem('loggedInUser');
+           console.log("AdminPage: localStorage cleared.");
           // Dispatch event immediately
           window.dispatchEvent(new Event('authStateChanged'));
+           console.log("AdminPage: authStateChanged event dispatched.");
       }
+      console.log("AdminPage: Redirecting to login after logout.");
       router.push('/auth/login');
   };
 
    // Prevent rendering on server to avoid hydration errors
     if (!isMounted) {
+        console.log("AdminPage: Not mounted, returning null for SSR.");
         return null;
     }
 
