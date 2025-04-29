@@ -38,7 +38,6 @@ import {
   EyeOff,
   Aperture,
   Zap,
-  Suspension
 } from 'lucide-react';
 
 const Icons = {
@@ -75,7 +74,7 @@ const Icons = {
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
   engine: Car,
-  suspension: Suspension,
+  suspension: Zap,
   brakes: Circle,
   electrical: Zap,
   body: Box,
