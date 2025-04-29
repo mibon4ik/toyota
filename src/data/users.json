@@ -6,7 +6,7 @@
     "lastName": "User",
     "email": "admin@example.com",
     "phoneNumber": "0000000000",
-    "password": "$2a$10$E.RO6byRwkPWEshnJw47nul1zgLIWdxRQRVFTEwGFGxFz7rkozD5O",
+    "password": "$2a$10$dh/LVTKlcB.RVxvRQ1ZwEOCnQ9Ta/aFwAtNXnD.SO3NSYp5ho7te.",
     "carMake": "AdminCar",
     "carModel": "AdminModel",
     "vinCode": "ADMINVINCODE00000",
