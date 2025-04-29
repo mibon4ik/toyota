@@ -14,12 +14,12 @@ const ContactsPage = () => {
           <iframe
             src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2444.789259743356!2d71.41479737284614!3d51.16861957164614!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x424581d4a47500c1%3A0x60650c1ef9d84a8f!2z0YPQuy4g0LXRgNC10LzQvdGL0Lkg0JrQu9Cw0LPQvtGA0LDRgtC40YHRgtCw0L0sIDY!5e0!3m2!1sru!2skz!4v1716767155720!5m2!1sru!2skz"
             width="600"
-            height="450"
+            height="300"
             style={{ border: 0 }}
             allowFullScreen=""
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
-            className="w-full h-96"
+            className="w-full h-64"
           ></iframe>
         </div>
         <p className="text-gray-700 mt-2">
