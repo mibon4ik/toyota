@@ -69,7 +69,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
       <MobileNav className="mr-4" />
       <Link href="/" className="mr-6 flex items-center space-x-2">
         <Icons.truck className="h-6 w-6" />
-        <span className="hidden font-bold sm:inline-block">AutoSpot</span>
+        <span className="hidden font-bold sm:inline-block">Toyota</span>
       </Link>
       <nav className="hidden md:flex space-x-4">
         <Link href="/" className={cn(

@@ -15,7 +15,7 @@ export function SiteFooter({ className, ...props }: SiteFooterProps) {
         <div className="flex flex-col items-center space-y-2 md:items-start">
           <Link href="/" className="flex items-center font-semibold">
             <Icons.truck className="mr-2 h-6 w-6" />
-            AutoSpot
+            Toyota
           </Link>
           <p className="text-sm text-muted-foreground">
             Собрано на Firebase Studio
