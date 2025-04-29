@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { AutoPart } from '@/types/autopart'; // Corrected import path
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation'; // Import useRouter
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 
 // Define CartItem extending AutoPart with quantity
 interface CartItem extends AutoPart {
@@ -246,3 +247,5 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
+
+    
