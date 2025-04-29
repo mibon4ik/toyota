@@ -72,7 +72,7 @@ const LoginPage = () => {
       title: "Вход выполнен!",
       description: "Вы успешно вошли в систему.",
     });
-    router.push(email === 'admin@admin.com' ? '/admin' : '/');
+    router.push(email === 'admin@admin.com' ? '/admin' : '/cart');
 
   };
 
