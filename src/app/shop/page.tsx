@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card'; // Import Card components
 
 // Define CartItem extending AutoPart with quantity
 interface CartItem extends AutoPart {
@@ -40,28 +41,42 @@ const ShopPage = () => {
   const initialCategory = searchParams.get('category') || 'all';
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
    const [searchTerm, setSearchTerm] = useState(''); // State for search input
+   const [isMounted, setIsMounted] = useState(false); // Track client mount
 
 
   // Cart state and persistence (could be moved to a global context/store)
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('cartItems');
-       try {
-          return storedCart ? JSON.parse(storedCart) : [];
-       } catch {
-           localStorage.removeItem('cartItems'); // Clear corrupted data
-           return [];
-       }
-    }
-    return [];
-  });
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+   // Load cart from localStorage on mount (client-side only)
    useEffect(() => {
-     if (typeof window !== 'undefined') {
-       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-       window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify navbar
+     setIsMounted(true);
+     const storedCart = localStorage.getItem('cartItems');
+     if (storedCart) {
+       try {
+         const parsedCart: CartItem[] = JSON.parse(storedCart);
+         // Basic validation of parsed cart items
+         if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
+           setCartItems(parsedCart);
+         } else {
+           console.warn("Invalid cart data found in localStorage. Clearing cart.");
+           localStorage.removeItem('cartItems');
+         }
+       } catch (e) {
+         console.error("Error parsing cart items from localStorage:", e);
+         localStorage.removeItem('cartItems'); // Clear corrupted data
+       }
      }
-   }, [cartItems]);
+   }, []);
+
+
+   // Update local storage whenever cartItems state changes (client-side only)
+   useEffect(() => {
+     if (isMounted) { // Only run on client after initial mount
+       localStorage.setItem('cartItems', JSON.stringify(cartItems));
+       // Optional: Dispatch a custom event to notify other components (like navbar badge)
+       window.dispatchEvent(new CustomEvent('cartUpdated'));
+     }
+   }, [cartItems, isMounted]);
 
 
   // Fetch products based on category and search term
@@ -99,22 +114,32 @@ const ShopPage = () => {
 
 
   const handleAddToCart = useCallback((product: AutoPart) => {
+     if (!isMounted) return; // Don't run if not mounted
+
     setCartItems(currentItems => {
       const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
       let updatedCart;
 
       if (existingItemIndex > -1) {
+        // If item exists, increment quantity
         updatedCart = currentItems.map((item, index) =>
-          index === existingItemIndex ? { ...item, quantity: item.quantity + 1 } : item
+          index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item // Ensure quantity exists
         );
-         toast({ title: "Количество обновлено!", description: `Количество ${product.name} в корзине увеличено.` });
+         toast({
+             title: "Количество обновлено!",
+             description: `Количество ${product.name} в корзине увеличено.`,
+         });
       } else {
+        // If item doesn't exist, add it with quantity 1
         updatedCart = [...currentItems, { ...product, quantity: 1 }];
-         toast({ title: "Товар добавлен!", description: `${product.name} добавлен в корзину.` });
+         toast({
+             title: "Товар добавлен в корзину!",
+             description: `${product.name} был добавлен в вашу корзину.`,
+         });
       }
       return updatedCart;
     });
-  }, [toast]); // Removed cartItems dependency to prevent potential loops if toast updates state
+  }, [toast, isMounted]); // Add isMounted
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -196,7 +221,8 @@ const ShopPage = () => {
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {products.map((product) => (
-                    <Autopart key={product.id} product={product} />
+                     // Pass handleAddToCart to Autopart component
+                    <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
                 ))}
             </div>
         )}

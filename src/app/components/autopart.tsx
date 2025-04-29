@@ -7,82 +7,21 @@ import type { AutoPart } from "@/types/autopart"; // Corrected import path
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
-// Define CartItem extending AutoPart with quantity
-interface CartItem extends AutoPart {
-  quantity: number;
-}
-
 interface AutopartProps {
   product: AutoPart;
+  onAddToCart: (product: AutoPart) => void; // Add this prop
 }
 
-const Autopart: React.FC<AutopartProps> = ({ product }) => {
+const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Receive onAddToCart prop
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-
-  // Initialize cart state lazily from localStorage on mount
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    // This function runs only once on initial render
-    if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('cartItems');
-      if (storedCart) {
-        try {
-          const parsedCart: CartItem[] = JSON.parse(storedCart);
-           // Basic validation
-           if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && typeof item.quantity === 'number')) {
-             return parsedCart;
-           }
-        } catch (e) {
-          console.error("Error parsing cart items from localStorage:", e);
-          localStorage.removeItem('cartItems'); // Clear corrupted data
-        }
-      }
-    }
-    return []; // Default to empty cart if localStorage is unavailable or invalid
-  });
 
   useEffect(() => {
     setIsMounted(true); // Component has mounted
   }, []);
 
-  // Update local storage whenever cartItems state changes (client-side only)
-  useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-       // Notify other components (like navbar badge) about the cart update
-       window.dispatchEvent(new CustomEvent('cartUpdated'));
-    }
-  }, [cartItems, isMounted]);
 
-  const handleAddToCart = useCallback(() => {
-    setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
-      let updatedCart;
-
-      if (existingItemIndex > -1) {
-        // If item exists, increment quantity
-        updatedCart = currentItems.map((item, index) =>
-          index === existingItemIndex ? { ...item, quantity: item.quantity + 1 } : item
-        );
-         toast({
-             title: "Количество обновлено!",
-             description: `Количество ${product.name} в корзине увеличено.`,
-         });
-      } else {
-        // If item doesn't exist, add it with quantity 1
-        updatedCart = [...currentItems, { ...product, quantity: 1 }];
-         toast({
-             title: "Товар добавлен в корзину!",
-             description: `${product.name} был добавлен в вашу корзину.`,
-         });
-      }
-      return updatedCart;
-    });
-
-
-  }, [product, toast, cartItems]); // Add cartItems to dependencies
-
-  const formatPrice = (price: number): string => {
+  const formatPrice = useCallback((price: number): string => {
       // Assuming price is already in Tenge (KZT) as per services/autoparts.ts
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
@@ -90,7 +29,8 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
         minimumFractionDigits: 0, // Tenge usually doesn't show fractions
         maximumFractionDigits: 0,
       }).format(price);
-    };
+    }, []); // No dependencies needed
+
 
   // Avoid rendering the button interaction part on the server
   if (!isMounted) {
@@ -138,7 +78,8 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
         </CardContent>
          {/* Footer for the button, pushed to the bottom */}
          <div className="p-6 pt-0 mt-auto">
-            <Button onClick={handleAddToCart} className="w-full">В корзину</Button>
+             {/* Call the passed-in onAddToCart function */}
+            <Button onClick={() => onAddToCart(product)} className="w-full">В корзину</Button>
         </div>
     </Card>
   );
