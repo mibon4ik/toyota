@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getCookie } from 'cookies-next'; // Use getCookie if needed elsewhere, but request.cookies is preferred here
 
 export function middleware(request: NextRequest) {
   // Check for the existence of the authToken cookie directly from the request
   const authToken = request.cookies.get('authToken')?.value;
-  const isLoggedIn = !!authToken; // User is logged in if authToken exists
+  const isLoggedInCookie = request.cookies.get('isLoggedIn')?.value; // Check isLoggedIn cookie
+  const isLoggedIn = !!authToken && isLoggedInCookie === 'true'; // User is logged in if authToken exists AND isLoggedIn cookie is 'true'
 
   const path = request.nextUrl.pathname;
 
@@ -22,7 +22,7 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
-    // If logged in, check admin status from the 'loggedInUser' cookie
+    // If logged in (cookie verified), check admin status from the 'loggedInUser' cookie
     const userCookie = request.cookies.get('loggedInUser')?.value;
     let isAdmin = false;
     if (userCookie) {
@@ -30,17 +30,24 @@ export function middleware(request: NextRequest) {
         const user = JSON.parse(userCookie);
         isAdmin = user.isAdmin === true; // Explicitly check for true
       } catch (e) {
-        console.error("Middleware: Error parsing user cookie:", e);
+        console.error("Middleware: Error parsing user cookie for admin check:", e);
         // Consider invalid cookie as not admin, redirect to login to force re-auth
-        console.log(`Middleware: Invalid user cookie found. Redirecting to /auth/login`);
-        // Optionally clear the bad cookie here if possible, though middleware doesn't easily modify response cookies.
+        console.log(`Middleware: Invalid user cookie found while checking admin. Redirecting to /auth/login`);
+        // Prepare response to clear cookies
         const response = NextResponse.redirect(new URL('/auth/login', request.url));
-         // Example of attempting to clear cookies (might not work reliably in all edge cases)
          response.cookies.delete('authToken');
          response.cookies.delete('isLoggedIn');
          response.cookies.delete('loggedInUser');
         return response;
       }
+    } else {
+         // If loggedIn cookie is set but user cookie is missing, it's an inconsistent state
+         console.log(`Middleware: Inconsistent auth state (loggedIn but no user data). Redirecting to /auth/login`);
+         const response = NextResponse.redirect(new URL('/auth/login', request.url));
+          response.cookies.delete('authToken');
+          response.cookies.delete('isLoggedIn');
+          response.cookies.delete('loggedInUser');
+         return response;
     }
 
     if (!isAdmin) {
@@ -51,13 +58,8 @@ export function middleware(request: NextRequest) {
     console.log(`Middleware: Admin user granted access to /admin.`);
   }
 
-  // --- Other Protected Routes (Example: Cart/Checkout IF they required login) ---
-  // As per request, cart/checkout are now public, so this block might be removed or adjusted.
-  // const otherProtectedRoutes = ['/cart', '/checkout']; // Example
-  // if (!isLoggedIn && otherProtectedRoutes.some(p => path.startsWith(p))) {
-  //   console.log(`Middleware: Unauthenticated user accessing ${path}. Redirecting to /auth/login`);
-  //   return NextResponse.redirect(new URL('/auth/login', request.url));
-  // }
+  // --- Cart Route (Public) ---
+  // No specific protection needed for /cart as per requirements
 
   // Allow the request to proceed if none of the above conditions were met
   return NextResponse.next();
@@ -71,7 +73,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - /images/ (public image files) - Added this to prevent middleware on images
+     * - /images/ (public image files)
      */
     '/((?!api|_next/static|_next/image|favicon.ico|images/).*)',
   ],

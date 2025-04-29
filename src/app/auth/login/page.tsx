@@ -68,7 +68,8 @@ const LoginPage = () => {
              localStorage.setItem('isLoggedIn', 'true');
              localStorage.setItem('loggedInUser', JSON.stringify(user));
              // Dispatch event to notify other components (like nav bar) immediately
-             window.dispatchEvent(new Event('authStateChanged'));
+             // Ensure this event is dispatched reliably
+             setTimeout(() => window.dispatchEvent(new Event('authStateChanged')), 0);
          } else {
              console.warn("localStorage is not available. Auth state might not persist across tabs immediately.");
          }
@@ -80,11 +81,14 @@ const LoginPage = () => {
         });
 
         // Redirect based on role AFTER state updates are likely processed
-        if (user.isAdmin) {
-            router.push('/admin'); // Redirect admin to admin page
-        } else {
-            router.push('/'); // Redirect regular user to home page
-        }
+        // Add a small delay before redirecting to allow state updates to propagate
+        setTimeout(() => {
+            if (user.isAdmin) {
+                router.push('/admin'); // Redirect admin to admin page
+            } else {
+                router.push('/'); // Redirect regular user to home page
+            }
+        }, 100); // Small delay (e.g., 100ms)
 
     } catch (err) {
         console.error("Login error:", err);

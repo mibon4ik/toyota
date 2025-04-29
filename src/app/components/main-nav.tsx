@@ -46,6 +46,8 @@ export function MainNav({ className, ...props }: MainNavProps) {
         } catch (e) {
           console.error("Error parsing cartItems from storage:", e);
           setCartItemCount(0);
+          // Optional: Clear corrupted cart data
+          // localStorage.removeItem('cartItems');
         }
       } else {
         setCartItemCount(0);
@@ -54,7 +56,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   }, []); // No state dependencies needed as it reads directly
 
   const handleLogout = useCallback(() => {
-    // Clear cookies
+    // Clear cookies first
     deleteCookie('authToken');
     deleteCookie('isLoggedIn');
     deleteCookie('loggedInUser');
@@ -65,84 +67,139 @@ export function MainNav({ className, ...props }: MainNavProps) {
         localStorage.removeItem('loggedInUser');
         // Optionally clear cart on logout? Depends on requirements.
         // localStorage.removeItem('cartItems');
-        // Dispatch event to notify other components (like nav bar) immediately
-        window.dispatchEvent(new Event('authStateChanged'));
+
+        // Update local state *before* dispatching event
+        setIsLoggedIn(false);
+        setLoggedInUser(null);
+        // setCartItemCount(0); // Reset cart count if clearing cart on logout
+
+        // Dispatch event AFTER clearing storage and setting state
+        // Use setTimeout to ensure state updates might have rendered
+        setTimeout(() => window.dispatchEvent(new Event('authStateChanged')), 0);
+    } else {
+         // If window is not defined (unexpected case for logout), still update state
+         setIsLoggedIn(false);
+         setLoggedInUser(null);
     }
 
-    // Update local state
-    setIsLoggedIn(false);
-    setLoggedInUser(null);
-    // setCartItemCount(0); // Reset cart count if clearing cart on logout
 
+    // Redirect after clearing state and potentially notifying
     router.push('/auth/login'); // Redirect to login
-  }, [router]); // Removed stable setters, only router dependency
+  }, [router]); // Only router dependency
 
   // Function to update auth state from cookies and localStorage
   const updateAuthState = useCallback(() => {
      if (typeof window === 'undefined') return; // Ensure this only runs client-side
 
+     // Prioritize cookies as the source of truth from the server/middleware
     const loggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
+    const authTokenCookie = getCookie('authToken'); // Check auth token as well
+
+    // Use localStorage as a secondary check or for cross-tab sync
     let loggedInLocalStorage = localStorage.getItem('isLoggedIn');
     let userLocalStorage = localStorage.getItem('loggedInUser');
 
+    let derivedIsLoggedIn = false;
+    let derivedUser: User | null = null;
 
-    const shouldBeLoggedIn = loggedInCookie === 'true' || loggedInLocalStorage === 'true';
-    const userJson = userCookie || userLocalStorage;
-    let parsedUser: User | null = null;
-    let isActuallyLoggedIn = false;
-
-    if (shouldBeLoggedIn && userJson) {
+    // Check cookies first
+    if (authTokenCookie && loggedInCookie === 'true' && userCookie) {
         try {
-            parsedUser = JSON.parse(userJson);
+            derivedUser = JSON.parse(userCookie);
             // Basic validation
-            if (parsedUser && parsedUser.id && parsedUser.username) {
-                isActuallyLoggedIn = true;
+            if (derivedUser && derivedUser.id && derivedUser.username) {
+                derivedIsLoggedIn = true;
             } else {
-                 console.warn("Invalid user data structure in storage.");
-                 parsedUser = null; // Treat invalid data as logged out
-                 isActuallyLoggedIn = false;
-                 // Clear invalid storage potentially causing issues
-                 deleteCookie('authToken');
-                 deleteCookie('isLoggedIn');
-                 deleteCookie('loggedInUser');
-                 localStorage.removeItem('isLoggedIn');
-                 localStorage.removeItem('loggedInUser');
-
+                 console.warn("Invalid user data structure in cookie storage.");
+                 derivedUser = null; // Treat invalid data as logged out
+                 derivedIsLoggedIn = false;
             }
         } catch (e) {
-            console.error("Error parsing user data:", e);
-            parsedUser = null; // Treat parse error as logged out
-            isActuallyLoggedIn = false;
-             // Clear invalid storage
-             deleteCookie('authToken');
-             deleteCookie('isLoggedIn');
-             deleteCookie('loggedInUser');
-             localStorage.removeItem('isLoggedIn');
-             localStorage.removeItem('loggedInUser');
+            console.error("Error parsing user cookie:", e);
+            derivedUser = null; // Treat parse error as logged out
+            derivedIsLoggedIn = false;
         }
-    } else {
-         isActuallyLoggedIn = false;
-         parsedUser = null;
     }
 
-    // Set state based on derived values ONLY if they changed
-     setIsLoggedIn(current => current !== isActuallyLoggedIn ? isActuallyLoggedIn : current);
-     setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(parsedUser) ? parsedUser : current);
+    // If not logged in via cookies, check localStorage (useful for initial client load)
+    if (!derivedIsLoggedIn && loggedInLocalStorage === 'true' && userLocalStorage) {
+         try {
+            derivedUser = JSON.parse(userLocalStorage);
+             // Basic validation
+            if (derivedUser && derivedUser.id && derivedUser.username) {
+                derivedIsLoggedIn = true;
+                 // Sync cookie if localStorage has valid data but cookie is missing/invalid
+                 if (!authTokenCookie || !loggedInCookie || !userCookie) {
+                     console.log("Syncing auth state from localStorage to cookies.");
+                     // Re-set cookies based on localStorage - requires a helper or logic here
+                     // For simplicity, we'll just update the UI state for now.
+                 }
+            } else {
+                 console.warn("Invalid user data structure in local storage.");
+                 derivedUser = null; // Treat invalid data as logged out
+                 derivedIsLoggedIn = false;
+            }
+         } catch (e) {
+              console.error("Error parsing user data from local storage:", e);
+              derivedUser = null; // Treat parse error as logged out
+              derivedIsLoggedIn = false;
+         }
+    }
+
+    // If checks fail, ensure state is logged out
+    if (!derivedIsLoggedIn) {
+        derivedUser = null;
+        // Optionally clear potentially inconsistent storage
+        // Be careful not to trigger logout loops if middleware relies on cookies
+        // if (authTokenCookie || loggedInCookie || userCookie) {
+        //     deleteCookie('authToken');
+        //     deleteCookie('isLoggedIn');
+        //     deleteCookie('loggedInUser');
+        // }
+        // if (loggedInLocalStorage || userLocalStorage) {
+        //     localStorage.removeItem('isLoggedIn');
+        //     localStorage.removeItem('loggedInUser');
+        // }
+    }
 
 
-  }, []); // Removed state setters from dependencies
+    // Set state based on derived values ONLY if they changed to prevent loops
+    setIsLoggedIn(current => {
+        if (current !== derivedIsLoggedIn) {
+            // console.log(`MainNav: Updating isLoggedIn state from ${current} to ${derivedIsLoggedIn}`);
+            return derivedIsLoggedIn;
+        }
+        return current;
+    });
+    setLoggedInUser(current => {
+        // Deep comparison for object might be needed if structure is complex
+        if (JSON.stringify(current) !== JSON.stringify(derivedUser)) {
+            // console.log(`MainNav: Updating loggedInUser state.`);
+            return derivedUser;
+        }
+        return current;
+    });
+
+
+  }, [setIsLoggedIn, setLoggedInUser]); // Add setters as dependencies
 
   // Effect to run on mount and listen for changes
    useEffect(() => {
         setIsMounted(true); // Indicate component has mounted
 
-        // Initial check on mount
-        updateAuthState();
-        updateCartCount();
+        // Initial check on mount - ensure this runs after component is mounted
+        // Use setTimeout to ensure it runs after the initial render cycle
+        const initialCheckTimeout = setTimeout(() => {
+            // console.log("MainNav: Running initial auth and cart check.");
+            updateAuthState();
+            updateCartCount();
+        }, 0);
+
 
         // Listener for direct storage changes (e.g., other tabs)
         const handleStorageChange = (event: StorageEvent) => {
+            // console.log(`MainNav: Storage event detected for key: ${event.key}`);
             if (event.key === 'cartItems') {
                 updateCartCount();
             }
@@ -152,9 +209,15 @@ export function MainNav({ className, ...props }: MainNavProps) {
         };
 
         // Listener for custom event dispatched after login/logout actions
-        const handleAuthStateChanged = () => updateAuthState();
+        const handleAuthStateChanged = () => {
+             // console.log("MainNav: 'authStateChanged' event received.");
+             updateAuthState();
+        };
         // Listener for custom event dispatched after cart updates
-        const handleCartUpdated = () => updateCartCount();
+        const handleCartUpdated = () => {
+             // console.log("MainNav: 'cartUpdated' event received.");
+             updateCartCount();
+        };
 
         // Attach listeners
         window.addEventListener('storage', handleStorageChange);
@@ -164,11 +227,13 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
         // Cleanup listeners on component unmount
         return () => {
+            // console.log("MainNav: Cleaning up listeners.");
+            clearTimeout(initialCheckTimeout);
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('authStateChanged', handleAuthStateChanged);
             window.removeEventListener('cartUpdated', handleCartUpdated);
         };
-    // updateAuthState and updateCartCount are stable due to useCallback with no dependencies
+    // updateAuthState and updateCartCount are stable due to useCallback
     }, [updateAuthState, updateCartCount]);
 
 
@@ -181,9 +246,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
         // Render a skeleton or simplified version during SSR/initial client render
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-                 <Button variant="ghost" size="icon" className="mr-2" disabled>
-                     <Icons.menu className="h-4 w-4" />
-                 </Button>
+                 <MobileNav className="mr-4" /> {/* Keep MobileNav for structure */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
@@ -193,12 +256,14 @@ export function MainNav({ className, ...props }: MainNavProps) {
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
+                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div> {/* Placeholder for Contacts */}
                 </nav>
                  <div className="ml-auto flex items-center space-x-4">
                      <Button size="sm" variant="ghost" className="relative" disabled>
                           <Icons.shoppingCart className="h-4 w-4" />
                           <span className="sr-only">Корзина</span>
                       </Button>
+                     {/* Skeleton for Login/User info */}
                      <div className="h-8 w-20 bg-muted rounded animate-pulse"></div>
                  </div>
             </div>
@@ -206,8 +271,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
     }
 
 
-   // Render the final structure directly on both server and client
-   // useEffect will update the state after hydration based on client-side storage
+   // Render the final structure after mount
    return (
      <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
        <MobileNav className="mr-4" /> {/* Add MobileNav */}

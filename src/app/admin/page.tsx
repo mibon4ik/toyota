@@ -23,29 +23,66 @@ const AdminPage = () => {
     if (!isMounted) return; // Don't run on server
 
     const checkAdminStatusAndFetchUsers = async () => {
-        let loggedInUserCookie: string | undefined;
         let isAdmin = false;
 
-        if (typeof window !== 'undefined') {
-            loggedInUserCookie = getCookie('loggedInUser');
-        }
+        // Prioritize checking cookies for auth state
+        const authTokenCookie = getCookie('authToken');
+        const isLoggedInCookie = getCookie('isLoggedIn');
+        const userCookie = getCookie('loggedInUser');
 
-
-        if (loggedInUserCookie) {
+        if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
             try {
-                const loggedInUser: User = JSON.parse(loggedInUserCookie);
+                const loggedInUser: User = JSON.parse(userCookie);
                 isAdmin = loggedInUser.isAdmin === true;
             } catch (e) {
-                console.error("Error parsing loggedInUser cookie:", e);
+                console.error("Admin Page: Error parsing loggedInUser cookie:", e);
+                // If cookie is invalid, treat as not admin and potentially clear cookies
+                 deleteCookie('authToken');
+                 deleteCookie('isLoggedIn');
+                 deleteCookie('loggedInUser');
+                 localStorage.removeItem('isLoggedIn'); // Clear localStorage too
+                 localStorage.removeItem('loggedInUser');
+                 window.dispatchEvent(new Event('authStateChanged'));
+                 router.push('/auth/login');
+                 return;
+            }
+        } else {
+            // Fallback to localStorage check ONLY if cookies are missing/invalid
+            const loggedInLocalStorage = localStorage.getItem('isLoggedIn');
+            const userLocalStorage = localStorage.getItem('loggedInUser');
+
+            if (loggedInLocalStorage === 'true' && userLocalStorage) {
+                try {
+                    const loggedInUser: User = JSON.parse(userLocalStorage);
+                    isAdmin = loggedInUser.isAdmin === true;
+                     // If localStorage is valid but cookies were missing, maybe redirect to login
+                     // to force cookie setting, or proceed if admin status is confirmed here.
+                     if (!isAdmin) {
+                        console.log("Admin Page: User logged in via localStorage but not admin.");
+                     } else {
+                         console.log("Admin Page: Admin status confirmed via localStorage fallback.");
+                     }
+                } catch (e) {
+                    console.error("Admin Page: Error parsing loggedInUser localStorage:", e);
+                    // If localStorage is also invalid, definitely redirect
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('loggedInUser');
+                    window.dispatchEvent(new Event('authStateChanged'));
+                    router.push('/auth/login');
+                    return;
+                }
             }
         }
 
+
         if (!isAdmin) {
+            console.log("Admin Page: User is not admin or not logged in. Redirecting.");
             router.push('/auth/login');
             return; // Stop execution if not admin
         }
 
-        // Fetch users if admin
+        // Fetch users ONLY if admin status is confirmed
+        console.log("Admin Page: Admin access granted. Fetching users...");
         try {
             const fetchedUsers = await getAllUsers();
             setUsers(fetchedUsers);
@@ -62,15 +99,19 @@ const AdminPage = () => {
 
 
   const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-        deleteCookie('authToken');
-        deleteCookie('isLoggedIn');
-        deleteCookie('loggedInUser');
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-        window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
-    }
-    router.push('/auth/login');
+      // Clear cookies first
+      deleteCookie('authToken');
+      deleteCookie('isLoggedIn');
+      deleteCookie('loggedInUser');
+
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('loggedInUser');
+          // Dispatch event immediately
+          window.dispatchEvent(new Event('authStateChanged'));
+      }
+      router.push('/auth/login');
   };
 
    // Prevent rendering on server to avoid hydration errors
