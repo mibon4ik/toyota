@@ -17,9 +17,6 @@ export function SiteFooter({ className, ...props }: SiteFooterProps) {
             <Icons.truck className="mr-2 h-6 w-6" />
             Toyota
           </Link>
-          <p className="text-sm text-muted-foreground">
-            Собрано на Firebase Studio
-          </p>
         </div>
         <nav className="flex flex-wrap items-center space-x-6 text-sm">
           <Link href="/" className="hover:text-foreground">
