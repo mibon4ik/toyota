@@ -17,11 +17,22 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (email === 'admin' && password === 'admin') {
-      localStorage.setItem('isLoggedIn', 'true');
-      router.push('/');
+    // Retrieve user data from localStorage
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+      const users = JSON.parse(storedUsers);
+      // Find user by email
+      const user = users.find((u: any) => u.email === email && u.password === password);
+
+      if (user) {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(user));
+        router.push('/');
+      } else {
+        setError('Неверные учетные данные');
+      }
     } else {
-      setError('Неверные учетные данные');
+      setError('Пользователь не найден');
     }
   };
 
@@ -34,11 +45,11 @@ const LoginPage = () => {
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Имя пользователя</Label>
+              <Label htmlFor="email">Адрес электронной почты</Label>
               <Input
                 id="email"
-                type="text"
-                placeholder="Имя пользователя"
+                type="email"
+                placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required

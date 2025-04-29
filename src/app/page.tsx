@@ -5,7 +5,6 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Icons} from "@/components/icons";
 import {cn} from "@/lib/utils";
-import {Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious} from "@/components/ui/carousel";
 import Autopart from "@/components/autopart";
 import Link from "next/link";
 import {suggestCompatibleParts} from '@/ai/flows/suggest-compatible-parts';
@@ -206,29 +205,23 @@ const HomePage = () => {
   return (
     <div className="fade-in">
       {/* Banner Carousel */}
-      <Carousel className="w-full">
-        <CarouselContent>
-          {banners.map((banner, index) => (
-            <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-              <div className="p-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{banner.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <img src={banner.imageUrl} alt={banner.title} className="rounded-md"/>
-                    <Button asChild>
-                      <Link href={banner.href}>{banner.buttonText}</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious />
-        <CarouselNext />
-      </Carousel>
+        <div>
+            {banners.map((banner, index) => (
+                <div key={index}>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{banner.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <img src={banner.imageUrl} alt={banner.title} className="rounded-md"/>
+                      <Button asChild>
+                        <Link href={banner.href}>{banner.buttonText}</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+            ))}
+        </div>
 
       {/* Compatibility Checker */}
       <section className="py-12">

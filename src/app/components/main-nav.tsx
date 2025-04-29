@@ -18,6 +18,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   const pathname = usePathname();
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -32,9 +33,15 @@ export function MainNav({ className, ...props }: MainNavProps) {
       setCartItemCount(0);
     }
 
-    // Check login status from cookies
+    // Check login status from local storage
     const storedLogin = localStorage.getItem('isLoggedIn');
     setIsLoggedIn(storedLogin === 'true');
+
+    // Load logged-in user data from localStorage
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (storedUser) {
+      setLoggedInUser(JSON.parse(storedUser));
+    }
   }, []);
 
   useEffect(() => {
@@ -51,7 +58,9 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loggedInUser');
     setIsLoggedIn(false);
+    setLoggedInUser(null);
     router.push('/auth/login');
   };
 
@@ -105,9 +114,12 @@ export function MainNav({ className, ...props }: MainNavProps) {
           </Button>
         </Link>
         {isLoggedIn ? (
-          <Button size="sm" variant="ghost" onClick={handleLogout}>
-            Выйти
-          </Button>
+          <>
+            <span>{loggedInUser?.firstName} {loggedInUser?.lastName}</span>
+            <Button size="sm" variant="ghost" onClick={handleLogout}>
+              Выйти
+            </Button>
+          </>
         ) : (
           <Link href="/auth/login">
             <Button size="sm" variant="ghost">

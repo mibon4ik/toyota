@@ -6,6 +6,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 const RegistrationPage = () => {
   const [firstName, setFirstName] = useState('');
@@ -19,6 +20,7 @@ const RegistrationPage = () => {
   const [vinCode, setVinCode] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+    const { toast } = useToast();
 
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +34,31 @@ const RegistrationPage = () => {
       setError('Пароли не совпадают.');
       return;
     }
+
+    // Store user data in localStorage
+    let users = [];
+    const storedUsers = localStorage.getItem('users');
+    if (storedUsers) {
+      users = JSON.parse(storedUsers);
+    }
+
+    const newUser = {
+      firstName,
+      lastName,
+      email,
+      phoneNumber,
+      password,
+      carMake,
+      carModel,
+      vinCode,
+    };
+
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    toast({
+        title: "Регистрация успешна!",
+        description: "Вы будете перенаправлены на страницу входа",
+    });
 
     try {
       console.log('Регистрация успешна!');

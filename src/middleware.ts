@@ -2,7 +2,19 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Add your middleware logic here
+  const isLoggedIn = request.cookies.get('isLoggedIn')?.value === 'true';
+  const path = request.nextUrl.pathname;
+
+  if (path === '/auth/login' && isLoggedIn) {
+    return NextResponse.redirect(new URL('/', request.nextUrl));
+  }
+    if (path === '/auth/register' && isLoggedIn) {
+        return NextResponse.redirect(new URL('/', request.nextUrl));
+    }
+  if ((path === '/cart' || path === '/checkout') && !isLoggedIn) {
+    return NextResponse.redirect(new URL('/auth/login', request.nextUrl));
+  }
+
   return NextResponse.next();
 }
 
@@ -17,5 +29,4 @@ export const config = {
     '/((?!_next|static|favicon\\.ico).*)',
   ],
 };
-
 
