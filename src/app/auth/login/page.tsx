@@ -9,7 +9,9 @@ import {Label} from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
-import {setCookie} from 'cookies-next';
+import { setCookie } from 'cookies-next';
+import { verifyPassword } from '@/lib/auth'; // Use the new auth function
+import type { User } from '@/types/user'; // Import the User type
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -18,13 +20,16 @@ const LoginPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const generateToken = (user: any) => {
-    // Simple token generation (replace with a more secure method in production)
+  const generateToken = (user: User) => {
+    // Simple token generation (replace with a more secure method like JWT in production)
     const userData = {
-      id: user.id || user.email, // Use a unique user identifier
+      id: user.id,
       email: user.email,
-      isAdmin: user.isAdmin,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isAdmin: user.isAdmin || false, // Default to false if not present
     };
     return btoa(JSON.stringify(userData)); // Base64 encode for simplicity
   };
@@ -32,45 +37,41 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // Hardcoded admin credentials
-    if (email === 'admin@admin.com' && password === 'admin') {
-      const adminUser = { email: 'admin@admin.com', isAdmin: true, firstName: 'Admin', lastName: 'User', id: 'admin' };
-      const token = generateToken(adminUser);
-      setCookie('authToken', token);
-      setCookie('isLoggedIn', 'true');
-      setCookie('loggedInUser', JSON.stringify(adminUser));
-      toast({
-        title: "Вход выполнен!",
-        description: "Вы успешно вошли в систему как администратор.",
-      });
-      router.push('/');
-      return;
+    try {
+        const user = await verifyPassword(email, password);
+
+        if (!user) {
+          setError('Неверные учетные данные');
+          setIsLoading(false);
+          return;
+        }
+
+        // Credentials are valid, generate token and set cookies
+        const token = generateToken(user);
+        setCookie('authToken', token, { maxAge: 60 * 60 * 24 * 7 }); // Expires in 7 days
+        setCookie('isLoggedIn', 'true', { maxAge: 60 * 60 * 24 * 7 });
+        setCookie('loggedInUser', JSON.stringify(user), { maxAge: 60 * 60 * 24 * 7 });
+
+        toast({
+            title: "Вход выполнен!",
+            description: user.isAdmin ? "Вы успешно вошли в систему как администратор." : "Вы успешно вошли в систему.",
+        });
+
+        // Redirect based on role
+        if (user.isAdmin) {
+            router.push('/admin'); // Redirect admin to admin page
+        } else {
+            router.push('/'); // Redirect regular user to home page
+        }
+
+    } catch (err) {
+        console.error("Login error:", err);
+        setError('Ошибка входа. Пожалуйста, попробуйте позже.');
+    } finally {
+        setIsLoading(false);
     }
-
-    const storedUsers = localStorage.getItem('users');
-    if (!storedUsers) {
-      setError('Неверные учетные данные');
-      return;
-    }
-
-    const users = JSON.parse(storedUsers);
-    const user = users.find((u: any) => u.email === email && u.password === password);
-
-    if (!user) {
-      setError('Неверные учетные данные');
-      return;
-    }
-    const token = generateToken(user);
-    setCookie('authToken', token);
-    setCookie('isLoggedIn', 'true');
-    setCookie('loggedInUser', JSON.stringify({ ...user, isAdmin: false }));
-
-    toast({
-      title: "Вход выполнен!",
-      description: "Вы успешно вошли в систему.",
-    });
-    router.push('/');
   };
 
   return (
@@ -90,6 +91,7 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div>
@@ -102,28 +104,30 @@ const LoginPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
-                  {showPassword ? <Icons.eyeOff /> : <Icons.eye />}
+                  {showPassword ? <Icons.eyeOff className="h-4 w-4" /> : <Icons.eye className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
-            <Button type="submit" className="w-full">
-              Войти
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? 'Вход...' : 'Войти'}
             </Button>
           </form>
 
           <div className="mt-4 text-center">
             <p>Еще нет аккаунта?</p>
             <Link href="/auth/register">
-              <Button variant="secondary" className="bg-[#535353ff] text-primary-foreground hover:bg-[#535353ff]/90 italic">Зарегистрироваться</Button>
+               <Button variant="secondary" className="bg-[#535353ff] text-primary-foreground hover:bg-[#535353ff]/90 italic">Зарегистрироваться</Button>
             </Link>
           </div>
         </CardContent>
