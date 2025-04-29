@@ -3,7 +3,7 @@
 
 import React, {useState, useEffect, useCallback} from 'react';
 import { getAutoPartsByCategory} from "@/services/autoparts";
-import type { AutoPart } from "@/types/autopart"; // Corrected import path
+import type { AutoPart } from '@/types/autopart'; // Corrected import path
 import Autopart from "@/app/components/autopart"; // Ensure correct path to Autopart component
 import {useToast} from "@/hooks/use-toast";
 import {useSearchParams} from "next/navigation";
@@ -29,6 +29,11 @@ const categories = [
   { value: 'Электрика', label: 'Электрика' },
   { value: 'Аксессуары', label: 'Аксессуары' },
   { value: 'Кузов', label: 'Кузов' },
+  { value: 'Освещение', label: 'Освещение' },
+  { value: 'Охлаждение', label: 'Охлаждение' },
+  { value: 'Трансмиссия', label: 'Трансмиссия' },
+  { value: 'Выхлопная система', label: 'Выхлопная система' },
+  { value: 'Интерьер', label: 'Интерьер' },
 ];
 
 
@@ -200,12 +205,12 @@ const ShopPage = () => {
 
        {/* Product Grid */}
         {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"> {/* Adjusted grid columns and gap */}
                 {/* Skeleton Loaders */}
-                {[...Array(8)].map((_, index) => (
+                {[...Array(10)].map((_, index) => ( // Show 10 skeletons
                     <Card key={index} className="w-full">
                         <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
-                        <CardContent className="flex flex-col items-center">
+                        <CardContent className="flex flex-col items-center p-4"> {/* Adjusted padding */}
                             <Skeleton className="h-32 w-full mb-4 rounded-md" />
                             <Skeleton className="h-4 w-1/4 mb-2" />
                             <Skeleton className="h-6 w-1/2 mb-4" />
@@ -219,7 +224,7 @@ const ShopPage = () => {
         ) : products.length === 0 ? (
              <p className="text-center text-muted-foreground">Товары не найдены{searchTerm ? ` по запросу "${searchTerm}"` : ''}{selectedCategory !== 'all' ? ` в категории "${categories.find(c => c.value === selectedCategory)?.label}"` : ''}.</p>
         ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"> {/* Adjusted grid columns and gap */}
                 {products.map((product) => (
                      // Pass handleAddToCart to Autopart component
                     <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
