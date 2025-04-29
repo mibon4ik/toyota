@@ -116,6 +116,13 @@ export function MainNav({ className, ...props }: MainNavProps) {
         {isLoggedIn ? (
           <>
             <span>{loggedInUser?.firstName} {loggedInUser?.lastName}</span>
+            {loggedInUser?.email === 'admin@admin.com' && (
+              <Link href="/admin">
+                <Button size="sm" variant="ghost">
+                  Админ панель
+                </Button>
+              </Link>
+            )}
             <Button size="sm" variant="ghost" onClick={handleLogout}>
               Выйти
             </Button>

@@ -33,7 +33,7 @@ const LoginPage = () => {
         title: "Вход выполнен!",
         description: "Вы успешно вошли в систему.",
       });
-      router.push('/');
+      router.push(email === 'admin@admin.com' ? '/admin' : '/');
     } else {
       setError('Неверные учетные данные');
     }
