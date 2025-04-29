@@ -90,17 +90,17 @@ const RegistrationPage = () => {
 
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', JSON.stringify(newUser));
+    localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('loggedInUser', JSON.stringify(newUser));
     toast({
       title: "Регистрация успешна!",
-      description: "Вы будете перенаправлены на страницу входа",
+      description: "Вы будете перенаправлены на главную страницу.",
     });
 
     try {
       console.log('Регистрация успешна!');
       setError('');
-      router.push('/cart');
+      router.push('/');
     } catch (err) {
       setError('Ошибка при регистрации. Пожалуйста, попробуйте позже.');
     }
@@ -187,10 +187,12 @@ const RegistrationPage = () => {
                 type="text"
                 placeholder="VIN-код автомобиля"
                 value={vinCode}
-                onChange={(e) => setVinCode(e.target.value)}
+                onChange={(e) => setVinCode(e.target.value.toUpperCase())} // Convert to uppercase
                 required
                 minLength={17}
                 maxLength={17}
+                pattern="[A-HJ-NPR-Z0-9]{17}" // Basic VIN pattern validation
+                title="VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
               />
             </div>
             <div>
@@ -203,6 +205,8 @@ const RegistrationPage = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  pattern="(?=.*\d)(?=.*[A-Z]).{8,}"
+                  title="Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру."
                 />
                 <Button
                   type="button"
@@ -211,7 +215,7 @@ const RegistrationPage = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Icons.shield /> : <Icons.user />}
+                  {showPassword ? <Icons.eyeOff /> : <Icons.eye />}
                 </Button>
               </div>
             </div>
@@ -233,12 +237,12 @@ const RegistrationPage = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  {showConfirmPassword ? <Icons.shield /> : <Icons.user />}
+                  {showConfirmPassword ? <Icons.eyeOff /> : <Icons.eye />}
                 </Button>
               </div>
             </div>
             {error && <p className="text-red-500 text-xs italic">{error}</p>}
-            <Button type="submit" className="w-full  hover:bg-primary/90 italic">
+            <Button type="submit" className="w-full hover:bg-[#8dc572] italic">
               Зарегистрироваться
             </Button>
           </form>
