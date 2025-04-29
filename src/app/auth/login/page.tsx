@@ -11,8 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
   const { toast } = useToast();
@@ -20,21 +20,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     // Pre-populate users in localStorage for initial setup
-    if (!localStorage.getItem('users')) {
-      const initialUsers = [
-        {
-          firstName: 'Admin',
-          lastName: 'User',
-          email: 'admin@admin.com',
-          phoneNumber: '123-456-7890',
-          password: 'admin',
-          carMake: 'Toyota',
-          carModel: 'Camry',
-          vinCode: '1234567890ABCDEFG',
-        },
-      ];
-      localStorage.setItem('users', JSON.stringify(initialUsers));
-    }
+      localStorage.removeItem('users');
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
