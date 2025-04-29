@@ -123,7 +123,7 @@ const benefits = [
   },
   {
     title: 'Круглосуточная поддержка',
-    description: 'Наша служба поддержки работает круглосуточно и готова помочь вам.',
+    description: 'Наша служба поддержки работает круглосуточно и готово помочь вам.',
     icon: Icons.help,
   },
 ];
@@ -268,7 +268,7 @@ const HomePage = () => {
             {categories.map((category) => (
               <Link href={category.href} key={category.name} className="flex flex-col items-center justify-center">
                 <Card className="w-full p-4 product-card">
-                  {React.createElement(category.icon, {className: "w-8 h-8 mb-2 text-primary"})}
+                  {React.createElement(category.icon, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' }})}
                   <CardTitle className="text-sm font-semibold">{category.name}</CardTitle>
                 </Card>
               </Link>
@@ -308,7 +308,7 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
             {benefits.map((benefit) => (
               <Card key={benefit.title} className="p-6 product-card">
-                {React.createElement(benefit.icon, {className: "w-10 h-10 mb-4 text-primary"})}
+                {React.createElement(benefit.icon, {className: "w-10 h-10 mb-4", style: { color: '#535353ff' }})}
                 <CardTitle className="text-xl font-semibold mb-2">{benefit.title}</CardTitle>
                 <CardDescription>{benefit.description}</CardDescription>
               </Card>
