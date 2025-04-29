@@ -35,6 +35,11 @@ const RegistrationPage = () => {
       return;
     }
 
+      if (vinCode.length !== 17) {
+          setError('VIN-код должен содержать 17 символов.');
+          return;
+      }
+
     // Store user data in localStorage
     let users = [];
     const storedUsers = localStorage.getItem('users');
@@ -147,11 +152,14 @@ const RegistrationPage = () => {
               <Label htmlFor="vinCode">VIN-код автомобиля</Label>
               <Input
                 id="vinCode"
-                type="number"
+                type="text"
                 placeholder="VIN-код автомобиля"
                 value={vinCode}
                 onChange={(e) => setVinCode(e.target.value)}
                 required
+                minLength={17}
+                maxLength={17}
+                pattern="[0-9A-Za-z]{17}"
               />
             </div>
             <div>
