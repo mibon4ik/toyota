@@ -37,6 +37,8 @@ import {
   Eye,
   EyeOff,
   Aperture,
+  Zap,
+  Suspension
 } from 'lucide-react';
 
 const Icons = {
@@ -73,15 +75,16 @@ const Icons = {
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
   engine: Car,
-  suspension: Camera,
+  suspension: Suspension,
   brakes: Circle,
-  electrical: Truck,
+  electrical: Zap,
   body: Box,
   accessories: Car,
   truck: Truck,
   eye: Eye,
   eyeOff: EyeOff,
   aperture: Aperture,
+  zap: Zap,
 };
 
 export {Icons};

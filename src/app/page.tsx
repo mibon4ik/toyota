@@ -29,7 +29,7 @@ const categories = [
   },
   {
     name: 'Электрика',
-    icon: Icons.electrical,
+    icon: Icons.zap,
     href: '/shop?category=electrical',
   },
   {
