@@ -11,7 +11,7 @@ interface SiteFooterProps extends React.HTMLAttributes<HTMLElement> {}
 export function SiteFooter({ className, ...props }: SiteFooterProps) {
   return (
     <footer className={cn("border-t bg-background", className)} {...props}>
-      <div className="container flex flex-col items-center justify-between space-y-4 py-6 md:flex-row md:space-y-0">
+      <div className="container flex flex-col items-center justify-between space-y-4 py-6 md:flex-row md:space-y-0 pl-6">
         <div className="flex flex-col items-center space-y-2 md:items-start">
           <Link href="/" className="flex items-center font-semibold">
             <Icons.truck className="mr-2 h-6 w-6" />
