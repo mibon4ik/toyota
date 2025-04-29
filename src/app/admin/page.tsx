@@ -4,6 +4,7 @@ import React, {useEffect, useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
+import {Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 
 interface User {
   firstName: string;
@@ -46,28 +47,38 @@ const AdminPage = () => {
           <CardTitle className="text-2xl text-center">Панель администратора</CardTitle>
         </CardHeader>
         <CardContent>
+          <Button className="mt-4" onClick={handleLogout}>Выйти</Button>
           <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
           {users.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {users.map((user, index) => (
-                <Card key={index} className="p-4">
-                  <CardHeader>
-                    <CardTitle>{user.firstName} {user.lastName}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p>Email: {user.email}</p>
-                    <p>Номер телефона: {user.phoneNumber}</p>
-                    <p>Марка машины: {user.carMake}</p>
-                    <p>Модель машины: {user.carModel}</p>
-                    <p>VIN-код: {user.vinCode}</p>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Имя</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Номер телефона</TableHead>
+                    <TableHead>Марка машины</TableHead>
+                    <TableHead>Модель машины</TableHead>
+                    <TableHead>VIN-код</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{user.firstName} {user.lastName}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.phoneNumber}</TableCell>
+                      <TableCell>{user.carMake}</TableCell>
+                      <TableCell>{user.carModel}</TableCell>
+                      <TableCell>{user.vinCode}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <p>Пользователи не найдены.</p>
           )}
-          <Button className="mt-4" onClick={handleLogout}>Выйти</Button>
         </CardContent>
       </Card>
     </div>
