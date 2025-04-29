@@ -10,10 +10,7 @@ const ContactsPage = () => {
           <strong>Контакты для связи:</strong> Техническая поддержка 8 (7172) 27 02 00
         </p>
         <p className="text-gray-700">
-          <strong>Часы работы:</strong>
-        </p>
-        <p className="text-gray-700">
-          ПН-ВС: 8:00-20:00
+          <strong>Часы работы:</strong> ПН-ВС: 8:00-20:00
         </p>
       </div>
     </div>
