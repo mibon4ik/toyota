@@ -8,7 +8,7 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { Icons } from "@/components/icons";
+import * as Icons from "@/components/icons";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('admin@admin.com');
@@ -76,7 +76,7 @@ const LoginPage = () => {
                   className="absolute right-2 top-1/2 -translate-y-1/2"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <Icons.eyeOff /> : <Icons.eye />}
+                  {showPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
                 </Button>
               </div>
             </div>
