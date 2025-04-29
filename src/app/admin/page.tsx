@@ -28,9 +28,10 @@ const AdminPage = () => {
       router.push('/auth/login');
     }
 
-    // Load users from localStorage
-    localStorage.removeItem('users');
-    setUsers([]);
+    const storedUsers = localStorage.getItem('users');
+      if (storedUsers) {
+          setUsers(JSON.parse(storedUsers));
+      }
   }, [router]);
 
   const handleLogout = () => {
