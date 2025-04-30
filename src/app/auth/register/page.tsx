@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RegistrationForm } from './components/RegistrationForm'; // Import the new form component
+import { RegistrationForm } from './components/RegistrationForm';
 
 const RegistrationPage = () => {
   return (

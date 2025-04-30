@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { AutoPart } from '@/types/autopart'; // Corrected import path
+import type { AutoPart } from '@/types/autopart';
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from 'next/navigation'; // Import useRouter
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { useRouter } from 'next/navigation';
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Define CartItem extending AutoPart with quantity
 interface CartItem extends AutoPart {
   quantity: number;
 }
@@ -21,9 +20,9 @@ const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
-  const router = useRouter(); // Initialize router
+  const router = useRouter();
 
-  // Load cart from localStorage on component mount (client-side only)
+
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
@@ -43,7 +42,7 @@ const CheckoutPage = () => {
     }
   }, []);
 
-   // Effect to redirect if cart becomes empty after mount
+
   useEffect(() => {
     if (isMounted && cartItems.length === 0) {
       toast({
@@ -60,7 +59,7 @@ const CheckoutPage = () => {
   }, [cartItems]);
 
    const formatPrice = useCallback((price: number): string => {
-      // Assuming price is already in Tenge (KZT)
+
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
         currency: 'KZT',
@@ -72,37 +71,33 @@ const CheckoutPage = () => {
 
     const handleCheckoutSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        // TODO: Implement actual order submission logic here
-        // - Collect form data
-        // - Validate form data
-        // - Send order data to backend/API
-        // - Handle success/error response
+
 
          console.log("Оформление заказа...");
-         // Simulate successful order placement
+
          toast({
             title: "Заказ оформлен!",
             description: "Ваш заказ успешно оформлен. Спасибо за покупку!",
          });
 
-         // Clear the cart after successful checkout
-         localStorage.removeItem('cartItems');
-         setCartItems([]); // Update local state
-          window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify navbar
 
-          // Redirect to a success page or home page
+         localStorage.removeItem('cartItems');
+         setCartItems([]);
+          window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+
          router.push('/');
     };
 
 
-  // Render loading state or nothing on the server/initial render
+
   if (!isMounted) {
-     // You can return a loading skeleton here if needed
+
     return (
          <div className="container mx-auto py-8 max-w-3xl">
              <h1 className="text-3xl font-bold text-center mb-8">Оформление заказа</h1>
               <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-              {/* Add skeleton loaders for form fields */}
+
               <div className="space-y-8 mt-8">
                  <Skeleton className="h-40 w-full rounded-md" />
                  <Skeleton className="h-48 w-full rounded-md" />
@@ -114,8 +109,7 @@ const CheckoutPage = () => {
     );
   }
 
-  // If cart is empty after mount, the useEffect above will redirect,
-  // but we can add an extra check here to prevent rendering the form briefly
+
    if (cartItems.length === 0) {
       return (
            <div className="container mx-auto py-8 max-w-3xl">
@@ -176,11 +170,7 @@ const CheckoutPage = () => {
                 <Input id="apartment" name="apartment" type="text" placeholder="Номер квартиры" autoComplete="address-line3" />
               </div>
             </div>
-             {/* Optional: Postal Code */}
-            {/* <div className="space-y-1">
-              <Label htmlFor="postalCode">Почтовый индекс</Label>
-              <Input id="postalCode" name="postalCode" type="text" placeholder="Почтовый индекс" autoComplete="postal-code" />
-            </div> */}
+
           </CardContent>
         </Card>
 
@@ -198,8 +188,8 @@ const CheckoutPage = () => {
                  <SelectContent>
                    <SelectItem value="online">Онлайн оплата картой (недоступно)</SelectItem>
                    <SelectItem value="cash_on_delivery">Оплата при получении</SelectItem>
-                   {/* Add more options like Kaspi Pay if applicable */}
-                    {/* <SelectItem value="kaspi">Kaspi Pay (недоступно)</SelectItem> */}
+
+
                  </SelectContent>
                </Select>
             </div>
@@ -211,7 +201,7 @@ const CheckoutPage = () => {
             <CardTitle>Итоговый заказ</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Display cart items summary here */}
+
              {cartItems.length > 0 ? (
                  <div className="space-y-2 mb-4 border-b pb-4">
                     {cartItems.map(item => (
@@ -224,11 +214,11 @@ const CheckoutPage = () => {
                     ))}
                  </div>
              ) : (
-                 // This case should ideally not be reached due to redirection logic
+
                 <p className="text-muted-foreground text-center mb-4">Ваша корзина пуста.</p>
              )}
-             {/* TODO: Add shipping cost calculation if applicable */}
-            {/* Display dynamic total */}
+
+
             <div className="flex justify-between items-center mt-4">
                 <span className="text-xl font-semibold">Итого:</span>
                 <span className="text-xl font-bold">{formatPrice(calculateTotal())}</span>
@@ -247,5 +237,3 @@ const CheckoutPage = () => {
 };
 
 export default CheckoutPage;
-
-    

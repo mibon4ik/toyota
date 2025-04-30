@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from '@/components/ui/button';
-import { LoginForm } from './components/LoginForm'; // Import the new form component
+import { LoginForm } from './components/LoginForm';
 
 const LoginPage = () => {
   return (

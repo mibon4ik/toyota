@@ -2,7 +2,7 @@
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import {AutoPart} from "@/services/autoparts";
+import {AutoPart} from "@/types/autopart";
 import {useToast} from "@/hooks/use-toast";
 import {useState, useEffect} from "react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ interface AutopartProps {
 const Autopart: React.FC<AutopartProps> = ({ product }) => {
   const { toast } = useToast();
   const [cartItems, setCartItems] = useState<AutoPart[]>(() => {
-    // Initialize cartItems from local storage
+
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cartItems');
       return storedCart ? JSON.parse(storedCart) : [];
@@ -23,7 +23,7 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
   });
 
   useEffect(() => {
-    // Update local storage when cartItems change
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
     }
@@ -35,12 +35,12 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
     let updatedCart;
 
     if (existingItemIndex > -1) {
-      // If item already exists in cart, increase the quantity (if you implement quantity)
+
       updatedCart = cartItems.map((item: AutoPart, index: number) =>
         index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
       );
     } else {
-      // If item is not in cart, add it with quantity 1
+
       updatedCart = [...cartItems, { ...product, quantity: 1 }];
     }
 
@@ -53,33 +53,44 @@ const Autopart: React.FC<AutopartProps> = ({ product }) => {
   };
 
   const formatPrice = (price: number): string => {
-    const exchangeRate = 500; // Курс доллара к тенге (пример)
-    const priceInTenge = price * exchangeRate;
+
+    const priceInTenge = price;
     return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
       currency: 'KZT',
-      minimumFractionDigits: 2,
+      minimumFractionDigits: 0,
+       maximumFractionDigits: 0,
     }).format(priceInTenge);
   };
 
   return (
-    <Card className="w-80 product-card">
-      
-        <CardHeader>
-          <CardTitle>{product.name}</CardTitle>
+    <Card className="w-full product-card flex flex-col h-full overflow-hidden group">
+        <CardHeader className="p-4">
+
+            <Link href={`/part/${product.id}`} passHref legacyBehavior={false} aria-label={`Посмотреть детали для ${product.name}`}>
+                  <CardTitle className="hover:text-primary transition-colors cursor-pointer line-clamp-2 text-sm font-medium h-10">
+                    {product.name}
+                   </CardTitle>
+             </Link>
         </CardHeader>
-        <CardContent className="flex flex-col items-center">
-          <Link href={`/part/${product.id}`}>
-            <img
-              src={product.imageUrl}
-              alt={product.name}
-              className="object-cover rounded-md mb-4 h-32 w-full"
-            />
-          </Link>
-          <p className="text-sm text-muted-foreground">{product.brand}</p>
-          <p className="text-lg font-semibold">{formatPrice(product.price)}</p>
-           <Button onClick={handleAddToCart}>В корзину</Button>
+        <CardContent className="flex flex-col items-center flex-grow p-4 pt-0">
+             <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3" aria-label={`Посмотреть изображение ${product.name}`}>
+                    <img
+                        src={product.imageUrl || 'https://picsum.photos/300/200'}
+                        alt={product.name}
+                        className="object-cover rounded-md h-28 w-full group-hover:opacity-90 transition-opacity border"
+                        loading="lazy"
+                         onError={(e) => (e.currentTarget.src = 'https://picsum.photos/300/200')}
+                    />
+            </Link>
+            <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
+            <p className="text-base font-semibold mb-3">{formatPrice(product.price)}</p>
         </CardContent>
+
+         <div className="p-4 pt-0 mt-auto">
+
+            <Button onClick={handleAddToCart} className="w-full h-9">В корзину</Button>
+        </div>
     </Card>
   );
 };

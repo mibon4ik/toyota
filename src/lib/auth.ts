@@ -8,9 +8,7 @@ import type { User } from '@/types/user';
 const usersFilePath = path.join(process.cwd(), 'src', 'data', 'users.json');
 const dataDir = path.dirname(usersFilePath);
 
-// --- File System Operations ---
 
-/** Ensures the data directory exists. */
 const ensureDataDirExists = async (): Promise<void> => {
   try {
     await fs.access(dataDir);
@@ -20,25 +18,25 @@ const ensureDataDirExists = async (): Promise<void> => {
       console.log(`Created data directory: ${dataDir}`);
     } else {
       console.error("Error accessing data directory:", error);
-      throw new Error("Could not access data directory."); // Throw a more specific error
+      throw new Error("Could not access data directory.");
     }
   }
 };
 
-/** Reads user data from the JSON file. */
+
 async function readUsersFile(): Promise<User[]> {
   await ensureDataDirExists();
   try {
     const data = await fs.readFile(usersFilePath, 'utf-8');
-    return JSON.parse(data || '[]'); // Return empty array if file is empty
+    return JSON.parse(data || '[]');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       console.log("users.json not found, returning empty array.");
-      return []; // File doesn't exist, return empty array
+      return [];
     }
     if (error instanceof SyntaxError) {
         console.error("Error parsing users.json:", error);
-        // Decide how to handle corrupted file (e.g., backup and recreate, or throw)
+
         throw new Error("User data file is corrupted.");
     }
     console.error("Error reading users file:", error);
@@ -46,7 +44,7 @@ async function readUsersFile(): Promise<User[]> {
   }
 }
 
-/** Writes user data to the JSON file. */
+
 async function writeUsersFile(users: User[]): Promise<void> {
   await ensureDataDirExists();
   try {
@@ -61,27 +59,26 @@ async function writeUsersFile(users: User[]): Promise<void> {
   }
 }
 
-// --- User Management Logic ---
 
-/** Creates the admin user object with a hashed password. */
+
 async function createAdminUserObject(): Promise<User> {
-    const hashedPassword = await bcrypt.hash('admin', 10); // Use default admin password
+    const hashedPassword = await bcrypt.hash('admin', 10);
     return {
       id: 'admin-user',
       username: 'admin',
       firstName: 'Admin',
       lastName: 'User',
-      // email: 'admin@example.com', // Optional
-      phoneNumber: '0000000000', // Placeholder
+
+      phoneNumber: '0000000000',
       password: hashedPassword,
-      carMake: 'N/A', // Placeholder
-      carModel: 'N/A', // Placeholder
-      vinCode: 'ADMINVIN000000000', // Placeholder
+      carMake: 'N/A',
+      carModel: 'N/A',
+      vinCode: 'ADMINVIN000000000',
       isAdmin: true,
     };
 }
 
-/** Ensures the admin user exists and has the correct credentials. */
+
 async function ensureAdminUser(): Promise<void> {
     let users = await readUsersFile();
     const adminIndex = users.findIndex(u => u.username === 'admin');
@@ -91,7 +88,7 @@ async function ensureAdminUser(): Promise<void> {
 
     if (adminIndex > -1) {
         const adminUser = users[adminIndex];
-        // Check if password needs updating or isAdmin flag is missing/false
+
         if (adminUser.password !== correctHashedPassword || !adminUser.isAdmin) {
              console.log("Updating admin user details...");
              adminUser.password = correctHashedPassword;
@@ -101,7 +98,7 @@ async function ensureAdminUser(): Promise<void> {
     } else {
         console.log("Admin user not found, creating...");
         const adminUser = await createAdminUserObject();
-        users.unshift(adminUser); // Add to the beginning
+        users.unshift(adminUser);
         needsUpdate = true;
     }
 
@@ -111,27 +108,27 @@ async function ensureAdminUser(): Promise<void> {
     }
 }
 
-/** Finds a user by their username. */
+
 export async function getUserByUsername(username: string): Promise<User | undefined> {
-  await ensureAdminUser(); // Make sure admin exists before any user lookup
+  await ensureAdminUser();
   const users = await readUsersFile();
   return users.find(user => user.username === username);
 }
 
-/** Finds a user by their VIN code. */
+
 export async function getUserByVin(vin: string): Promise<User | undefined> {
     await ensureAdminUser();
     const users = await readUsersFile();
-    // Ensure case-insensitive comparison for VIN
+
     return users.find(user => user.vinCode?.toUpperCase() === vin?.toUpperCase());
 }
 
-/** Creates a new user. */
+
 export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'password'> & { password?: string }): Promise<User> {
-  await ensureAdminUser(); // Ensure admin exists before creating users
+  await ensureAdminUser();
   let users = await readUsersFile();
 
-  // --- Validation ---
+
   const usernameExists = users.some(user => user.username === newUser.username);
   if (usernameExists) {
     throw new Error('Этот логин уже зарегистрирован.');
@@ -149,12 +146,13 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
   if (!newUser.password) {
     throw new Error('Password is required.');
   }
-   // --- End Validation ---
+
+
 
   const hashedPassword = await bcrypt.hash(newUser.password, 10);
 
   const userWithId: User = {
-    id: Date.now().toString(), // Simple unique ID
+    id: Date.now().toString(),
     username: newUser.username,
     firstName: newUser.firstName,
     lastName: newUser.lastName,
@@ -164,21 +162,21 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
     carMake: newUser.carMake,
     carModel: newUser.carModel,
     vinCode: newUser.vinCode.toUpperCase(),
-    isAdmin: false, // Default to non-admin
+    isAdmin: false,
   };
 
   users.push(userWithId);
   await writeUsersFile(users);
 
-  // Omit password from returned user object for security
+
   const { password, ...userWithoutPassword } = userWithId;
   return userWithoutPassword as User;
 }
 
-/** Verifies a user's password. */
+
 export async function verifyPassword(username: string, passwordInput: string): Promise<User | null> {
   console.log(`Verifying password for username: ${username}`);
-  await ensureAdminUser(); // Ensure admin exists
+  await ensureAdminUser();
 
   const user = await getUserByUsername(username);
 
@@ -188,7 +186,7 @@ export async function verifyPassword(username: string, passwordInput: string): P
   }
   if (!user.password) {
       console.warn(`User ${username} found, but has no password hash set.`);
-      return null; // Cannot verify if no password hash exists
+      return null;
   }
 
   console.log(`User ${username} found. Comparing passwords...`);
@@ -197,7 +195,7 @@ export async function verifyPassword(username: string, passwordInput: string): P
     console.log(`Password comparison result for ${username}: ${passwordsMatch}`);
 
     if (passwordsMatch) {
-      // Omit password from returned user object for security
+
       const { password, ...userWithoutPassword } = user;
       console.log(`Password verification successful for ${username}.`);
       return userWithoutPassword as User;
@@ -207,19 +205,18 @@ export async function verifyPassword(username: string, passwordInput: string): P
     }
   } catch (error) {
     console.error(`Error during password comparison for ${username}:`, error);
-    return null; // Return null on comparison error
+    return null;
   }
 }
 
-/** Retrieves all users, omitting passwords. */
+
 export async function getAllUsers(): Promise<Omit<User, 'password'>[]> {
-  await ensureAdminUser(); // Ensure admin user data is up-to-date
+  await ensureAdminUser();
   const users = await readUsersFile();
   return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
 }
 
-// --- Initialization ---
-// Ensure admin user exists when the server starts.
+
 (async () => {
     try {
         console.log("Ensuring admin user exists on startup...");
@@ -227,7 +224,7 @@ export async function getAllUsers(): Promise<Omit<User, 'password'>[]> {
         console.log("Admin user check complete.");
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
-        // Consider exiting the process if admin setup fails critically
-        // process.exit(1);
+
+
     }
 })();

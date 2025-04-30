@@ -8,30 +8,28 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea'; // Assuming Textarea component exists
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { addAutoPart } from '@/services/autoparts'; // Import the service function
-import type { AutoPart } from '@/services/autoparts';
+import { addAutoPart } from '@/services/autoparts';
+import type { AutoPart } from '@/types/autopart';
 
-// Define Zod schema for validation
 const productSchema = z.object({
   name: z.string().min(3, 'Название должно содержать не менее 3 символов'),
   brand: z.string().min(2, 'Бренд должен содержать не менее 2 символов'),
-  price: z.coerce.number().positive('Цена должна быть положительным числом'), // Coerce to number
+  price: z.coerce.number().positive('Цена должна быть положительным числом'),
   imageUrl: z.string().url('Неверный URL изображения'),
   description: z.string().min(10, 'Описание должно содержать не менее 10 символов'),
   category: z.string().min(3, 'Категория должна содержать не менее 3 символов'),
-  compatibleVehicles: z.string().min(3, 'Укажите хотя бы одну совместимую модель'), // Input as string, will split later
+  compatibleVehicles: z.string().min(3, 'Укажите хотя бы одну совместимую модель'),
   sku: z.string().optional(),
-  stock: z.coerce.number().int().nonnegative('Количество должно быть не отрицательным').optional(), // Coerce to integer
+  stock: z.coerce.number().int().nonnegative('Количество должно быть не отрицательным').optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
-// Omit id as it will be generated
 type NewProductData = Omit<AutoPart, 'id' | 'compatibleVehicles'> & {
-  compatibleVehicles: string[]; // Expect array after processing
+  compatibleVehicles: string[];
 };
 
 
@@ -49,17 +47,16 @@ export const AddProductForm: React.FC = () => {
 
   const onSubmit: SubmitHandler<ProductFormData> = async (data) => {
     setIsLoading(true);
-    setError(null); // Clear previous errors
+    setError(null);
 
     try {
-       // Convert compatibleVehicles string to array
        const compatibleVehiclesArray = data.compatibleVehicles.split(',').map(v => v.trim()).filter(v => v);
 
         const newProductPayload: NewProductData = {
             ...data,
             compatibleVehicles: compatibleVehiclesArray,
-            // Ensure optional fields are handled correctly
-            stock: data.stock ?? 0, // Default stock to 0 if not provided
+
+            stock: data.stock ?? 0,
         };
 
       await addAutoPart(newProductPayload);
@@ -68,7 +65,7 @@ export const AddProductForm: React.FC = () => {
         title: 'Товар добавлен!',
         description: `Товар "${data.name}" успешно добавлен.`,
       });
-      reset(); // Reset form fields
+      reset();
     } catch (error: any) {
         console.error("Ошибка добавления товара:", error);
         setError(error.message || 'Не удалось добавить товар. Попробуйте позже.');
@@ -82,7 +79,6 @@ export const AddProductForm: React.FC = () => {
     }
   };
 
-   // State for general form errors (e.g., API errors)
    const [error, setError] = useState<string | null>(null);
 
   return (

@@ -3,12 +3,12 @@
 
 import React, {useState, useEffect, useCallback} from 'react';
 import { getAutoPartById} from "@/services/autoparts";
-import type { AutoPart } from '@/types/autopart'; // Corrected import path
+import type { AutoPart } from '@/types/autopart';
 import {Card, CardContent, CardHeader, CardTitle, CardDescription} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -16,13 +16,13 @@ interface CartItem extends AutoPart {
 
 const PartDetailPage = () => {
   const [part, setPart] = useState<AutoPart | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Loading state
-  const params = useParams<{ partId: string }>(); // Explicitly type params
-  const partId = params?.partId; // Safely access partId
+  const [isLoading, setIsLoading] = useState(true);
+  const params = useParams<{ partId: string }>();
+  const partId = params?.partId;
   const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false); // Track client mount
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Use useCallback for cartItems state setter logic if needed elsewhere, otherwise useState is fine
+
    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cartItems');
@@ -30,7 +30,7 @@ const PartDetailPage = () => {
          return storedCart ? JSON.parse(storedCart) : [];
        } catch (e) {
          console.error("Error parsing cart from localStorage on init:", e);
-         localStorage.removeItem('cartItems'); // Clear corrupted data
+         localStorage.removeItem('cartItems');
          return [];
        }
     }
@@ -38,14 +38,14 @@ const PartDetailPage = () => {
   });
 
 
-  // Fetch part data
+
   useEffect(() => {
-    setIsMounted(true); // Indicate component is mounted
+    setIsMounted(true);
     const fetchPart = async () => {
-      if (partId) { // Check if partId exists
+      if (partId) {
         setIsLoading(true);
         try {
-             const partData = await getAutoPartById(partId); // Use the potentially typed partId
+             const partData = await getAutoPartById(partId);
             setPart(partData);
          } catch (error) {
             console.error("Failed to fetch part details:", error);
@@ -58,27 +58,27 @@ const PartDetailPage = () => {
             setIsLoading(false);
          }
       } else {
-         setIsLoading(false); // No partId, stop loading
-          // Optionally show a "not found" message or redirect
+         setIsLoading(false);
+
       }
     };
 
     fetchPart();
-  }, [partId, toast]); // Add toast to dependencies
+  }, [partId, toast]);
 
-   // Effect to update localStorage when cartItems changes
+
    useEffect(() => {
-     if (isMounted) { // Only run on client after mount
+     if (isMounted) {
        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-       // Dispatch event to notify other components (like nav bar)
+
        window.dispatchEvent(new CustomEvent('cartUpdated'));
      }
    }, [cartItems, isMounted]);
 
 
-  // Add item to cart - Use useCallback
+
    const handleAddToCart = useCallback(() => {
-     if (!part) return; // Ensure part is loaded
+     if (!part) return;
 
      setCartItems(currentItems => {
        const existingItemIndex = currentItems.findIndex(item => item.id === part.id);
@@ -103,20 +103,20 @@ const PartDetailPage = () => {
      });
 
 
-   }, [part, toast]); // Add part and toast to dependencies
+   }, [part, toast, setCartItems]);
 
 
     const formatPrice = useCallback((price: number): string => {
-      // Assuming price is already in Tenge (KZT)
+
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
         currency: 'KZT',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }).format(price);
-    }, []); // No dependencies, format is constant
+    }, []);
 
-   // Render skeleton while loading
+
    if (isLoading) {
      return (
          <div className="container mx-auto py-8">
@@ -137,7 +137,7 @@ const PartDetailPage = () => {
     );
    }
 
-    // Render "not found" message if part is null after loading
+
     if (!part) {
         return <div className="container mx-auto py-8 text-center text-muted-foreground">Товар не найден.</div>;
     }
@@ -152,7 +152,7 @@ const PartDetailPage = () => {
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <img
-            src={part.imageUrl || 'https://picsum.photos/600/400'} // Fallback image
+            src={part.imageUrl || 'https://picsum.photos/600/400'}
             alt={part.name}
             className="object-cover rounded-md mb-4 h-64 w-full"
             loading="lazy"

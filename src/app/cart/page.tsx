@@ -4,30 +4,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { AutoPart } from "@/types/autopart"; // Corrected import path
+import type { AutoPart } from '@/types/autopart';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from 'lucide-react'; // Import trash icon
+import { Trash2 } from 'lucide-react';
 
-// Define CartItem extending AutoPart with quantity
 interface CartItem extends AutoPart {
   quantity: number;
 }
 
 const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false); // For handling client-side only logic
+  const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
-  // Load cart from localStorage on component mount (client-side only)
+
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
-        // Basic validation of parsed cart items
+
         if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
           setCartItems(parsedCart);
         } else {
@@ -36,26 +35,26 @@ const CartPage = () => {
         }
       } catch (e) {
         console.error("Error parsing cart items from localStorage:", e);
-        localStorage.removeItem('cartItems'); // Clear corrupted data
+        localStorage.removeItem('cartItems');
       }
     }
   }, []);
 
-  // Persist cart changes to localStorage whenever cartItems state updates
+
   useEffect(() => {
-    if (isMounted) { // Only run on client after initial mount
+    if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      // Optional: Dispatch a custom event to notify other components (like navbar badge)
+
       window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
   }, [cartItems, isMounted]);
 
   const calculateTotal = useCallback(() => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  }, [cartItems]); // Recalculate only when cartItems change
+  }, [cartItems]);
 
   const updateQuantity = useCallback((id: string, newQuantity: number) => {
-    const quantity = Math.max(1, newQuantity); // Ensure quantity is at least 1
+    const quantity = Math.max(1, newQuantity);
 
     setCartItems(currentItems =>
       currentItems.map(item =>
@@ -80,7 +79,7 @@ const CartPage = () => {
           item.id === id ? { ...item, quantity: item.quantity - 1 } : item
         );
       }
-      // If quantity is 1, don't decrement further (or optionally remove)
+
       return currentItems;
     });
   }, []);
@@ -90,28 +89,28 @@ const CartPage = () => {
     toast({
       title: "Товар удален!",
       description: "Товар удален из корзины",
-      variant: "destructive" // Optional: Use destructive variant for removal
+      variant: "destructive"
     });
-  }, [toast]); // Add toast as dependency
+  }, [toast]);
 
    const formatPrice = useCallback((price: number): string => {
-      // Assuming price is already in Tenge (KZT)
+
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
         currency: 'KZT',
         minimumFractionDigits: 0,
         maximumFractionDigits: 0,
       }).format(price);
-    }, []); // No dependencies needed
+    }, []);
 
 
-  // Render nothing on the server to avoid hydration issues with localStorage
+
   if (!isMounted) {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
              <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-             {/* You could add skeleton loaders here */}
+
         </div>
     );
   }
@@ -134,19 +133,19 @@ const CartPage = () => {
                 <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
                     <img
-                      src={item.imageUrl || 'https://picsum.photos/100/100'} // Fallback image
+                      src={item.imageUrl || 'https://picsum.photos/100/100'}
                       alt={item.name}
-                      className="w-20 h-20 object-cover rounded-md flex-shrink-0 border" // Added border
-                      onError={(e) => (e.currentTarget.src = 'https://picsum.photos/100/100')} // Handle image load errors
+                      className="w-20 h-20 object-cover rounded-md flex-shrink-0 border"
+                      onError={(e) => (e.currentTarget.src = 'https://picsum.photos/100/100')}
                     />
                     <div className="flex-grow">
-                      <CardTitle className="text-lg mb-1 line-clamp-2">{item.name}</CardTitle> {/* Added line-clamp */}
+                      <CardTitle className="text-lg mb-1 line-clamp-2">{item.name}</CardTitle>
                       <p className="text-sm text-muted-foreground">{item.brand}</p>
                       <p className="text-sm font-semibold">{formatPrice(item.price)} / шт.</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0"> {/* Added flex-shrink-0 */}
+                  <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0">
                      <div className="flex items-center border rounded-md">
                        <Button
                          variant="ghost"
@@ -160,7 +159,7 @@ const CartPage = () => {
                        </Button>
                        <Input
                          type="number"
-                         className="h-8 w-12 text-center border-l border-r-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // Hide spinners
+                         className="h-8 w-12 text-center border-l border-r-0 rounded-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                          value={item.quantity}
                          onChange={(e) => updateQuantity(item.id, parseInt(e.target.value) || 1)}
                          min="1"
@@ -169,7 +168,7 @@ const CartPage = () => {
                        <Button
                          variant="ghost"
                          size="icon"
-                         className="h-8 w-8 rounded-l-none border-l" // Added border-l
+                         className="h-8 w-8 rounded-l-none border-l"
                          onClick={() => incrementQuantity(item.id)}
                          aria-label={`Увеличить количество ${item.name}`}
                        >
@@ -177,18 +176,18 @@ const CartPage = () => {
                        </Button>
                      </div>
 
-                     <p className="text-lg font-semibold w-28 text-right"> {/* Increased width */}
+                     <p className="text-lg font-semibold w-28 text-right">
                        {formatPrice(item.price * item.quantity)}
                      </p>
 
                     <Button
-                      size="icon" // Changed to icon size
-                      variant="ghost" // More subtle removal button
-                      className="text-destructive hover:bg-destructive/10 h-8 w-8" // Use destructive color
+                      size="icon"
+                      variant="ghost"
+                      className="text-destructive hover:bg-destructive/10 h-8 w-8"
                       onClick={() => removeItem(item.id)}
                       aria-label={`Удалить ${item.name} из корзины`}
                     >
-                     <Trash2 className="h-4 w-4" /> {/* Use Trash icon */}
+                     <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
@@ -197,10 +196,7 @@ const CartPage = () => {
           </div>
 
           <div className="mt-8 pt-4 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
-             {/* Optional: Add a "Clear Cart" button */}
-             {/* <Button variant="outline" size="sm" onClick={() => setCartItems([])} className="text-destructive border-destructive hover:bg-destructive/10">
-                Очистить корзину
-             </Button> */}
+
             <h2 className="text-2xl font-bold">
               Итого: {formatPrice(calculateTotal())}
             </h2>

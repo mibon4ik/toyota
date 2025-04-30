@@ -1,5 +1,3 @@
-// Removed "use client" - this can be a Server Component
-
 import * as React from "react"
 import Link from "next/link"
 
@@ -8,7 +6,6 @@ import { Icons } from "@/components/icons"
 
 interface SiteFooterProps extends React.HTMLAttributes<HTMLElement> {}
 
-// Made the component an async function (optional, but good practice for Server Components)
 export async function SiteFooter({ className, ...props }: SiteFooterProps) {
   return (
     <footer className={cn("border-t bg-background", className)} {...props}>
@@ -18,7 +15,7 @@ export async function SiteFooter({ className, ...props }: SiteFooterProps) {
             <Icons.truck className="mr-2 h-6 w-6" />
             Toyota
           </Link>
-          {/* Removed the Firebase Studio text */}
+
         </div>
         <nav className="flex flex-wrap items-center justify-center md:justify-end space-x-4 sm:space-x-6 text-sm">
           <Link href="/" className="text-muted-foreground hover:text-foreground transition-colors">

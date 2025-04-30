@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 import { setCookie } from 'cookies-next';
-import { verifyPassword } from '@/lib/auth'; // Use the updated auth function
-import type { User } from '@/types/user'; // Import the User type
+import { verifyPassword } from '@/lib/auth';
+import type { User } from '@/types/user';
 
 export const LoginForm = () => {
   const [username, setUsername] = useState('');
@@ -22,24 +22,24 @@ export const LoginForm = () => {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true); // Indicate component has mounted on client
+    setIsMounted(true);
   }, []);
 
-   // Simple token generation (replace with a more secure method like JWT in production)
+
   const generateToken = (user: User) => {
     const userData = {
       id: user.id,
-      username: user.username, // Use username
+      username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
-      isAdmin: user.isAdmin || false, // Default to false if not present
+      isAdmin: user.isAdmin || false,
     };
-    // Basic Base64 encode - In real app use JWT or similar
+
     try {
       return btoa(JSON.stringify(userData));
     } catch (e) {
       console.error("Error generating token:", e);
-      return `error-${Date.now()}`; // Fallback token
+      return `error-${Date.now()}`;
     }
   };
 
@@ -47,10 +47,10 @@ export const LoginForm = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    console.log("Login attempt with username:", username); // Log username
+    console.log("Login attempt with username:", username);
 
     try {
-        const user = await verifyPassword(username, password); // Use username instead of email
+        const user = await verifyPassword(username, password);
 
         if (!user) {
           console.log("Login failed: Invalid credentials for username:", username);
@@ -61,33 +61,32 @@ export const LoginForm = () => {
 
         console.log("Login successful for user:", user.username, "Is Admin:", user.isAdmin);
 
-        // Credentials are valid, generate token and set cookies/localStorage
+
         const token = generateToken(user);
         const cookieOptions = {
-          maxAge: 60 * 60 * 24 * 7, // Expires in 7 days
+          maxAge: 60 * 60 * 24 * 7,
           path: '/',
-          // secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-          // sameSite: 'lax', // Recommended
+
         };
 
-        // Prepare user data for cookie (omit password)
+
         const { password: _omittedPassword, ...userToStore } = user;
 
-        // Set cookies
+
         console.log("Setting cookies...");
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
-        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store user without password
+        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
         console.log("Cookies set.");
 
-         // Set localStorage AFTER ensuring window exists
+
          if (typeof window !== 'undefined') {
              console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
-             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store user without password
+             localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
              console.log("localStorage set.");
 
-             // Dispatch event to notify other components (like nav bar) immediately
+
              console.log("Dispatching authStateChanged event...");
              window.dispatchEvent(new Event('authStateChanged'));
              console.log("authStateChanged event dispatched.");
@@ -102,9 +101,9 @@ export const LoginForm = () => {
             description: user.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
 
-        // Redirect all users to the home page after login
+
         console.log("Redirecting to / after login...");
-        // Use replace to avoid pushing the login page onto the history stack
+
         router.replace('/');
         console.log("Redirection initiated.");
 
@@ -112,14 +111,14 @@ export const LoginForm = () => {
     } catch (err) {
         console.error("Login error:", err);
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');
-        setIsLoading(false); // Ensure loading is set to false on error
+        setIsLoading(false);
     }
-    // We don't need finally here as redirect happens inside the try block
+
   };
 
-    // Prevent rendering on server to avoid hydration errors with localStorage
+
   if (!isMounted) {
-    // Optionally render a loading state or skeleton
+
     return <div className="text-center text-muted-foreground">Загрузка формы входа...</div>;
   }
 

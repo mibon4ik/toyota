@@ -31,11 +31,11 @@ export const RegistrationForm = () => {
   const [isMounted, setIsMounted] = useState(false);
 
    useEffect(() => {
-        setIsMounted(true); // Indicate component has mounted on client
+        setIsMounted(true);
     }, []);
 
 
-  // Simple token generation (replace with a more secure method like JWT in production)
+
   const generateToken = (user: User) => {
       const userData = {
           id: user.id,
@@ -57,7 +57,7 @@ export const RegistrationForm = () => {
     setError('');
 
 
-    // Client-side validation
+
     if (!username || !firstName || !lastName || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) {
       setError('Пожалуйста, заполните все обязательные поля.');
       return;
@@ -66,7 +66,7 @@ export const RegistrationForm = () => {
       setError('Неверный формат электронной почты.');
       return;
     }
-    if (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) { // Case-insensitive check
+    if (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
       setError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
       return;
     }
@@ -79,7 +79,7 @@ export const RegistrationForm = () => {
       return;
     }
 
-    setIsLoading(true); // Set loading true only after validation passes
+    setIsLoading(true);
 
     try {
       const newUserPayload = {
@@ -88,20 +88,20 @@ export const RegistrationForm = () => {
         lastName,
         email: email || undefined,
         phoneNumber,
-        password, // Hashing happens server-side in createUser
+        password,
         carMake,
         carModel,
         vinCode: vinCode.toUpperCase(),
       };
       const registeredUser = await createUser(newUserPayload);
 
-      // --- Successful Registration ---
+
       console.log("Registration successful for:", registeredUser.username);
 
-      // Set auth cookie and localStorage
+
        const token = generateToken(registeredUser);
        const cookieOptions = {
-           maxAge: 60 * 60 * 24 * 7, // 7 days
+           maxAge: 60 * 60 * 24 * 7,
            path: '/',
        };
        setCookie('authToken', token, cookieOptions);
@@ -112,7 +112,7 @@ export const RegistrationForm = () => {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('loggedInUser', JSON.stringify(registeredUser));
             console.log("Dispatching authStateChanged event after registration...");
-            window.dispatchEvent(new Event('authStateChanged')); // Notify nav bar
+            window.dispatchEvent(new Event('authStateChanged'));
              console.log("authStateChanged event dispatched.");
         }
 
@@ -122,7 +122,7 @@ export const RegistrationForm = () => {
         description: 'Вы будете перенаправлены на главную страницу.',
       });
 
-       // Redirect AFTER state updates are likely processed
+
        console.log("Redirecting to / after registration in 150ms...");
        setTimeout(() => {
             router.push('/');
@@ -138,7 +138,7 @@ export const RegistrationForm = () => {
     }
   };
 
-   // Avoid rendering the form on the server
+
     if (!isMounted) {
         return <div className="text-center text-muted-foreground">Загрузка формы регистрации...</div>;
     }
@@ -248,7 +248,7 @@ export const RegistrationForm = () => {
           title="VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
           disabled={isLoading}
           className="uppercase tracking-widest [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-           autoComplete="off" // VIN should generally not be auto-completed
+           autoComplete="off"
         />
       </div>
       <div>
