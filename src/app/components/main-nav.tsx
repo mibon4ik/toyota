@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-import { MobileNav } from "@/components/ui/mobile-nav" // Corrected import path
+// Removed import for MobileNav
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
@@ -242,7 +242,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
         // console.log("MainNav: Rendering skeleton (not mounted).");
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-                 <MobileNav className="mr-4" /> {/* Keep MobileNav for structure */}
+                 {/* MobileNav trigger removed */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
@@ -271,7 +271,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
    // console.log("MainNav: Rendering final structure (mounted). isLoggedIn:", isLoggedIn, "User:", loggedInUser?.username);
    return (
      <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-       <MobileNav className="mr-4" /> {/* Add MobileNav */}
+        {/* MobileNav trigger removed */}
        <Link href="/" className="mr-6 flex items-center space-x-2">
          <Icons.truck className="h-6 w-6" />
          <span className="hidden font-bold sm:inline-block">Toyota</span>
