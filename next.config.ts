@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -20,6 +21,12 @@ const nextConfig: NextConfig = {
        {
         protocol: 'https',
         hostname: 'fastly.picsum.photos', // Add if using fastly CDN
+        port: '',
+        pathname: '/**',
+      },
+      { // Add example.com to allowed hostnames
+        protocol: 'https',
+        hostname: 'example.com',
         port: '',
         pathname: '/**',
       },
