@@ -17,32 +17,38 @@ const categories = [
   {
     name: 'Двигатель',
     icon: Icons.car, // Using Car icon for engine
-    href: '/shop?category=engine',
+    value: 'Двигатель', // Add a value field for the query param
+    href: '/shop?category=Двигатель', // Use the value here
   },
   {
     name: 'Подвеска',
     icon: Icons.zap, // Keep Zap for suspension based on previous correction
-    href: '/shop?category=suspension',
+    value: 'Подвеска',
+    href: '/shop?category=Подвеска',
   },
   {
     name: 'Тормоза',
     icon: Icons.circle, // Using Circle for brakes based on previous correction
-    href: '/shop?category=brakes',
+    value: 'Тормоза',
+    href: '/shop?category=Тормоза',
   },
   {
     name: 'Электрика',
     icon: Icons.zap, // Keep Zap for electrical
-    href: '/shop?category=electrical',
+    value: 'Электрика',
+    href: '/shop?category=Электрика',
   },
   {
     name: 'Кузов',
     icon: Icons.box,
-    href: '/shop?category=body',
+    value: 'Кузов',
+    href: '/shop?category=Кузов',
   },
   {
     name: 'Аксессуары',
     icon: Icons.gift, // Use Gift icon for accessories
-    href: '/shop?category=accessories',
+    value: 'Аксессуары',
+    href: '/shop?category=Аксессуары',
   },
 ];
 
@@ -433,9 +439,11 @@ const HomePage = () => {
             {categories.map((category) => {
               const IconComponent = category.icon || Icons.box; // Default to Box icon if none provided
                return (
-                 <Link key={category.name} href={category.href ?? '#'} passHref legacyBehavior={false} className="block">
+                 // Use the correct href from the category object
+                 <Link key={category.name} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
                      <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                        {IconComponent && <IconComponent className="w-8 h-8 mb-2" style={{ color: '#535353ff' }} />}
+                        {/* Use createElement to render the icon component */}
+                        {IconComponent && React.createElement(IconComponent, { className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
                         <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
                      </Card>
                  </Link>
