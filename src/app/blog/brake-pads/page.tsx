@@ -1,10 +1,21 @@
 
 import React from 'react';
+import Image from 'next/image';
 
 const BrakePadsPage = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">🛑 Выбор правильных тормозных колодок для вашего автомобиля</h1>
+      {/* Consider adding an introductory image */}
+      {/* <div className="mb-8 relative h-64">
+        <Image
+          src="https://picsum.photos/seed/brakemain/1200/400" // Placeholder image
+          alt="Тормозные колодки"
+          layout="fill"
+          objectFit="cover"
+          className="rounded-md"
+        />
+      </div> */}
       <div className="bg-card text-card-foreground shadow-md rounded-md p-8">
         <p className="text-muted-foreground mb-4">
           Тормозные колодки — это один из ключевых элементов тормозной системы. От их качества и соответствия конкретной модели автомобиля зависит не только эффективность торможения, но и ваша безопасность. Разберёмся, как выбрать правильные колодки и на что стоит обратить внимание.

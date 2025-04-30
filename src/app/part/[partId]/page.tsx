@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useState, useEffect, useCallback} from 'react';
@@ -9,6 +8,7 @@ import {Button} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import Image from 'next/image'; // Import next/image
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -22,25 +22,33 @@ const PartDetailPage = () => {
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
 
-
+  // Load cart from localStorage on mount (client-side only)
    const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cartItems');
        try {
-         return storedCart ? JSON.parse(storedCart) : [];
+         const parsedCart: CartItem[] = storedCart ? JSON.parse(storedCart) : [];
+          // Add validation if needed
+          if (Array.isArray(parsedCart)) {
+            return parsedCart;
+          }
+         return [];
        } catch (e) {
          console.error("Error parsing cart from localStorage on init:", e);
-         localStorage.removeItem('cartItems');
+         localStorage.removeItem('cartItems'); // Clear corrupted data
          return [];
        }
     }
-    return [];
+    return []; // Return empty array during SSR or if window is not defined
   });
 
-
-
+  // Set mount status
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  // Fetch part details
+  useEffect(() => {
     const fetchPart = async () => {
       if (partId) {
         setIsLoading(true);
@@ -59,55 +67,59 @@ const PartDetailPage = () => {
          }
       } else {
          setIsLoading(false);
-
+         toast({
+             title: "Ошибка",
+             description: "ID товара не найден.",
+             variant: "destructive",
+         });
       }
     };
 
     fetchPart();
   }, [partId, toast]);
 
-
+   // Save cart to localStorage whenever it changes (client-side only)
    useEffect(() => {
      if (isMounted) {
        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-       window.dispatchEvent(new CustomEvent('cartUpdated'));
+       window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify other components like header
      }
    }, [cartItems, isMounted]);
 
 
-
+   // Add to cart handler
    const handleAddToCart = useCallback(() => {
-     if (!part) return;
+     if (!part || !isMounted) return; // Ensure component is mounted and part exists
 
      setCartItems(currentItems => {
        const existingItemIndex = currentItems.findIndex(item => item.id === part.id);
        let updatedCart;
+       let toastTitle = "";
+       let toastDescription = "";
 
        if (existingItemIndex > -1) {
          updatedCart = currentItems.map((item, index) =>
            index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
          );
-         toast({
-             title: "Количество обновлено!",
-             description: `Количество ${part.name} в корзине увеличено.`,
-         });
+         toastTitle = "Количество обновлено!";
+         toastDescription = `Количество ${part.name} в корзине увеличено.`;
        } else {
          updatedCart = [...currentItems, { ...part, quantity: 1 }];
-          toast({
-              title: "Добавлено в корзину!",
-              description: `${part.name} был добавлен в вашу корзину.`,
-          });
+         toastTitle = "Добавлено в корзину!";
+         toastDescription = `${part.name} был добавлен в вашу корзину.`;
        }
+
+        // Use setTimeout to defer toast display after state update
+        setTimeout(() => {
+             toast({ title: toastTitle, description: toastDescription });
+        }, 0);
+
         return updatedCart;
      });
-
-
-   }, [part, toast, setCartItems]);
+   }, [part, toast, isMounted, setCartItems]); // Add isMounted and setCartItems
 
 
     const formatPrice = useCallback((price: number): string => {
-
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
         currency: 'KZT',
@@ -151,13 +163,21 @@ const PartDetailPage = () => {
           <CardDescription>{part.brand} {part.sku ? `(Арт: ${part.sku})` : ''}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
-          <img
-            src={part.imageUrl || 'https://picsum.photos/600/400'}
-            alt={part.name}
-            className="object-cover rounded-md mb-4 h-64 w-full"
-            loading="lazy"
-            onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
-          />
+          <div className="relative w-full h-64 mb-4">
+            <Image
+              src={part.imageUrl || 'https://picsum.photos/600/400'}
+              alt={part.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-contain rounded-md" // Use object-contain if you want to see the whole image
+              loading="lazy"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.srcset = 'https://picsum.photos/600/400';
+                target.src = 'https://picsum.photos/600/400';
+              }}
+            />
+          </div>
            <p className="text-lg font-semibold mb-2">{formatPrice(part.price)}</p>
             {part.stock !== undefined && (
                 <p className={`text-sm mb-2 ${part.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>

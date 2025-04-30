@@ -34,6 +34,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru" className={`${inter.variable} ${poppins.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://picsum.photos" />
+        <link rel="preconnect" href="https://fastly.picsum.photos" />
+      </head>
       <body className="antialiased bg-background text-foreground">
         <div className="relative flex min-h-screen flex-col">
           <SiteHeader />

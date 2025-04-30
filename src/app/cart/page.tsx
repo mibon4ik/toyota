@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -9,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from 'lucide-react';
+import Image from 'next/image'; // Import next/image
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -19,14 +19,14 @@ const CartPage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
-
+  // Load cart from local storage only on client-side mount
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
-
+        // Add validation if needed
         if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
           setCartItems(parsedCart);
         } else {
@@ -35,17 +35,16 @@ const CartPage = () => {
         }
       } catch (e) {
         console.error("Error parsing cart items from localStorage:", e);
-        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartItems'); // Clear corrupted data
       }
     }
   }, []);
 
-
+  // Save cart to local storage whenever it changes (client-side only)
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify header
     }
   }, [cartItems, isMounted]);
 
@@ -54,7 +53,7 @@ const CartPage = () => {
   }, [cartItems]);
 
   const updateQuantity = useCallback((id: string, newQuantity: number) => {
-    const quantity = Math.max(1, newQuantity);
+    const quantity = Math.max(1, newQuantity); // Ensure quantity is at least 1
 
     setCartItems(currentItems =>
       currentItems.map(item =>
@@ -73,28 +72,30 @@ const CartPage = () => {
 
   const decrementQuantity = useCallback((id: string) => {
     setCartItems(currentItems => {
-      const itemToUpdate = currentItems.find(item => item.id === id);
-      if (itemToUpdate && itemToUpdate.quantity > 1) {
-        return currentItems.map(item =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+      const itemIndex = currentItems.findIndex(item => item.id === id);
+      if (itemIndex > -1 && currentItems[itemIndex].quantity > 1) {
+        return currentItems.map((item, index) =>
+          index === itemIndex ? { ...item, quantity: item.quantity - 1 } : item
         );
       }
-
+      // If quantity is 1, do nothing (or consider removing the item)
       return currentItems;
     });
   }, []);
 
   const removeItem = useCallback((id: string) => {
     setCartItems(currentItems => currentItems.filter(item => item.id !== id));
-    toast({
-      title: "Товар удален!",
-      description: "Товар удален из корзины",
-      variant: "destructive"
-    });
+     // Use setTimeout to ensure state update happens before toast
+     setTimeout(() => {
+         toast({
+           title: "Товар удален!",
+           description: "Товар удален из корзины",
+           variant: "destructive"
+         });
+     }, 0);
   }, [toast]);
 
    const formatPrice = useCallback((price: number): string => {
-
       return new Intl.NumberFormat('ru-KZ', {
         style: 'currency',
         currency: 'KZT',
@@ -103,14 +104,13 @@ const CartPage = () => {
       }).format(price);
     }, []);
 
-
-
+  // Loading state until component is mounted
   if (!isMounted) {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
              <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-
+             {/* Optional: Add Skeleton loaders here */}
         </div>
     );
   }
@@ -121,7 +121,7 @@ const CartPage = () => {
       {cartItems.length === 0 ? (
         <div className="text-center py-10">
             <p className="text-muted-foreground mb-4">Ваша корзина пуста.</p>
-             <Link href="/shop" passHref>
+             <Link href="/shop" passHref legacyBehavior={false}>
                 <Button>Перейти в магазин</Button>
             </Link>
         </div>
@@ -132,12 +132,20 @@ const CartPage = () => {
               <Card key={item.id} className="overflow-hidden">
                 <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
-                    <img
-                      src={item.imageUrl || 'https://picsum.photos/100/100'}
-                      alt={item.name}
-                      className="w-20 h-20 object-cover rounded-md flex-shrink-0 border"
-                      onError={(e) => (e.currentTarget.src = 'https://picsum.photos/100/100')}
-                    />
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                       <Image
+                         src={item.imageUrl || 'https://picsum.photos/100/100'}
+                         alt={item.name}
+                         fill
+                         sizes="80px" // Specify size for optimization
+                         className="object-cover rounded-md border"
+                         onError={(e) => {
+                           const target = e.target as HTMLImageElement;
+                           target.srcset = 'https://picsum.photos/100/100';
+                           target.src = 'https://picsum.photos/100/100';
+                         }}
+                       />
+                    </div>
                     <div className="flex-grow">
                       <CardTitle className="text-lg mb-1 line-clamp-2">{item.name}</CardTitle>
                       <p className="text-sm text-muted-foreground">{item.brand}</p>
@@ -200,7 +208,7 @@ const CartPage = () => {
             <h2 className="text-2xl font-bold">
               Итого: {formatPrice(calculateTotal())}
             </h2>
-            <Link href="/checkout" passHref>
+            <Link href="/checkout" passHref legacyBehavior={false}>
               <Button size="lg" className="w-full sm:w-auto">Перейти к оформлению</Button>
             </Link>
           </div>

@@ -1,10 +1,21 @@
 
 import React from 'react';
+import Image from 'next/image'; // Import next/image
 
 const OilChangesPage = () => {
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">🔧 Важность регулярной замены масла</h1>
+      {/* Consider adding an introductory image */}
+      {/* <div className="mb-8 relative h-64">
+        <Image
+          src="https://picsum.photos/seed/oilmain/1200/400" // Placeholder image
+          alt="Замена масла в двигателе"
+          layout="fill"
+          objectFit="cover"
+          className="rounded-md"
+        />
+      </div> */}
       <div className="bg-card text-card-foreground shadow-md rounded-md p-8">
         <p className="text-muted-foreground mb-4">
           Моторное масло — один из важнейших компонентов, обеспечивающих надёжную и бесперебойную работу двигателя.
