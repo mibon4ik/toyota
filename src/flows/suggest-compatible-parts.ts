@@ -8,7 +8,7 @@
  * - SuggestCompatiblePartsOutput - Тип возвращаемых данных для функции suggestCompatibleParts.
  */
 
-import {ai} from '@/ai/ai-instance';
+import {ai} from '@/ai/ai-instance'; // Still uses the AI instance
 import {z} from 'genkit';
 import {AutoPart, searchAutoParts} from '@/services/autoparts';
 

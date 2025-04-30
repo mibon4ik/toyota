@@ -1,1 +1,1 @@
-import '@/ai/flows/suggest-compatible-parts.ts';
+import '@/flows/suggest-compatible-parts.ts';

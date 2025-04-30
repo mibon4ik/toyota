@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useState, useEffect, useCallback} from 'react';
@@ -6,35 +5,35 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Icons } from "@/components/icons";
 import {cn} from "@/lib/utils";
-import Autopart from "@/app/components/autopart"; // Corrected import path
+import Autopart from "@/app/components/autopart";
 import Link from "next/link";
-import { getPartsByVin, getPartsByMakeModel } from '@/services/autoparts'; // Import part search functions
+import { getPartsByVin, getPartsByMakeModel } from '@/services/autoparts';
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
-import type { AutoPart } from '@/types/autopart'; // Ensure correct path
+import type { AutoPart } from '@/types/autopart';
 
 const categories = [
   {
     name: 'Двигатель',
-    icon: Icons.car, // Using Car icon for engine
-    value: 'Двигатель', // Add a value field for the query param
-    href: '/shop?category=Двигатель', // Use the value here
+    icon: Icons.car,
+    value: 'Двигатель',
+    href: '/shop?category=Двигатель',
   },
   {
     name: 'Подвеска',
-    icon: Icons.suspension, // Reverted to Zap as Suspension is not valid
+    icon: Icons.suspension,
     value: 'Подвеска',
     href: '/shop?category=Подвеска',
   },
   {
     name: 'Тормоза',
-    icon: Icons.circle, // Using Circle for brakes based on previous correction
+    icon: Icons.circle,
     value: 'Тормоза',
     href: '/shop?category=Тормоза',
   },
   {
     name: 'Электрика',
-    icon: Icons.electrical, // Keep Zap for electrical
+    icon: Icons.zap,
     value: 'Электрика',
     href: '/shop?category=Электрика',
   },
@@ -46,13 +45,12 @@ const categories = [
   },
   {
     name: 'Аксессуары',
-    icon: Icons.accessories, // Use Gift icon for accessories
+    icon: Icons.accessories,
     value: 'Аксессуары',
     href: '/shop?category=Аксессуары',
   },
 ];
 
-// Dummy data - replace with actual data fetching or use AI suggestions more prominently
 const popularProducts: AutoPart[] = [
   {
     id: 'bps-001',
@@ -231,7 +229,7 @@ const popularProducts: AutoPart[] = [
     "stock": 100,
     "rating": 4.7,
     "reviewCount": 65
-  },
+  }
 ];
 
 const newArrivals: AutoPart[] = [
@@ -260,7 +258,7 @@ const newArrivals: AutoPart[] = [
     stock: 40,
   },
   {
-    id: 'oil-003-dup-new', // Ensure unique ID if needed for keys
+    id: 'oil-003-dup-new',
     name: 'Синтетическое моторное масло 5W-30 - Новинка',
     brand: 'Castrol',
     price: 18500,
@@ -318,12 +316,12 @@ const benefits = [
 const blogPosts = [
   {
     title: 'Важность регулярной замены масла',
-    imageUrl: 'https://picsum.photos/seed/oilchange/600/400', // Placeholder
+    imageUrl: 'https://picsum.photos/seed/oilchange/600/400',
     href: '/blog/oil-changes',
   },
   {
     title: 'Выбор правильных тормозных колодок для вашего автомобиля',
-    imageUrl: 'https://picsum.photos/seed/brakepads/600/400', // Placeholder
+    imageUrl: 'https://picsum.photos/seed/brakepads/600/400',
     href: '/blog/brake-pads',
   },
 ];
@@ -331,19 +329,18 @@ const blogPosts = [
 const banners = [
   {
     title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://picsum.photos/seed/summersale/1200/400', // Placeholder
+    imageUrl: 'https://picsum.photos/seed/summersale/1200/400',
     buttonText: 'Купить сейчас',
     href: '/shop?sale=true',
   },
   {
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400', // Placeholder
+     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400',
     buttonText: 'Посмотреть новинки',
     href: '/shop?sort=newest',
   },
 ];
 
-// Type for the state holding the suggested parts
 type CompatiblePartsResult = AutoPart[] | null;
 
 interface CartItem extends AutoPart {
@@ -355,12 +352,11 @@ const HomePage = () => {
   const [model, setModel] = useState('');
   const [vinCode, setVinCode] = useState('');
   const [compatibleParts, setCompatibleParts] = useState<CompatiblePartsResult>(null);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false); // Loading state for suggestions
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
@@ -377,11 +373,10 @@ const HomePage = () => {
     }
   }, []);
 
-  // Persist cart changes to localStorage
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify navbar
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
   }, [cartItems, isMounted]);
 
@@ -408,13 +403,12 @@ const HomePage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsLoadingSuggestions(true); // Start loading
-    setCompatibleParts(null); // Clear previous results
+    setIsLoadingSuggestions(true);
+    setCompatibleParts(null);
 
     let partsResult: AutoPart[] = [];
     let searchPerformed = false;
 
-    // 1. Try searching by VIN if provided and valid
     if (vinCode && vinCode.length === 17 && /^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
       try {
         console.log(`Searching parts by VIN: ${vinCode}`);
@@ -423,10 +417,8 @@ const HomePage = () => {
         console.log(`Found ${partsResult.length} parts by VIN.`);
       } catch (error) {
         console.error("Error fetching parts by VIN:", error);
-        // Don't show toast yet, might fallback to make/model
       }
     } else if (vinCode) {
-       // Invalid VIN format
        toast({
          title: "Ошибка",
          description: "VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.",
@@ -436,7 +428,6 @@ const HomePage = () => {
        return;
     }
 
-    // 2. If VIN search didn't run or returned no results, AND make/model are provided, try searching by make/model
     if ((!searchPerformed || partsResult.length === 0) && make && model) {
         if (!searchPerformed) console.log("VIN not provided or invalid, searching by Make/Model...");
         else console.log("No parts found by VIN, falling back to Make/Model search...");
@@ -454,13 +445,11 @@ const HomePage = () => {
         });
         setCompatibleParts(null);
         setIsLoadingSuggestions(false);
-        return; // Stop if make/model search also fails
+        return;
       }
     }
 
-    // 3. Handle results or lack thereof
     if (!searchPerformed) {
-      // If neither VIN nor Make/Model were valid/provided
       toast({
         title: "Ошибка",
         description: "Пожалуйста, введите Марку и Модель или корректный VIN-код.",
@@ -471,12 +460,12 @@ const HomePage = () => {
             title: "Детали не найдены",
             description: "Не удалось найти совместимые детали для вашего запроса.",
         });
-        setCompatibleParts([]); // Set to empty array to show message
+        setCompatibleParts([]);
     } else {
         setCompatibleParts(partsResult);
     }
 
-    setIsLoadingSuggestions(false); // Stop loading
+    setIsLoadingSuggestions(false);
   };
 
    const formatPrice = useCallback((price: number): string => {
@@ -490,7 +479,7 @@ const HomePage = () => {
 
 
   return (
-    <div className="fade-in space-y-12"> {/* Added space-y for vertical spacing */}
+    <div className="fade-in space-y-12">
       {/* Banner Carousel */}
         <div className="space-y-4">
             {banners.map((banner, index) => (
@@ -517,7 +506,6 @@ const HomePage = () => {
       <section className="py-12 bg-card border rounded-lg p-6">
         <div className="container mx-auto text-center">
           <h2 className="text-2xl font-bold mb-6">Найти детали для вашего автомобиля</h2>
-           {/* Updated Form Structure */}
            <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Input
@@ -555,13 +543,12 @@ const HomePage = () => {
                     disabled={isLoadingSuggestions}
                 />
               </div>
-               <Button type="submit" className="w-full sm:w-auto" disabled={isLoadingSuggestions}>
+               <Button type="submit" className="w-full sm:w-auto bg-[#535353ff] hover:bg-[#535353ff]/90" disabled={isLoadingSuggestions}>
                  {isLoadingSuggestions ? <Icons.loader className="mr-2 h-4 w-4 animate-spin" /> : null}
                  {isLoadingSuggestions ? 'Поиск...' : 'Найти детали'}
                </Button>
           </form>
 
-          {/* Display Suggested Parts */}
            {isLoadingSuggestions && (
                 <div className="mt-8 text-center text-muted-foreground">
                    <Icons.loader className="mx-auto h-6 w-6 animate-spin mb-2" />
@@ -591,14 +578,11 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {categories.map((category) => {
-               const IconComponent = category.icon; // Get the component type
+               const IconComponent = category.icon;
                return (
-                 // Use the correct href from the category object
                  <Link key={category.value} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
-                    {/* Remove nested <a> tag */}
                    <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                      {/* Render icon component directly */}
-                      {IconComponent && <IconComponent className="w-8 h-8 mb-2" style={{ color: '#535353ff' }} />}
+                      {IconComponent && React.createElement(IconComponent, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
                       <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
                    </Card>
                  </Link>
@@ -612,7 +596,7 @@ const HomePage = () => {
       <section className="py-12 bg-secondary rounded-lg">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold mb-8 text-center">Хиты продаж</h2>
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> {/* Adjusted grid columns */}
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {popularProducts.map((product) => (
               <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
             ))}
@@ -646,7 +630,7 @@ const HomePage = () => {
               const IconComponent = benefit.icon;
               return (
                 <Card key={benefit.title} className="p-6 text-center">
-                  {IconComponent && <IconComponent className="w-10 h-10 mb-4 mx-auto text-[#535353ff]" />}
+                  {IconComponent && React.createElement(IconComponent, { className: "w-10 h-10 mb-4 mx-auto text-[#535353ff]" })}
                   <CardTitle className="text-lg font-semibold mb-2">{benefit.title}</CardTitle>
                   <CardDescription>{benefit.description}</CardDescription>
                 </Card>
@@ -664,7 +648,6 @@ const HomePage = () => {
             {blogPosts.map((post) => (
               <Card key={post.title} className="overflow-hidden group">
                  <Link href={post.href ?? '#'} passHref legacyBehavior={false} className="block">
-                    {/* Remove nested <a> tag */}
                     <img
                         src={post.imageUrl}
                         alt={post.title}
