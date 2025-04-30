@@ -4,7 +4,7 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import {Icons} from "@/components/icons";
+import {Icons } from "@/components/icons";
 import {cn} from "@/lib/utils";
 import Autopart from "@/app/components/autopart"; // Corrected import path
 import Link from "next/link";
@@ -22,7 +22,7 @@ const categories = [
   },
   {
     name: 'Подвеска',
-    icon: Icons.zap, // Keep Zap for suspension based on previous correction
+    icon: Icons.suspension, // Reverted to Zap as Suspension is not valid
     value: 'Подвеска',
     href: '/shop?category=Подвеска',
   },
@@ -34,19 +34,19 @@ const categories = [
   },
   {
     name: 'Электрика',
-    icon: Icons.zap, // Keep Zap for electrical
+    icon: Icons.electrical, // Keep Zap for electrical
     value: 'Электрика',
     href: '/shop?category=Электрика',
   },
   {
     name: 'Кузов',
-    icon: Icons.box,
+    icon: Icons.body,
     value: 'Кузов',
     href: '/shop?category=Кузов',
   },
   {
     name: 'Аксессуары',
-    icon: Icons.gift, // Use Gift icon for accessories
+    icon: Icons.accessories, // Use Gift icon for accessories
     value: 'Аксессуары',
     href: '/shop?category=Аксессуары',
   },
@@ -107,23 +107,20 @@ const popularProducts: AutoPart[] = [
     reviewCount: 300
   },
    {
-    id: 'wpr-016',
-    name: 'Щетки стеклоочистителя (комплект)',
-    brand: 'Bosch',
-    price: 12000,
-    imageUrl: 'https://picsum.photos/seed/wpr016/300/200',
-    description: 'Всесезонные щетки стеклоочистителя для чистого обзора.',
-    category: 'Кузов',
-    compatibleVehicles: ['Toyota Camry', 'Toyota Corolla', 'Toyota RAV4'],
-    sku: 'BSH-ICON-SET',
-    stock: 200,
-    rating: 4.7,
-    reviewCount: 180
+    id: 'shk-004',
+    name: 'Задние амортизаторы',
+    brand: 'KYB',
+    price: 60000,
+    imageUrl: 'https://picsum.photos/seed/shk004/300/200',
+    description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
+    category: 'Подвеска',
+    compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
+    sku: 'KYB-349041',
+    stock: 30,
+    rating: 4.6,
+    reviewCount: 55,
   },
-];
-
-const newArrivals: AutoPart[] = [
- {
+   {
     id: 'lhd-005',
     name: 'Светодиодная лампа для фары (H11)',
     brand: 'Philips',
@@ -134,6 +131,8 @@ const newArrivals: AutoPart[] = [
     compatibleVehicles: ['Различные модели Toyota/Lexus'],
     sku: 'PH-H11LED-X2',
     stock: 75,
+    rating: 4.7,
+    reviewCount: 92,
   },
   {
     id: 'acc-006',
@@ -146,13 +145,126 @@ const newArrivals: AutoPart[] = [
     compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
     sku: 'WT-441301-441302',
     stock: 40,
+    rating: 4.9,
+    reviewCount: 150,
   },
   {
-    id: 'oil-003-dup', // Ensure unique ID if needed for keys
-    name: 'Синтетическое моторное масло 5W-30',
+    "id": "wpr-016",
+    "name": "Щетки стеклоочистителя (комплект)",
+    "brand": "Bosch",
+    "price": 12000,
+    "imageUrl": "https://picsum.photos/seed/wpr016/300/200",
+    "description": "Всесезонные щетки стеклоочистителя для чистого обзора.",
+    "category": "Кузов",
+    "compatibleVehicles": [
+      "Toyota Camry",
+      "Toyota Corolla",
+      "Toyota RAV4"
+    ],
+    "sku": "BSH-ICON-SET",
+    "stock": 200,
+    "rating": 4.7,
+    "reviewCount": 180
+  },
+  {
+    "id": "flt-017",
+    "name": "Топливный фильтр",
+    "brand": "Denso",
+    "price": 15000,
+    "imageUrl": "https://picsum.photos/seed/flt017/300/200",
+    "description": "Фильтр тонкой очистки топлива для защиты топливной системы.",
+    "category": "Фильтры",
+    "compatibleVehicles": [
+      "Toyota Land Cruiser 200 2008+",
+      "Lexus LX570 2008+"
+    ],
+    "sku": "DN-23390",
+    "stock": 55,
+    "rating": 4.6,
+    "reviewCount": 50
+  },
+  {
+    "id": "eng-018",
+    "name": "Ремень ГРМ (комплект с роликами)",
+    "brand": "Gates",
+    "price": 45000,
+    "imageUrl": "https://picsum.photos/seed/eng018/300/200",
+    "description": "Комплект для замены ремня ГРМ, включая ролики и натяжитель.",
+    "category": "Двигатель",
+    "compatibleVehicles": [
+      "Toyota Tundra 4.7L V8",
+      "Toyota Sequoia 4.7L V8"
+    ],
+    "sku": "GTS-TCKWP295",
+    "stock": 25,
+    "rating": 4.8,
+    "reviewCount": 70
+  },
+   {
+    "id": "rad-019",
+    "name": "Радиатор охлаждения двигателя",
+    "brand": "Spectra Premium",
+    "price": 70000,
+    "imageUrl": "https://picsum.photos/seed/rad019/300/200",
+    "description": "Высококачественный радиатор для эффективного охлаждения двигателя.",
+    "category": "Двигатель",
+    "compatibleVehicles": [
+      "Toyota Camry 2012-2017"
+    ],
+    "sku": "SPR-CU13217",
+    "stock": 18,
+    "rating": 4.3,
+    "reviewCount": 30
+  },
+  {
+    "id": "tir-020",
+    "name": "Датчик давления в шинах (TPMS)",
+    "brand": "Toyota Genuine",
+    "price": 28000,
+    "imageUrl": "https://picsum.photos/seed/tir020/300/200",
+    "description": "Оригинальный датчик TPMS для контроля давления в шинах.",
+    "category": "Электрика",
+    "compatibleVehicles": [
+      "Различные модели Toyota/Lexus"
+    ],
+    "sku": "TG-42607-0C070",
+    "stock": 100,
+    "rating": 4.7,
+    "reviewCount": 65
+  },
+];
+
+const newArrivals: AutoPart[] = [
+ {
+    id: 'lhd-005-new',
+    name: 'Светодиодная лампа для фары (H11) - Новинка',
+    brand: 'Philips',
+    price: 24995,
+    imageUrl: 'https://picsum.photos/seed/lhd005new/300/200',
+    description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
+    category: 'Электрика',
+    compatibleVehicles: ['Различные модели Toyota/Lexus'],
+    sku: 'PH-H11LED-X2',
+    stock: 75,
+  },
+  {
+    id: 'acc-006-new',
+    name: 'Всесезонные коврики (комплект) - Новинка',
+    brand: 'WeatherTech',
+    price: 75000,
+    imageUrl: 'https://picsum.photos/seed/acc006new/300/200',
+    description: 'Прочные коврики для защиты салона от грязи и влаги.',
+    category: 'Аксессуары',
+    compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
+    sku: 'WT-441301-441302',
+    stock: 40,
+  },
+  {
+    id: 'oil-003-dup-new', // Ensure unique ID if needed for keys
+    name: 'Синтетическое моторное масло 5W-30 - Новинка',
     brand: 'Castrol',
     price: 18500,
-    imageUrl: 'https://picsum.photos/seed/oil003dup/300/200',
+    imageUrl: 'https://picsum.photos/seed/oil003dupnew/300/200',
     description: 'Полностью синтетическое масло для универсальной защиты.',
     category: 'Двигатель',
     compatibleVehicles: ['Большинство моделей'],
@@ -160,11 +272,11 @@ const newArrivals: AutoPart[] = [
     stock: 95,
   },
    {
-    id: 'shk-004',
-    name: 'Задние амортизаторы',
+    id: 'shk-004-new',
+    name: 'Задние амортизаторы - Новинка',
     brand: 'KYB',
     price: 60000,
-    imageUrl: 'https://picsum.photos/seed/shk004/300/200',
+    imageUrl: 'https://picsum.photos/seed/shk004new/300/200',
     description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
     category: 'Подвеска',
     compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
@@ -172,11 +284,11 @@ const newArrivals: AutoPart[] = [
     stock: 30,
   },
    {
-    id: 'flt-008',
-    name: 'Салонный фильтр (угольный)',
+    id: 'flt-008-new',
+    name: 'Салонный фильтр (угольный) - Новинка',
     brand: 'Bosch',
     price: 11250,
-    imageUrl: 'https://picsum.photos/seed/flt008/300/200',
+    imageUrl: 'https://picsum.photos/seed/flt008new/300/200',
     description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
     category: 'Фильтры',
     compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
@@ -479,15 +591,16 @@ const HomePage = () => {
           <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {categories.map((category) => {
-              const IconComponent = category.icon || Icons.box; // Default to Box icon if none provided
+               const IconComponent = category.icon; // Get the component type
                return (
                  // Use the correct href from the category object
                  <Link key={category.value} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
-                     <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                        {/* Use createElement to render the icon component */}
-                         {IconComponent && React.createElement(IconComponent, { className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
-                        <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
-                     </Card>
+                    {/* Remove nested <a> tag */}
+                   <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
+                      {/* Render icon component directly */}
+                      {IconComponent && <IconComponent className="w-8 h-8 mb-2" style={{ color: '#535353ff' }} />}
+                      <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
+                   </Card>
                  </Link>
                );
             })}
@@ -499,7 +612,7 @@ const HomePage = () => {
       <section className="py-12 bg-secondary rounded-lg">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold mb-8 text-center">Хиты продаж</h2>
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"> {/* Adjusted grid columns */}
             {popularProducts.map((product) => (
               <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
             ))}
@@ -551,17 +664,18 @@ const HomePage = () => {
             {blogPosts.map((post) => (
               <Card key={post.title} className="overflow-hidden group">
                  <Link href={post.href ?? '#'} passHref legacyBehavior={false} className="block">
-                        <img
-                            src={post.imageUrl}
-                            alt={post.title}
-                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                             onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
-                            />
-                        <CardContent className="p-4">
-                             <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{post.title}</CardTitle>
-                             <p className="text-sm text-muted-foreground mb-3">Узнайте больше о...</p>
-                             <Button variant="link" className="p-0 h-auto text-primary">Читать далее →</Button>
-                        </CardContent>
+                    {/* Remove nested <a> tag */}
+                    <img
+                        src={post.imageUrl}
+                        alt={post.title}
+                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                         onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
+                        />
+                    <CardContent className="p-4">
+                         <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{post.title}</CardTitle>
+                         <p className="text-sm text-muted-foreground mb-3">Узнайте больше о...</p>
+                         <Button variant="link" className="p-0 h-auto text-primary">Читать далее →</Button>
+                    </CardContent>
                  </Link>
               </Card>
             ))}
@@ -573,4 +687,3 @@ const HomePage = () => {
   };
 
   export default HomePage;
-

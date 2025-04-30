@@ -30,7 +30,6 @@ import {
   ChevronDown,
   ChevronUp,
   Car,
-  Camera,
   Box,
   Truck,
   X,
@@ -38,6 +37,7 @@ import {
   EyeOff,
   Aperture,
   Zap,
+  Gift, // Added Gift icon
 } from 'lucide-react';
 
 const Icons = {
@@ -73,12 +73,12 @@ const Icons = {
   filter: Filter,
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
-  engine: Car,
-  suspension: Zap,
+  car: Car, // Changed 'engine' key to 'car' to match import
+  suspension: Zap, // Reverted to Zap as Suspension is not valid
   brakes: Circle,
   electrical: Zap,
   body: Box,
-  accessories: Car,
+  accessories: Gift, // Using Gift for accessories
   truck: Truck,
   eye: Eye,
   eyeOff: EyeOff,
