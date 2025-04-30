@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { AutoPart } from "@/types/autopart"; // Corrected import path
+import type { AutoPart } from '@/types/autopart'; // Corrected import path
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 
@@ -31,15 +31,11 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
       }).format(price);
     }, []); // No dependencies needed
 
-   const handleButtonClick = () => {
+   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+       e.preventDefault(); // Prevent default link behavior if inside a link
+       e.stopPropagation(); // Prevent event bubbling up to parent links
        onAddToCart(product);
-       // Defer toast call slightly
-       // setTimeout(() => {
-       //   toast({
-       //     title: "Добавлено в корзину!",
-       //     description: `${product.name} был добавлен в вашу корзину.`,
-       //   });
-       // }, 0);
+       // Toast is handled within onAddToCart's context now
    };
 
 
@@ -66,17 +62,14 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
     <Card className="w-full product-card flex flex-col h-full overflow-hidden group"> {/* Changed width, added overflow-hidden and group */}
         <CardHeader className="p-4"> {/* Adjusted padding */}
             {/* Link wraps the clickable area for navigation */}
-            <Link href={`/part/${product.id}`} passHref legacyBehavior>
-                <a aria-label={`Посмотреть детали для ${product.name}`}>
+            <Link href={`/part/${product.id}`} passHref legacyBehavior={false} aria-label={`Посмотреть детали для ${product.name}`}>
                   <CardTitle className="hover:text-primary transition-colors cursor-pointer line-clamp-2 text-sm font-medium h-10"> {/* Adjusted size and height */}
                     {product.name}
                    </CardTitle>
-                 </a>
              </Link>
         </CardHeader>
         <CardContent className="flex flex-col items-center flex-grow p-4 pt-0"> {/* Adjusted padding */}
-             <Link href={`/part/${product.id}`} passHref legacyBehavior>
-                <a className="block w-full mb-3" aria-label={`Посмотреть изображение ${product.name}`}>
+             <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3" aria-label={`Посмотреть изображение ${product.name}`}>
                     <img
                         src={product.imageUrl || 'https://picsum.photos/300/200'} // Fallback image
                         alt={product.name}
@@ -84,7 +77,6 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
                         loading="lazy" // Lazy load images below the fold
                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/300/200')} // Handle image load errors
                     />
-                 </a>
             </Link>
             <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
             <p className="text-base font-semibold mb-3">{formatPrice(product.price)}</p> {/* Adjusted margin */}
@@ -99,3 +91,4 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => { // Rec
 };
 
 export default Autopart;
+

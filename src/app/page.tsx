@@ -346,7 +346,7 @@ const HomePage = () => {
                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')}
                          />
                       <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90">
-                        <Link href={banner.href}>{banner.buttonText}</Link>
+                        <Link href={banner.href ?? '#'}>{banner.buttonText}</Link>
                       </Button>
                     </CardContent>
                   </Card>
@@ -433,13 +433,11 @@ const HomePage = () => {
             {categories.map((category) => {
               const IconComponent = category.icon || Icons.box; // Default to Box icon if none provided
                return (
-                 <Link key={category.name} href={category.href} passHref legacyBehavior>
-                   <a className="block">
+                 <Link key={category.name} href={category.href ?? '#'} passHref legacyBehavior={false} className="block">
                      <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
                         {IconComponent && <IconComponent className="w-8 h-8 mb-2" style={{ color: '#535353ff' }} />}
                         <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
                      </Card>
-                   </a>
                  </Link>
                );
             })}
@@ -502,8 +500,7 @@ const HomePage = () => {
            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {blogPosts.map((post) => (
               <Card key={post.title} className="overflow-hidden group">
-                 <Link href={post.href} passHref legacyBehavior>
-                     <a className="block">
+                 <Link href={post.href ?? '#'} passHref legacyBehavior={false} className="block">
                         <img
                             src={post.imageUrl}
                             alt={post.title}
@@ -515,7 +512,6 @@ const HomePage = () => {
                              <p className="text-sm text-muted-foreground mb-3">Узнайте больше о...</p>
                              <Button variant="link" className="p-0 h-auto text-primary">Читать далее →</Button>
                         </CardContent>
-                     </a>
                  </Link>
               </Card>
             ))}
@@ -527,4 +523,3 @@ const HomePage = () => {
   };
 
   export default HomePage;
-
