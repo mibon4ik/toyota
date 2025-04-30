@@ -78,6 +78,48 @@ const popularProducts: AutoPart[] = [
     sku: 'DN-17801',
     stock: 150,
   },
+    {
+    id: 'oil-003',
+    name: 'Синтетическое моторное масло 0W-20',
+    brand: 'Mobil 1',
+    price: 17500,
+    imageUrl: 'https://picsum.photos/seed/oil003/300/200',
+    description: 'Полностью синтетическое масло для улучшенной защиты и производительности.',
+    category: 'Двигатель',
+    compatibleVehicles: ['Большинство моделей Toyota'],
+    sku: 'M1-0W20-5Q',
+    stock: 80,
+    rating: 4.9,
+    reviewCount: 210
+  },
+  {
+    id: 'flt-010',
+    name: 'Масляный фильтр',
+    brand: 'Toyota Genuine',
+    price: 5000,
+    imageUrl: 'https://picsum.photos/seed/oil010/300/200',
+    description: 'Оригинальный масляный фильтр для максимальной фильтрации.',
+    category: 'Фильтры',
+    compatibleVehicles: ['Большинство моделей Toyota'],
+    sku: 'TG-90915-YZZD3',
+    stock: 250,
+    rating: 4.9,
+    reviewCount: 300
+  },
+   {
+    id: 'wpr-016',
+    name: 'Щетки стеклоочистителя (комплект)',
+    brand: 'Bosch',
+    price: 12000,
+    imageUrl: 'https://picsum.photos/seed/wpr016/300/200',
+    description: 'Всесезонные щетки стеклоочистителя для чистого обзора.',
+    category: 'Кузов',
+    compatibleVehicles: ['Toyota Camry', 'Toyota Corolla', 'Toyota RAV4'],
+    sku: 'BSH-ICON-SET',
+    stock: 200,
+    rating: 4.7,
+    reviewCount: 180
+  },
 ];
 
 const newArrivals: AutoPart[] = [
@@ -106,16 +148,16 @@ const newArrivals: AutoPart[] = [
     stock: 40,
   },
   {
-    id: 'oil-003',
-    name: 'Синтетическое моторное масло 0W-20',
-    brand: 'Mobil 1',
-    price: 17500,
-    imageUrl: 'https://picsum.photos/seed/oil003/300/200',
-    description: 'Полностью синтетическое масло для улучшенной защиты и производительности.',
+    id: 'oil-003-dup', // Ensure unique ID if needed for keys
+    name: 'Синтетическое моторное масло 5W-30',
+    brand: 'Castrol',
+    price: 18500,
+    imageUrl: 'https://picsum.photos/seed/oil003dup/300/200',
+    description: 'Полностью синтетическое масло для универсальной защиты.',
     category: 'Двигатель',
-    compatibleVehicles: ['Большинство моделей Toyota'],
-    sku: 'M1-0W20-5Q',
-    stock: 80,
+    compatibleVehicles: ['Большинство моделей'],
+    sku: 'CAS-EDGE-5W30',
+    stock: 95,
   },
    {
     id: 'shk-004',
@@ -351,7 +393,7 @@ const HomePage = () => {
                         className="rounded-md w-full h-48 object-cover mb-4"
                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')}
                          />
-                      <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90">
+                      <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
                         <Link href={banner.href ?? '#'}>{banner.buttonText}</Link>
                       </Button>
                     </CardContent>
@@ -440,10 +482,10 @@ const HomePage = () => {
               const IconComponent = category.icon || Icons.box; // Default to Box icon if none provided
                return (
                  // Use the correct href from the category object
-                 <Link key={category.name} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
+                 <Link key={category.value} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
                      <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
                         {/* Use createElement to render the icon component */}
-                        {IconComponent && React.createElement(IconComponent, { className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
+                         {IconComponent && React.createElement(IconComponent, { className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
                         <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
                      </Card>
                  </Link>
@@ -531,3 +573,4 @@ const HomePage = () => {
   };
 
   export default HomePage;
+
