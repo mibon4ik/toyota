@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState, useEffect, useCallback, Suspense} from 'react';
@@ -5,9 +6,9 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Button} from "@/components/ui/button";
 import {Icons } from "@/components/icons";
 import {cn} from "@/lib/utils";
-import Autopart from "@/app/components/autopart";
+import Autopart from "@/app/components/autopart"; // Corrected component path
 import Link from "next/link";
-import { getPartsByVin, getPartsByMakeModel } from '@/services/autopartCompatibility'; // Updated import path
+// Removed unused imports for getPartsByVin, getPartsByMakeModel
 import {Input} from "@/components/ui/input";
 import {useToast} from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
@@ -15,12 +16,13 @@ import Image from 'next/image'; // Import next/image
 import dynamic from 'next/dynamic'; // Import next/dynamic
 
 // Dynamically import sections that are further down the page
-const PopularCategories = dynamic(() => import('./components/PopularCategories').then(mod => mod.PopularCategories), { ssr: false });
-const HitsOfSales = dynamic(() => import('./components/HitsOfSales').then(mod => mod.HitsOfSales), { ssr: false });
-const NewArrivals = dynamic(() => import('./components/NewArrivals').then(mod => mod.NewArrivals), { ssr: false });
-const StoreBenefits = dynamic(() => import('./components/StoreBenefits').then(mod => mod.StoreBenefits), { ssr: false });
-const MiniBlog = dynamic(() => import('./components/MiniBlog').then(mod => mod.MiniBlog), { ssr: false });
-const CompatibilityChecker = dynamic(() => import('./components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), { ssr: false });
+const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), { ssr: false });
+const HitsOfSales = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), { ssr: false });
+const NewArrivals = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), { ssr: false });
+const StoreBenefits = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), { ssr: false });
+const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), { ssr: false });
+// Corrected import path for CompatibilityChecker
+const CompatibilityChecker = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), { ssr: false });
 
 
 const banners = [
@@ -95,13 +97,16 @@ const HomePage = () => {
         toastTitle = "Товар добавлен в корзину!";
         toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
+
+        // Moved toast display outside of setCartItems update to prevent potential infinite loop issues
+        // Use setTimeout to ensure state update likely finishes before showing toast
+        setTimeout(() => {
+          toast({ title: toastTitle, description: toastDescription });
+        }, 0);
+
       return updatedCart;
     });
 
-    // Use setTimeout to defer toast call
-    setTimeout(() => {
-        toast({ title: toastTitle, description: toastDescription });
-    }, 0);
   }, [toast, isMounted]); // Removed setCartItems from dependencies as it's stable
 
   return (
@@ -119,8 +124,8 @@ const HomePage = () => {
                         alt={banner.title}
                         width={1200}
                         height={400}
-                        className="rounded-md w-full h-auto object-cover mb-4" // Use h-auto for better responsiveness
-                        priority={index === 0} // Prioritize loading the first banner image (LCP candidate)
+                        className="rounded-md w-full h-auto object-cover mb-4"
+                        priority={index === 0}
                         onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')}
                          />
                       <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">

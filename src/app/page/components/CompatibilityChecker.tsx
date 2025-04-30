@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import Autopart from "@/app/components/autopart";
-import { getPartsByVin, getPartsByMakeModel } from '@/services/autopartCompatibility';
+import { getPartsByVin, getPartsByMakeModel } from '@/services/autoparts'; // Corrected import path
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
@@ -72,7 +72,7 @@ export const CompatibilityChecker: React.FC<CompatibilityCheckerProps> = ({ onAd
       }
     }
 
-    if (!searchPerformed) {
+    if (!searchPerformed && (!make || !model)) {
       toast({
         title: "Ошибка",
         description: "Пожалуйста, введите Марку и Модель или корректный VIN-код.",
