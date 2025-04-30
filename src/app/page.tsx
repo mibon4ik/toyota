@@ -21,7 +21,7 @@ const categories = [
   },
   {
     name: 'Подвеска',
-    icon: Icons.suspension,
+    icon: Icons.suspension, // Ensure this icon exists in Icons
     value: 'Подвеска',
     href: '/shop?category=Подвеска',
   },
@@ -383,6 +383,9 @@ const HomePage = () => {
   const handleAddToCart = useCallback((product: AutoPart) => {
     if (!isMounted) return;
 
+    let toastTitle = "";
+    let toastDescription = "";
+
     setCartItems(currentItems => {
       const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
       let updatedCart;
@@ -391,13 +394,20 @@ const HomePage = () => {
         updatedCart = currentItems.map((item, index) =>
           index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
         );
-        toast({ title: "Количество обновлено!", description: `Количество ${product.name} в корзине увеличено.` });
+        toastTitle = "Количество обновлено!";
+        toastDescription = `Количество ${product.name} в корзине увеличено.`;
       } else {
         updatedCart = [...currentItems, { ...product, quantity: 1 }];
-        toast({ title: "Товар добавлен в корзину!", description: `${product.name} был добавлен в вашу корзину.` });
+        toastTitle = "Товар добавлен в корзину!";
+        toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
       return updatedCart;
     });
+
+    // Defer toast call to avoid state update during render
+    setTimeout(() => {
+        toast({ title: toastTitle, description: toastDescription });
+    }, 0);
   }, [toast, isMounted, setCartItems]);
 
 
@@ -580,11 +590,14 @@ const HomePage = () => {
             {categories.map((category) => {
                const IconComponent = category.icon;
                return (
+                 // Use the correct href from the category object
                  <Link key={category.value} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
-                   <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                      {IconComponent && React.createElement(IconComponent, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' } })}
-                      <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
-                   </Card>
+                    {/* Remove the redundant <a> tag */}
+                    <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
+                       {/* Use createElement to render the icon component */}
+                       {IconComponent ? React.createElement(IconComponent, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' } }) : null}
+                       <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
+                    </Card>
                  </Link>
                );
             })}
