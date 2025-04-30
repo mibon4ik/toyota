@@ -4,19 +4,19 @@ import React from 'react';
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 
 const blogPosts = [
   {
     id: 'blog-1',
     title: 'Важность регулярной замены масла',
-    imageUrl: 'https://picsum.photos/seed/oilchange/600/400',
+    imageUrl: 'https://picsum.photos/seed/oilchange/600/400', // Keep placeholder
     href: '/blog/oil-changes',
   },
   {
     id: 'blog-2',
     title: 'Выбор правильных тормозных колодок для вашего автомобиля',
-    imageUrl: 'https://picsum.photos/seed/brakepads/600/400',
+    imageUrl: 'https://picsum.photos/seed/brakepads/600/400', // Keep placeholder
     href: '/blog/brake-pads',
   },
 ];
@@ -33,8 +33,8 @@ export const MiniBlog: React.FC = () => {
                   <Image
                       src={post.imageUrl}
                       alt={post.title}
-                      width={600}
-                      height={400}
+                      width={600} // Explicit width
+                      height={400} // Explicit height
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                        onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
                       />

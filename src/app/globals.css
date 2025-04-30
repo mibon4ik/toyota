@@ -4,6 +4,7 @@
 
 body {
   font-family: Inter, sans-serif;
+  font-display: swap; /* Added font-display */
 }
 
 h1,
@@ -11,6 +12,7 @@ h2,
 h3 {
   font-family: Poppins, sans-serif;
   font-weight: bold;
+  font-display: swap; /* Added font-display */
 }
 
 h1 {
@@ -120,14 +122,12 @@ h3 {
   body {
     @apply bg-background text-foreground;
     font-size: 16px;
-    /* Improve rendering performance */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   .text-small {
     font-size: 14px;
   }
-  /* Ensure images don't exceed their container */
   img, svg, video, canvas, audio, iframe, embed, object {
     display: block;
     max-width: 100%;
@@ -151,14 +151,13 @@ h3 {
 /* Hover effect on product cards */
 .product-card {
   transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  /* Ensure smooth scaling */
   backface-visibility: hidden;
   transform: translateZ(0);
   -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .product-card:hover {
-  transform: scale(1.03); /* Slightly reduce scale for better performance */
+  transform: scale(1.03);
   box-shadow: var(--shadow);
 }
 

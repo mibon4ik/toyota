@@ -2,10 +2,10 @@
 import React, { useCallback } from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
-import type { AutoPart } from '@/types/autopart'; // Ensure AutoPart type includes quantity
+import type { AutoPart } from '@/types/autopart';
 import {useToast} from "@/hooks/use-toast";
 import Link from "next/link";
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 
 interface AutopartProps {
   product: AutoPart;
@@ -19,7 +19,6 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
        e.preventDefault();
        e.stopPropagation();
        onAddToCart(product);
-       // Toast is now handled within the onAddToCart function passed from parent
    }, [onAddToCart, product]);
 
 
@@ -43,18 +42,16 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
         </CardHeader>
         <CardContent className="flex flex-col items-center flex-grow p-4 pt-0">
              <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3 relative aspect-video" aria-label={`Посмотреть изображение ${product.name}`}>
-                  {/* Use next/image */}
                     <Image
                         src={product.imageUrl || 'https://picsum.photos/300/200'}
                         alt={product.name}
-                        fill // Use fill to make the image cover the container
+                        fill // Use fill layout
                         sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" // Adjust sizes based on your grid layout
                         className="object-cover rounded-md group-hover:opacity-90 transition-opacity border"
-                        loading="lazy"
+                        loading="lazy" // Keep lazy loading for product cards
                          onError={(e) => {
-                            // Optional: Handle image loading errors, e.g., show a placeholder
                             const target = e.target as HTMLImageElement;
-                            target.srcset = 'https://picsum.photos/300/200'; // Fallback src
+                            target.srcset = 'https://picsum.photos/300/200';
                             target.src = 'https://picsum.photos/300/200';
                          }}
                     />

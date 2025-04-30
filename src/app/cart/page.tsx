@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from 'lucide-react';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -26,7 +26,6 @@ const CartPage = () => {
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
-        // Add validation if needed
         if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
           setCartItems(parsedCart);
         } else {
@@ -78,14 +77,12 @@ const CartPage = () => {
           index === itemIndex ? { ...item, quantity: item.quantity - 1 } : item
         );
       }
-      // If quantity is 1, do nothing (or consider removing the item)
       return currentItems;
     });
   }, []);
 
   const removeItem = useCallback((id: string) => {
     setCartItems(currentItems => currentItems.filter(item => item.id !== id));
-     // Use setTimeout to ensure state update happens before toast
      setTimeout(() => {
          toast({
            title: "Товар удален!",
@@ -136,7 +133,7 @@ const CartPage = () => {
                        <Image
                          src={item.imageUrl || 'https://picsum.photos/100/100'}
                          alt={item.name}
-                         fill
+                         fill // Use fill layout
                          sizes="80px" // Specify size for optimization
                          className="object-cover rounded-md border"
                          onError={(e) => {

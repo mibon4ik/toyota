@@ -9,21 +9,20 @@ import { SiteFooter } from "@/app/components/site-footer";
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
-  display: 'swap',
+  display: 'swap', // Use font-display: swap
 });
 
 const poppins = Poppins({
   subsets: ['latin'],
   variable: '--font-poppins',
   weight: ['400', '500', '600', '700'],
-  display: 'swap',
+  display: 'swap', // Use font-display: swap
 });
 
 
 export const metadata: Metadata = {
   title: 'Toyota - Запчасти и Аксессуары',
   description: 'Ваш надежный магазин автозапчастей и аксессуаров для Toyota.',
-
 };
 
 
@@ -35,8 +34,10 @@ export default function RootLayout({
   return (
     <html lang="ru" className={`${inter.variable} ${poppins.variable}`}>
       <head>
+        {/* Preconnect to image origins */}
         <link rel="preconnect" href="https://picsum.photos" />
         <link rel="preconnect" href="https://fastly.picsum.photos" />
+        <link rel="preconnect" href="https://example.com" />
       </head>
       <body className="antialiased bg-background text-foreground">
         <div className="relative flex min-h-screen flex-col">
@@ -44,7 +45,6 @@ export default function RootLayout({
           <main className="container mx-auto max-w-7xl flex-1 px-4 sm:px-6 py-8 sm:py-12">
             {children}
           </main>
-
           <SiteFooter />
         </div>
         <Toaster />

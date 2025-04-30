@@ -8,7 +8,7 @@ import {Button} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -17,30 +17,28 @@ interface CartItem extends AutoPart {
 const PartDetailPage = () => {
   const [part, setPart] = useState<AutoPart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const params = useParams<{ partId: string }>();
-  const partId = params?.partId;
+  const params = useParams();
+  const partId = typeof params?.partId === 'string' ? params.partId : undefined; // Ensure partId is a string
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Load cart from localStorage on mount (client-side only)
-   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('cartItems');
+   // Load cart from localStorage on mount (client-side only)
+   useEffect(() => {
+     setIsMounted(true);
+     const storedCart = localStorage.getItem('cartItems');
+     if (storedCart) {
        try {
-         const parsedCart: CartItem[] = storedCart ? JSON.parse(storedCart) : [];
-          // Add validation if needed
-          if (Array.isArray(parsedCart)) {
-            return parsedCart;
-          }
-         return [];
+         const parsedCart: CartItem[] = JSON.parse(storedCart);
+         if (Array.isArray(parsedCart)) {
+           setCartItems(parsedCart);
+         }
        } catch (e) {
          console.error("Error parsing cart from localStorage on init:", e);
          localStorage.removeItem('cartItems'); // Clear corrupted data
-         return [];
        }
-    }
-    return []; // Return empty array during SSR or if window is not defined
-  });
+     }
+   }, []);
 
   // Set mount status
   useEffect(() => {
@@ -67,29 +65,28 @@ const PartDetailPage = () => {
          }
       } else {
          setIsLoading(false);
-         toast({
-             title: "Ошибка",
-             description: "ID товара не найден.",
-             variant: "destructive",
-         });
+         // Removed toast for missing ID as it might fire prematurely on client mount
+         console.warn("Part ID not found in URL parameters.");
       }
     };
 
-    fetchPart();
-  }, [partId, toast]);
+    if (isMounted) { // Only fetch if mounted and partId is available
+        fetchPart();
+    }
+  }, [partId, toast, isMounted]); // Add isMounted dependency
 
    // Save cart to localStorage whenever it changes (client-side only)
    useEffect(() => {
      if (isMounted) {
        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-       window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify other components like header
+       window.dispatchEvent(new CustomEvent('cartUpdated'));
      }
    }, [cartItems, isMounted]);
 
 
    // Add to cart handler
    const handleAddToCart = useCallback(() => {
-     if (!part || !isMounted) return; // Ensure component is mounted and part exists
+     if (!part || !isMounted) return;
 
      setCartItems(currentItems => {
        const existingItemIndex = currentItems.findIndex(item => item.id === part.id);
@@ -109,14 +106,13 @@ const PartDetailPage = () => {
          toastDescription = `${part.name} был добавлен в вашу корзину.`;
        }
 
-        // Use setTimeout to defer toast display after state update
         setTimeout(() => {
              toast({ title: toastTitle, description: toastDescription });
         }, 0);
 
         return updatedCart;
      });
-   }, [part, toast, isMounted, setCartItems]); // Add isMounted and setCartItems
+   }, [part, toast, isMounted]); // Added isMounted
 
 
     const formatPrice = useCallback((price: number): string => {
@@ -168,8 +164,8 @@ const PartDetailPage = () => {
               src={part.imageUrl || 'https://picsum.photos/600/400'}
               alt={part.name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain rounded-md" // Use object-contain if you want to see the whole image
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes
+              className="object-contain rounded-md"
               loading="lazy"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
