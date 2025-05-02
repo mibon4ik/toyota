@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from 'lucide-react';
-import Image from 'next/image'; // Import next/image
+import Image from 'next/image';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
 
@@ -29,6 +29,7 @@ const CartPage = () => {
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
+        // Basic validation to ensure it's an array of objects with necessary properties
         if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
           setCartItems(parsedCart);
         } else {
@@ -37,7 +38,7 @@ const CartPage = () => {
         }
       } catch (e) {
         console.error("Error parsing cart items from localStorage:", e);
-        localStorage.removeItem('cartItems');
+        localStorage.removeItem('cartItems'); // Clear corrupted data
       }
     }
   }, []);
@@ -46,7 +47,7 @@ const CartPage = () => {
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify nav bar or other components
     }
   }, [cartItems, isMounted]);
 
@@ -76,6 +77,7 @@ const CartPage = () => {
     setCartItems(currentItems => {
       const itemIndex = currentItems.findIndex(item => item.id === id);
       if (itemIndex > -1 && currentItems[itemIndex].quantity > 1) {
+        // Decrease quantity if it's more than 1
         return currentItems.map((item, index) =>
           index === itemIndex ? { ...item, quantity: item.quantity - 1 } : item
         );
@@ -88,32 +90,33 @@ const CartPage = () => {
 
   const removeItem = useCallback((id: string) => {
     setCartItems(currentItems => currentItems.filter(item => item.id !== id));
-     // Defer toast to avoid calling during render
-     setTimeout(() => {
-         toast({
-           title: "Товар удален!",
-           description: "Товар удален из корзины",
-           variant: "destructive"
-         });
-     }, 0);
+    // Defer toast to avoid calling during render
+    setTimeout(() => {
+        toast({
+          title: "Товар удален!",
+          description: "Товар удален из корзины",
+          variant: "destructive" // Or another appropriate variant
+        });
+    }, 0);
   }, [toast]);
 
-   const formatPrice = useCallback((price: number): string => {
-      return new Intl.NumberFormat('ru-KZ', {
-        style: 'currency',
-        currency: 'KZT',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(price);
-    }, []);
+  const formatPrice = useCallback((price: number): string => {
+    // Formats price to KZT currency
+    return new Intl.NumberFormat('ru-KZ', {
+      style: 'currency',
+      currency: 'KZT',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  }, []);
 
   // Show loading state until mounted
   if (!isMounted) {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
-             <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-             {/* Optional: Add skeleton loader here */}
+            <p className="text-center text-muted-foreground">Загрузка корзины...</p>
+            {/* Optional: Add skeleton loader here */}
         </div>
     );
   }
@@ -124,7 +127,7 @@ const CartPage = () => {
       {cartItems.length === 0 ? (
         <div className="text-center py-10">
             <p className="text-muted-foreground mb-4">Ваша корзина пуста.</p>
-             <Link href="/shop" passHref legacyBehavior={false}>
+            <Link href="/shop" passHref legacyBehavior={false}>
                 <Button className="bg-[#535353ff] hover:bg-[#535353ff]/90">Перейти в магазин</Button>
             </Link>
         </div>
@@ -139,7 +142,7 @@ const CartPage = () => {
                     {/* Image */}
                     <div className="relative w-20 h-20 flex-shrink-0">
                        <Image
-                         src={item.imageUrl || 'https://picsum.photos/100/100'} // Placeholder URL
+                         src={item.imageUrl || 'https://picsum.photos/100/100'} // Use the imageUrl from the cart item
                          alt={item.name}
                          fill // Use fill layout
                          sizes="80px" // Specify size for optimization
