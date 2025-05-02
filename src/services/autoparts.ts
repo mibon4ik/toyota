@@ -10,7 +10,6 @@ const partsFilePath = path.join(process.cwd(), 'src', 'data', 'autoparts.json');
 const vehiclesFilePath = path.join(process.cwd(), 'src', 'data', 'vehicles.json');
 const dataDir = path.dirname(partsFilePath);
 
-
 const ensureDataDirExists = async (): Promise<void> => {
   try {
     await fs.access(dataDir);
@@ -24,7 +23,6 @@ const ensureDataDirExists = async (): Promise<void> => {
     }
   }
 };
-
 
 async function readPartsFile(): Promise<AutoPart[]> {
   await ensureDataDirExists();
@@ -47,7 +45,6 @@ async function readPartsFile(): Promise<AutoPart[]> {
   }
 }
 
-
 async function writePartsFile(parts: AutoPart[]): Promise<void> {
   await ensureDataDirExists();
   try {
@@ -61,7 +58,6 @@ async function writePartsFile(parts: AutoPart[]): Promise<void> {
     throw new Error("Could not save autoparts data.");
   }
 }
-
 
 async function readVehiclesFile(): Promise<Vehicle[]> {
     await ensureDataDirExists();
@@ -83,14 +79,14 @@ async function readVehiclesFile(): Promise<Vehicle[]> {
     }
   }
 
-
-
-
-function simulateApiCall<T>(data: T, delay = 300): Promise<T> {
+function simulateApiCall<T>(data: T, delay = 100): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(data), delay));
 }
 
-
+export async function getAllAutoParts(): Promise<AutoPart[]> {
+    const allParts = await readPartsFile();
+    return simulateApiCall(allParts);
+}
 
 export async function searchAutoParts(query: string): Promise<AutoPart[]> {
   const allParts = await readPartsFile();
@@ -102,14 +98,13 @@ export async function searchAutoParts(query: string): Promise<AutoPart[]> {
   const results = allParts.filter(part =>
     part.name.toLowerCase().includes(lowerCaseQuery) ||
     part.brand.toLowerCase().includes(lowerCaseQuery) ||
-    part.description.toLowerCase().includes(lowerCaseQuery) ||
+    (part.description && part.description.toLowerCase().includes(lowerCaseQuery)) ||
     part.category.toLowerCase().includes(lowerCaseQuery) ||
     (part.sku && part.sku.toLowerCase().includes(lowerCaseQuery))
   );
 
   return simulateApiCall(results);
 }
-
 
 export async function getAutoPartsByCategory(category: string | null | undefined): Promise<AutoPart[]> {
    const allParts = await readPartsFile();
@@ -123,14 +118,11 @@ export async function getAutoPartsByCategory(category: string | null | undefined
   return simulateApiCall(results);
 }
 
-
 export async function getAutoPartById(partId: string): Promise<AutoPart | null> {
    const allParts = await readPartsFile();
   const part = allParts.find(p => p.id === partId);
   return simulateApiCall(part || null);
 }
-
-
 
 export async function getPartsByVin(vinCode: string): Promise<AutoPart[]> {
   const vehicle = await getVehicleByVin(vinCode);
@@ -143,7 +135,6 @@ export async function getPartsByVin(vinCode: string): Promise<AutoPart[]> {
    return getPartsByMakeModel(vehicle.make, vehicle.model);
 }
 
-
 export async function getPartsByMakeModel(make: string, model: string): Promise<AutoPart[]> {
    const allParts = await readPartsFile();
   if (!make || !model) {
@@ -155,6 +146,8 @@ export async function getPartsByMakeModel(make: string, model: string): Promise<
   const results = allParts.filter(part =>
     part.compatibleVehicles.some(v => {
       const lowerV = v.toLowerCase();
+      // Basic check: see if make and model are substrings
+      // A more robust solution would involve parsing the vehicle string
       return lowerV.includes(lowerMake) && lowerV.includes(lowerModel);
     }) || part.compatibleVehicles.some(v => v.toLowerCase().includes('большинство моделей') || v.toLowerCase().includes('различные модели'))
   );
@@ -162,8 +155,6 @@ export async function getPartsByMakeModel(make: string, model: string): Promise<
   console.log(`getPartsByMakeModel: Found ${results.length} potentially compatible parts for ${make} ${model}`);
   return simulateApiCall(results);
 }
-
-
 
 export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<AutoPart> {
   if (!newPartData || typeof newPartData !== 'object' || !newPartData.name) {
@@ -195,6 +186,35 @@ export async function addAutoPart(newPartData: Omit<AutoPart, 'id'>): Promise<Au
 }
 
 
+export async function updateAutoPart(partId: string, updatedData: Partial<Omit<AutoPart, 'id'>>): Promise<AutoPart> {
+  if (!partId || !updatedData || typeof updatedData !== 'object') {
+    throw new Error("Некорректные данные для обновления товара.");
+  }
+
+  const allParts = await readPartsFile();
+  const partIndex = allParts.findIndex(p => p.id === partId);
+
+  if (partIndex === -1) {
+    throw new Error(`Товар с ID "${partId}" не найден.`);
+  }
+
+  // Prevent updating the ID
+  const { id, ...dataToUpdate } = updatedData;
+
+  const updatedPart = {
+    ...allParts[partIndex],
+    ...dataToUpdate,
+    price: typeof dataToUpdate.price === 'number' ? dataToUpdate.price : allParts[partIndex].price,
+    stock: typeof dataToUpdate.stock === 'number' ? dataToUpdate.stock : allParts[partIndex].stock,
+    compatibleVehicles: Array.isArray(dataToUpdate.compatibleVehicles) ? dataToUpdate.compatibleVehicles : allParts[partIndex].compatibleVehicles,
+  };
+
+  allParts[partIndex] = updatedPart;
+  await writePartsFile(allParts);
+
+  console.log(`Updated part: ${updatedPart.name} (ID: ${partId})`);
+  return simulateApiCall(updatedPart);
+}
 
 
 export async function getVehicleByVin(vinCode: string): Promise<Vehicle | null> {
@@ -204,7 +224,6 @@ export async function getVehicleByVin(vinCode: string): Promise<Vehicle | null> 
   const vehicle = vehicles.find(v => v.vin.toUpperCase() === upperVin);
   return simulateApiCall(vehicle || null);
 }
-
 
 export async function getVehicleByMakeModel(make: string, model: string): Promise<Vehicle | null> {
   if (!make || !model) return simulateApiCall(null);
@@ -217,15 +236,15 @@ export async function getVehicleByMakeModel(make: string, model: string): Promis
   return simulateApiCall(vehicle || null);
 }
 
-
 // --- Initialization (Optional, if needed) ---
-// (async () => {
-//     try {
-//         console.log("Ensuring data files exist on startup...");
-//         await readPartsFile(); // Ensures file exists or is created
-//         await readVehiclesFile(); // Ensures file exists or is created
-//         console.log("Data file checks complete.");
-//     } catch (error) {
-//         console.error("FATAL: Failed to initialize data files:", error);
-//     }
-// })();
+(async () => {
+    try {
+        await ensureDataDirExists();
+        // Ensure files exist, create if not
+        await readPartsFile();
+        await readVehiclesFile();
+        console.log("Data files checked/initialized.");
+    } catch (error) {
+        console.error("FATAL: Failed to initialize data files:", error);
+    }
+})();
