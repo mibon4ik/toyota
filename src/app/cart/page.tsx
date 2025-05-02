@@ -19,7 +19,6 @@ const CartPage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
 
-  // Load cart from local storage only on client-side mount
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
@@ -34,16 +33,15 @@ const CartPage = () => {
         }
       } catch (e) {
         console.error("Error parsing cart items from localStorage:", e);
-        localStorage.removeItem('cartItems'); // Clear corrupted data
+        localStorage.removeItem('cartItems');
       }
     }
   }, []);
 
-  // Save cart to local storage whenever it changes (client-side only)
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify header
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
   }, [cartItems, isMounted]);
 
@@ -52,7 +50,7 @@ const CartPage = () => {
   }, [cartItems]);
 
   const updateQuantity = useCallback((id: string, newQuantity: number) => {
-    const quantity = Math.max(1, newQuantity); // Ensure quantity is at least 1
+    const quantity = Math.max(1, newQuantity);
 
     setCartItems(currentItems =>
       currentItems.map(item =>
@@ -101,13 +99,11 @@ const CartPage = () => {
       }).format(price);
     }, []);
 
-  // Loading state until component is mounted
   if (!isMounted) {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
              <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-             {/* Optional: Add Skeleton loaders here */}
         </div>
     );
   }
@@ -133,14 +129,15 @@ const CartPage = () => {
                        <Image
                          src={item.imageUrl || 'https://picsum.photos/100/100'}
                          alt={item.name}
-                         fill // Use fill layout
-                         sizes="80px" // Specify size for optimization
+                         fill
+                         sizes="80px"
                          className="object-cover rounded-md border"
                          onError={(e) => {
                            const target = e.target as HTMLImageElement;
                            target.srcset = 'https://picsum.photos/100/100';
                            target.src = 'https://picsum.photos/100/100';
                          }}
+                         data-ai-hint={`${item.category} ${item.brand} cart item`} // Add hint
                        />
                     </div>
                     <div className="flex-grow">
@@ -216,3 +213,5 @@ const CartPage = () => {
 };
 
 export default CartPage;
+
+    

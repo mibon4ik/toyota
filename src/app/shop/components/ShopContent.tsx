@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card'; // Keep Card imports if used in this component
-import { Skeleton } from "@/components/ui/skeleton"; // Keep Skeleton if used directly here
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface CartItem extends AutoPart {
@@ -40,22 +40,20 @@ export const ShopContent = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const {toast} = useToast();
-  const searchParams = useSearchParams(); // useSearchParams is safe here due to 'use client'
-  const initialCategory = searchParams.get('category') || 'all'; // Get initial category from URL
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get('category') || 'all';
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
    const [searchTerm, setSearchTerm] = useState('');
    const [isMounted, setIsMounted] = useState(false);
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-   // Load cart from localStorage on mount
    useEffect(() => {
      setIsMounted(true);
      const storedCart = localStorage.getItem('cartItems');
      if (storedCart) {
        try {
          const parsedCart: CartItem[] = JSON.parse(storedCart);
-         // Basic validation
          if (Array.isArray(parsedCart) && parsedCart.every(item => typeof item.id === 'string' && typeof item.name === 'string' && typeof item.price === 'number' && typeof item.quantity === 'number')) {
            setCartItems(parsedCart);
          } else {
@@ -69,11 +67,10 @@ export const ShopContent = () => {
      }
    }, []);
 
-   // Save cart to localStorage whenever it changes
    useEffect(() => {
      if (isMounted) {
        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-       window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify other components like header
+       window.dispatchEvent(new CustomEvent('cartUpdated'));
      }
    }, [cartItems, isMounted]);
 
@@ -96,7 +93,7 @@ export const ShopContent = () => {
           product.category.toLowerCase().includes(lowerSearchTerm) ||
           (product.description && product.description.toLowerCase().includes(lowerSearchTerm))
         );
-         console.log(`Filtered to ${filteredProducts.length} parts based on search term "${searchTerm}"`);
+         console.log(`Filtered to ${filteredProducts.length} parts based on search term "${searchTerm}"}`);
       } else {
            console.log(`No search term, showing all ${filteredProducts.length} parts for the category.`);
       }
@@ -105,26 +102,28 @@ export const ShopContent = () => {
     } catch (err: any) {
       console.error("Failed to fetch products:", err);
       setError("Не удалось загрузить товары.");
-      toast({ title: "Ошибка", description: err.message || "Не удалось загрузить товары.", variant: "destructive" });
+       // Defer toast to prevent state update during render
+       setTimeout(() => {
+           toast({ title: "Ошибка", description: err.message || "Не удалось загрузить товары.", variant: "destructive" });
+       }, 0);
     } finally {
       setIsLoading(false);
       console.log("Finished fetching products.");
     }
-  }, [selectedCategory, searchTerm, toast]); // Add toast to dependencies
+  }, [selectedCategory, searchTerm, toast]);
 
    useEffect(() => {
-     if(isMounted) { // Only fetch products after the component has mounted
+     if(isMounted) {
         fetchProducts();
      }
-   }, [fetchProducts, isMounted]); // Add isMounted dependency
+   }, [fetchProducts, isMounted]);
 
-   // Update selectedCategory when URL changes
    useEffect(() => {
        const categoryFromUrl = searchParams.get('category') || 'all';
        if (categoryFromUrl !== selectedCategory) {
            setSelectedCategory(categoryFromUrl);
        }
-   }, [searchParams, selectedCategory]); // Add selectedCategory to dependencies
+   }, [searchParams, selectedCategory]);
 
    const handleAddToCart = useCallback((product: AutoPart) => {
      if (!isMounted) return;
@@ -149,7 +148,6 @@ export const ShopContent = () => {
        }
         console.log("Updated cart state (pending):", updatedCart);
 
-       // Defer toast call slightly to ensure state update completes
        setTimeout(() => {
             toast({
                 title: toastTitle,
@@ -160,35 +158,29 @@ export const ShopContent = () => {
 
        return updatedCart;
      });
-   }, [toast, isMounted]); // Removed setCartItems dependency as it's stable
+   }, [toast, isMounted]);
 
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
      setSearchTerm(event.target.value);
-     // Optional: Trigger search on type if desired, but might be too many requests
-     // fetchProducts();
    };
 
-   // Explicit search submission
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         console.log("Search submitted with term:", searchTerm);
-        fetchProducts(); // Trigger fetch on submit
+        fetchProducts();
     };
 
    const handleCategoryChange = (value: string) => {
      console.log("Category changed to:", value);
      setSelectedCategory(value);
-     // Optionally update URL here if needed, though usually Suspense handles URL changes reacting to state
-     // router.push(`/shop?category=${value}`); // Requires importing useRouter from 'next/navigation'
    };
 
-    // Memoize the filtered products display to avoid re-rendering unless products change
     const displayedProducts = useMemo(() => {
         if (isLoading) {
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {[...Array(10)].map((_, index) => ( // Increased skeleton count
+                    {[...Array(10)].map((_, index) => (
                         <Card key={index} className="w-full overflow-hidden">
                              <CardHeader className="p-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
                              <CardContent className="flex flex-col items-center p-4 pt-0">
@@ -218,14 +210,13 @@ export const ShopContent = () => {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {products.map((product) => (
-                    <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
+                    <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} data-ai-hint={`${product.category} ${product.brand}`} />
                 ))}
             </div>
         );
     }, [isLoading, error, products, searchTerm, selectedCategory, handleAddToCart]);
 
 
-  // Render the actual content
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Каталог автозапчастей</h1>
@@ -261,8 +252,9 @@ export const ShopContent = () => {
         </form>
       </div>
 
-       {/* Display the memoized product grid */}
        {displayedProducts}
     </div>
   );
 };
+
+    

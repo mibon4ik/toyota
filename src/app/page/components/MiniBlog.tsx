@@ -10,14 +10,16 @@ const blogPosts = [
   {
     id: 'blog-1',
     title: 'Важность регулярной замены масла',
-    imageUrl: 'https://picsum.photos/seed/oilchange/600/400', // Keep placeholder
+    imageUrl: 'https://picsum.photos/seed/oilchange/600/400',
     href: '/blog/oil-changes',
+    dataAiHint: "engine oil change"
   },
   {
     id: 'blog-2',
     title: 'Выбор правильных тормозных колодок для вашего автомобиля',
-    imageUrl: 'https://picsum.photos/seed/brakepads/600/400', // Keep placeholder
+    imageUrl: 'https://picsum.photos/seed/brakepads/600/400',
     href: '/blog/brake-pads',
+    dataAiHint: "brake pads selection"
   },
 ];
 
@@ -33,10 +35,11 @@ export const MiniBlog: React.FC = () => {
                   <Image
                       src={post.imageUrl}
                       alt={post.title}
-                      width={600} // Explicit width
-                      height={400} // Explicit height
+                      width={600}
+                      height={400}
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                        onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
+                       data-ai-hint={post.dataAiHint}
                       />
                   <CardContent className="p-4">
                        <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{post.title}</CardTitle>
@@ -51,3 +54,5 @@ export const MiniBlog: React.FC = () => {
      </section>
   );
 };
+
+    

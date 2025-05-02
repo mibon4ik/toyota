@@ -45,15 +45,16 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
                     <Image
                         src={product.imageUrl || 'https://picsum.photos/300/200'}
                         alt={product.name}
-                        fill // Use fill layout
-                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw" // Adjust sizes based on your grid layout
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
                         className="object-cover rounded-md group-hover:opacity-90 transition-opacity border"
-                        loading="lazy" // Keep lazy loading for product cards
+                        loading="lazy"
                          onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.srcset = 'https://picsum.photos/300/200';
                             target.src = 'https://picsum.photos/300/200';
                          }}
+                         data-ai-hint={product.dataAiHint || `${product.category} part`} // Use provided hint or generate a basic one
                     />
             </Link>
             <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
@@ -68,3 +69,5 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
 };
 
 export default Autopart;
+
+    

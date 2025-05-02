@@ -1,42 +1,42 @@
 'use client';
 
-import React, {useState, useEffect, useCallback, Suspense} from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {Icons } from "@/components/icons";
-import {cn} from "@/lib/utils";
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
+import { cn } from "@/lib/utils";
 import Autopart from "@/app/components/autopart";
 import Link from "next/link";
-import {useToast} from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@/components/ui/skeleton'; // Import Skeleton
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Dynamically import sections that are further down the page
 const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
   ssr: false,
-  loading: () => <Skeleton className="h-40 w-full" />, // Added skeleton loader
+  loading: () => <Skeleton className="h-40 w-full" />,
 });
 const HitsOfSales = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
   ssr: false,
-  loading: () => <Skeleton className="h-96 w-full" />, // Added skeleton loader
- });
+  loading: () => <Skeleton className="h-96 w-full" />,
+});
 const NewArrivals = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), {
   ssr: false,
-  loading: () => <Skeleton className="h-96 w-full" />, // Added skeleton loader
+  loading: () => <Skeleton className="h-96 w-full" />,
 });
 const StoreBenefits = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
   ssr: false,
-  loading: () => <Skeleton className="h-48 w-full" />, // Added skeleton loader
+  loading: () => <Skeleton className="h-48 w-full" />,
 });
 const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
   ssr: false,
-  loading: () => <Skeleton className="h-64 w-full" />, // Added skeleton loader
+  loading: () => <Skeleton className="h-64 w-full" />,
 });
 const CompatibilityChecker = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
   ssr: false,
-  loading: () => <Skeleton className="h-80 w-full" />, // Added skeleton loader
+  loading: () => <Skeleton className="h-80 w-full" />,
 });
 
 
@@ -44,16 +44,18 @@ const banners = [
   {
     id: 'banner-1',
     title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://picsum.photos/seed/summersale/1200/400', // Keep placeholder
+    imageUrl: 'https://picsum.photos/seed/summersale/1200/400',
     buttonText: 'Купить сейчас',
     href: '/shop?sale=true',
+    dataAiHint: "car parts summer sale"
   },
   {
     id: 'banner-2',
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400', // Keep placeholder
+     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400',
     buttonText: 'Посмотреть новинки',
     href: '/shop?sort=newest',
+    dataAiHint: "new car parts arrivals"
   },
 ];
 
@@ -66,7 +68,6 @@ const HomePage = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Load cart from local storage only on the client side
   useEffect(() => {
     setIsMounted(true);
     const storedCart = localStorage.getItem('cartItems');
@@ -83,7 +84,6 @@ const HomePage = () => {
     }
   }, []);
 
-  // Update local storage when cart changes
   useEffect(() => {
     if (isMounted) {
       localStorage.setItem('cartItems', JSON.stringify(cartItems));
@@ -112,7 +112,6 @@ const HomePage = () => {
         toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
 
-      // Defer toast call slightly to ensure state update completes
        setTimeout(() => {
             toast({ title: toastTitle, description: toastDescription });
        }, 0);
@@ -120,7 +119,7 @@ const HomePage = () => {
       return updatedCart;
     });
 
-  }, [toast, isMounted]); // Removed setCartItems from dependencies
+  }, [toast, isMounted]);
 
 
   return (
@@ -133,15 +132,16 @@ const HomePage = () => {
                       <CardTitle className="text-xl">{banner.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-start p-4 pt-0">
-                      <div className="relative w-full aspect-[3/1] mb-4"> {/* Set aspect ratio */}
+                      <div className="relative w-full aspect-[3/1] mb-4">
                         <Image
                           src={banner.imageUrl}
                           alt={banner.title}
-                          fill // Use fill layout
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes attribute
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="rounded-md object-cover"
-                          priority={index === 0} // Add priority to the first banner image
-                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')} // Fallback
+                          priority={index === 0}
+                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')}
+                          data-ai-hint={banner.dataAiHint}
                         />
                       </div>
                       <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
@@ -152,32 +152,26 @@ const HomePage = () => {
             ))}
         </div>
 
-      {/* Compatibility Checker */}
       <Suspense fallback={<Skeleton className="h-80 w-full" />}>
         <CompatibilityChecker onAddToCart={handleAddToCart} />
       </Suspense>
 
-      {/* Popular Categories */}
       <Suspense fallback={<Skeleton className="h-40 w-full" />}>
         <PopularCategories />
       </Suspense>
 
-      {/* Hits of Sales */}
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
          <HitsOfSales onAddToCart={handleAddToCart} />
       </Suspense>
 
-      {/* New Arrivals */}
       <Suspense fallback={<Skeleton className="h-96 w-full" />}>
         <NewArrivals onAddToCart={handleAddToCart} />
       </Suspense>
 
-      {/* Store Benefits */}
        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
          <StoreBenefits />
        </Suspense>
 
-      {/* Mini Blog */}
        <Suspense fallback={<Skeleton className="h-64 w-full" />}>
          <MiniBlog />
        </Suspense>
@@ -186,3 +180,5 @@ const HomePage = () => {
   };
 
   export default HomePage;
+
+    

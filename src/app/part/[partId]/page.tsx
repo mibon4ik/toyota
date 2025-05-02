@@ -18,12 +18,11 @@ const PartDetailPage = () => {
   const [part, setPart] = useState<AutoPart | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const params = useParams();
-  const partId = typeof params?.partId === 'string' ? params.partId : undefined; // Ensure partId is a string
+  const partId = typeof params?.partId === 'string' ? params.partId : undefined;
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-   // Load cart from localStorage on mount (client-side only)
    useEffect(() => {
      setIsMounted(true);
      const storedCart = localStorage.getItem('cartItems');
@@ -35,17 +34,15 @@ const PartDetailPage = () => {
          }
        } catch (e) {
          console.error("Error parsing cart from localStorage on init:", e);
-         localStorage.removeItem('cartItems'); // Clear corrupted data
+         localStorage.removeItem('cartItems');
        }
      }
    }, []);
 
-  // Set mount status
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // Fetch part details
   useEffect(() => {
     const fetchPart = async () => {
       if (partId) {
@@ -65,17 +62,15 @@ const PartDetailPage = () => {
          }
       } else {
          setIsLoading(false);
-         // Removed toast for missing ID as it might fire prematurely on client mount
          console.warn("Part ID not found in URL parameters.");
       }
     };
 
-    if (isMounted) { // Only fetch if mounted and partId is available
+    if (isMounted) {
         fetchPart();
     }
-  }, [partId, toast, isMounted]); // Add isMounted dependency
+  }, [partId, toast, isMounted]);
 
-   // Save cart to localStorage whenever it changes (client-side only)
    useEffect(() => {
      if (isMounted) {
        localStorage.setItem('cartItems', JSON.stringify(cartItems));
@@ -84,7 +79,6 @@ const PartDetailPage = () => {
    }, [cartItems, isMounted]);
 
 
-   // Add to cart handler
    const handleAddToCart = useCallback(() => {
      if (!part || !isMounted) return;
 
@@ -112,7 +106,7 @@ const PartDetailPage = () => {
 
         return updatedCart;
      });
-   }, [part, toast, isMounted]); // Added isMounted
+   }, [part, toast, isMounted]);
 
 
     const formatPrice = useCallback((price: number): string => {
@@ -164,7 +158,7 @@ const PartDetailPage = () => {
               src={part.imageUrl || 'https://picsum.photos/600/400'}
               alt={part.name}
               fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-contain rounded-md"
               loading="lazy"
               onError={(e) => {
@@ -172,6 +166,7 @@ const PartDetailPage = () => {
                 target.srcset = 'https://picsum.photos/600/400';
                 target.src = 'https://picsum.photos/600/400';
               }}
+              data-ai-hint={`${part.category} ${part.brand} part detail`} // Add hint
             />
           </div>
            <p className="text-lg font-semibold mb-2">{formatPrice(part.price)}</p>
@@ -203,3 +198,5 @@ const PartDetailPage = () => {
 };
 
 export default PartDetailPage;
+
+    

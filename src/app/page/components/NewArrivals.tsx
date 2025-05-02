@@ -13,60 +13,65 @@ const newArrivals: AutoPart[] = [
     name: 'Светодиодная лампа для фары (H11) - Новинка',
     brand: 'Philips',
     price: 24995,
-    imageUrl: 'https://picsum.photos/seed/lhd005new/300/200',
+    imageUrl: 'https://picsum.photos/seed/lhd005new/300/200', // Keep placeholder, add hint if needed
     description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
     category: 'Электрика',
     compatibleVehicles: ['Различные модели Toyota/Lexus'],
     sku: 'PH-H11LED-X2',
     stock: 75,
+     dataAiHint: "led headlight bulb"
   },
   {
     id: 'acc-006-new',
     name: 'Всесезонные коврики (комплект) - Новинка',
     brand: 'WeatherTech',
     price: 75000,
-    imageUrl: 'https://picsum.photos/seed/acc006new/300/200',
+    imageUrl: 'https://picsum.photos/seed/acc006new/300/200', // Keep placeholder, add hint if needed
     description: 'Прочные коврики для защиты салона от грязи и влаги.',
     category: 'Аксессуары',
     compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
     sku: 'WT-441301-441302',
     stock: 40,
+     dataAiHint: "car floor mats"
   },
   {
     id: 'oil-003-dup-new',
     name: 'Синтетическое моторное масло 5W-30 - Новинка',
     brand: 'Castrol',
     price: 18500,
-    imageUrl: 'https://picsum.photos/seed/oil003dupnew/300/200',
+    imageUrl: 'https://picsum.photos/seed/oil003dupnew/300/200', // Keep placeholder, add hint if needed
     description: 'Полностью синтетическое масло для универсальной защиты.',
     category: 'Двигатель',
     compatibleVehicles: ['Большинство моделей'],
     sku: 'CAS-EDGE-5W30',
     stock: 95,
+     dataAiHint: "synthetic engine oil"
   },
    {
     id: 'shk-004-new',
     name: 'Задние амортизаторы - Новинка',
     brand: 'KYB',
     price: 60000,
-    imageUrl: 'https://picsum.photos/seed/shk004new/300/200',
+    imageUrl: 'https://picsum.photos/seed/shk004new/300/200', // Keep placeholder, add hint if needed
     description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
     category: 'Подвеска',
     compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
     sku: 'KYB-349041',
     stock: 30,
+     dataAiHint: "rear shock absorbers"
   },
    {
     id: 'flt-008-new',
     name: 'Салонный фильтр (угольный) - Новинка',
     brand: 'Bosch',
     price: 11250,
-    imageUrl: 'https://picsum.photos/seed/flt008new/300/200',
+    imageUrl: 'https://picsum.photos/seed/flt008new/300/200', // Keep placeholder, add hint if needed
     description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
     category: 'Фильтры',
     compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
     sku: 'BSH-6055C',
     stock: 120,
+     dataAiHint: "cabin air filter"
   }
 ];
 
@@ -93,3 +98,5 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
     </section>
   );
 };
+
+    
