@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -12,7 +11,7 @@ import { UserList } from './components/UserList';
 import { AddProductForm } from './components/AddProductForm';
 import { ProductList } from './components/ProductList'; // Import ProductList
 import { EditProductForm } from './components/EditProductForm'; // Import EditProductForm
-import { getAllUsers } from '@/lib/auth';
+import { getAllUsers, verifyPassword } from '@/lib/auth'; // Added verifyPassword for potential future checks
 import { getAllAutoParts } from '@/services/autoparts'; // Import service to fetch products
 import type { AutoPart } from '@/types/autopart'; // Import AutoPart type
 
@@ -36,11 +35,12 @@ const AdminPage = () => {
   }, []);
 
   const fetchProducts = useCallback(async () => {
+     console.log("AdminPage: Fetching products...");
      setIsLoadingProducts(true);
      setErrorProducts(null);
       try {
         const fetchedProducts = await getAllAutoParts();
-        console.log("AdminPage: Fetched products:", fetchedProducts.length);
+        console.log("AdminPage: Fetched products count:", fetchedProducts.length);
         setProducts(fetchedProducts);
       } catch (fetchError) {
         console.error("AdminPage: Failed to fetch products:", fetchError);
@@ -52,6 +52,7 @@ const AdminPage = () => {
         });
       } finally {
         setIsLoadingProducts(false);
+        console.log("AdminPage: Finished fetching products.");
       }
   }, [toast]); // Added toast dependency
 
@@ -62,9 +63,7 @@ const AdminPage = () => {
     }
      console.log("AdminPage: Running auth check and data fetch (client-side).");
      setIsLoadingUsers(true);
-    //  setIsLoadingProducts(true); // Product loading handled by fetchProducts
      setErrorUsers(null);
-    //  setErrorProducts(null);
 
      const authTokenCookie = getCookie('authToken');
      const isLoggedInCookie = getCookie('isLoggedIn');
@@ -93,7 +92,7 @@ const AdminPage = () => {
          }
      } else {
          console.log("AdminPage: Auth cookies not found or incomplete.");
-         // Optionally try restoring from localStorage (consider security implications)
+          // Try restoring from localStorage
          const localIsLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isLoggedIn') : null;
          const localUser = typeof window !== 'undefined' ? localStorage.getItem('loggedInUser') : null;
          if (localIsLoggedIn === 'true' && localUser) {
@@ -101,7 +100,17 @@ const AdminPage = () => {
               try {
                  loggedInUser = JSON.parse(localUser);
                  isAdmin = !!loggedInUser?.isAdmin;
-                  if (!isAdmin) console.log("AdminPage: User from localStorage is not admin.");
+                  if (!isAdmin) {
+                      console.log("AdminPage: User from localStorage is not admin.");
+                  } else {
+                      // Restore cookies if missing but localStorage is present (e.g., browser restart)
+                      const token = btoa(JSON.stringify({ id: loggedInUser.id, username: loggedInUser.username, isAdmin: loggedInUser.isAdmin })); // Simplified token
+                      const cookieOptions = { maxAge: 60 * 60 * 24 * 7, path: '/' };
+                      setCookie('authToken', token, cookieOptions);
+                      setCookie('isLoggedIn', 'true', cookieOptions);
+                      setCookie('loggedInUser', JSON.stringify(loggedInUser), cookieOptions);
+                       console.log("AdminPage: Restored cookies from localStorage.");
+                  }
               } catch (e) {
                   console.error("AdminPage: Error parsing localStorage user data:", e);
                   isAdmin = false;
@@ -121,6 +130,7 @@ const AdminPage = () => {
              description: "У вас нет прав для доступа к этой странице.",
              variant: "destructive",
          });
+          // Clear cookies and localStorage just in case
           deleteCookie('authToken', { path: '/' });
           deleteCookie('isLoggedIn', { path: '/' });
           deleteCookie('loggedInUser', { path: '/' });
@@ -131,7 +141,6 @@ const AdminPage = () => {
           }
           router.push('/auth/login');
           setIsLoadingUsers(false);
-        //   setIsLoadingProducts(false); // Product loading handled by fetchProducts
           return;
      }
 
@@ -140,7 +149,7 @@ const AdminPage = () => {
      // Fetch Users
      try {
          const fetchedUsers = await getAllUsers();
-         console.log("AdminPage: Fetched users:", fetchedUsers.length);
+         console.log("AdminPage: Fetched users count:", fetchedUsers.length);
          setUsers(fetchedUsers);
      } catch (fetchError) {
          console.error("AdminPage: Failed to fetch users:", fetchError);
@@ -155,14 +164,16 @@ const AdminPage = () => {
      }
 
      // Fetch Products initially
-     fetchProducts();
+     await fetchProducts(); // Ensure products are fetched after admin check
 
 
-  }, [isMounted, router, toast, fetchProducts]); // Added fetchProducts dependency
+  }, [isMounted, router, toast, fetchProducts]);
 
   useEffect(() => {
-    checkAdminAndFetchData();
-  }, [checkAdminAndFetchData]);
+    if (isMounted) { // Ensure checkAdminAndFetchData runs only after mount
+        checkAdminAndFetchData();
+    }
+  }, [checkAdminAndFetchData, isMounted]); // Add isMounted dependency
 
   const handleLogout = useCallback(() => {
       console.log("AdminPage: Logout initiated.");
@@ -194,17 +205,14 @@ const AdminPage = () => {
     setSelectedProduct(null);
   };
 
-  // Modify handleProductUpdated to refetch products
-  const handleProductUpdated = (updatedProduct: AutoPart) => {
-    // Optionally update state immediately for responsiveness (minor visual lag possible)
-    // setProducts(prevProducts =>
-    //   prevProducts.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
-    // );
 
-    // Refetch all products to ensure the list is up-to-date
-    fetchProducts();
-  };
+  const handleProductUpdated = useCallback((updatedProduct: AutoPart) => {
+      console.log("AdminPage: Product updated, refetching product list...");
+      // Refetch all products to ensure the list is up-to-date
+      fetchProducts();
+  }, [fetchProducts]);
 
+   // Show loading indicator until mount and initial data fetch attempts are complete
    if (!isMounted || isLoadingUsers || isLoadingProducts) {
         return (
             <div className="container mx-auto py-8">
@@ -214,6 +222,7 @@ const AdminPage = () => {
                     </CardHeader>
                     <CardContent>
                         <p className="text-center text-muted-foreground">Загрузка данных...</p>
+                        {/* Optional: Add skeletons here */}
                     </CardContent>
                 </Card>
             </div>
@@ -238,7 +247,6 @@ const AdminPage = () => {
 
            <AddProductForm />
 
-            {/* Edit Product Modal */}
             <EditProductForm
               product={selectedProduct}
               isOpen={isEditModalOpen}

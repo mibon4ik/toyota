@@ -9,14 +9,14 @@ import { SiteFooter } from "@/app/components/site-footer";
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
-  display: 'swap', // Use font-display: swap
+  display: 'swap',
 });
 
 const poppins = Poppins({
   subsets: ['latin'],
   variable: '--font-poppins',
   weight: ['400', '500', '600', '700'],
-  display: 'swap', // Use font-display: swap
+  display: 'swap',
 });
 
 
@@ -37,7 +37,9 @@ export default function RootLayout({
         {/* Preconnect to image origins */}
         <link rel="preconnect" href="https://picsum.photos" />
         <link rel="preconnect" href="https://fastly.picsum.photos" />
-        <link rel="preconnect" href="https://example.com" />
+        <link rel="preconnect" href="https://content.onliner.by" />
+        {/* Add other domains if used */}
+        {/* <link rel="preconnect" href="https://example.com" /> */}
       </head>
       <body className="antialiased bg-background text-foreground">
         <div className="relative flex min-h-screen flex-col">

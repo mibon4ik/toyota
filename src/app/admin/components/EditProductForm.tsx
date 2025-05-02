@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -15,7 +14,6 @@ import { updateAutoPart } from '@/services/autoparts';
 import type { AutoPart } from '@/types/autopart';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
-// Schema similar to AddProductForm, but ID is known
 const productSchema = z.object({
   name: z.string().min(3, 'Название должно содержать не менее 3 символов'),
   brand: z.string().min(2, 'Бренд должен содержать не менее 2 символов'),
@@ -26,6 +24,7 @@ const productSchema = z.object({
   compatibleVehicles: z.string().min(3, 'Укажите хотя бы одну совместимую модель'),
   sku: z.string().optional(),
   stock: z.coerce.number().int().nonnegative('Количество должно быть не отрицательным').optional(),
+  dataAiHint: z.string().optional(), // Added dataAiHint field
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -52,7 +51,6 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, isOpe
     resolver: zodResolver(productSchema),
   });
 
-  // Reset form when product changes or dialog opens/closes
   useEffect(() => {
     if (product && isOpen) {
       setValue('name', product.name);
@@ -64,9 +62,10 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, isOpe
       setValue('compatibleVehicles', product.compatibleVehicles.join(', '));
       setValue('sku', product.sku || '');
       setValue('stock', product.stock || 0);
-      setError(null); // Clear previous errors
+      setValue('dataAiHint', product.dataAiHint || ''); // Set dataAiHint value
+      setError(null);
     } else if (!isOpen) {
-      reset(); // Clear form when closing
+      reset();
       setError(null);
     }
   }, [product, isOpen, reset, setValue]);
@@ -80,11 +79,22 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, isOpe
     try {
        const compatibleVehiclesArray = data.compatibleVehicles.split(',').map(v => v.trim()).filter(v => v);
 
+       // Construct the payload carefully, ensuring all fields from AutoPart are considered
        const updatePayload: Partial<Omit<AutoPart, 'id'>> = {
-            ...data,
-            compatibleVehicles: compatibleVehiclesArray,
-            stock: data.stock ?? 0, // Ensure stock is a number
-            sku: data.sku || undefined, // Ensure optional fields are handled correctly
+           name: data.name,
+           brand: data.brand,
+           price: data.price,
+           imageUrl: data.imageUrl,
+           description: data.description,
+           category: data.category,
+           compatibleVehicles: compatibleVehiclesArray,
+           sku: data.sku || undefined,
+           stock: data.stock ?? 0,
+           dataAiHint: data.dataAiHint || undefined, // Include dataAiHint
+           // Ensure rating and reviewCount are preserved if they exist on the original product
+           rating: product.rating,
+           reviewCount: product.reviewCount,
+           // Quantity is not typically part of the product data itself
        };
 
       const updatedProduct = await updateAutoPart(product.id, updatePayload);
@@ -108,7 +118,7 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, isOpe
     }
   };
 
-  if (!product) return null; // Don't render if no product is selected
+  if (!product) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -144,6 +154,13 @@ export const EditProductForm: React.FC<EditProductFormProps> = ({ product, isOpe
             <Input id="edit-imageUrl" type="url" {...register('imageUrl')} disabled={isLoading} placeholder="https://example.com/image.jpg" />
             {errors.imageUrl && <p className="text-destructive text-xs mt-1">{errors.imageUrl.message}</p>}
           </div>
+
+           {/* Data AI Hint */}
+           <div>
+            <Label htmlFor="edit-dataAiHint">Подсказка для AI (необязательно)</Label>
+            <Input id="edit-dataAiHint" {...register('dataAiHint')} disabled={isLoading} placeholder="Напр., brake pads toyota" />
+            {errors.dataAiHint && <p className="text-destructive text-xs mt-1">{errors.dataAiHint.message}</p>}
+           </div>
 
           {/* Description */}
           <div>

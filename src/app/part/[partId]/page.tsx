@@ -8,7 +8,7 @@ import {Button} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from 'next/image';
+import Image from 'next/image'; // Import next/image
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -39,13 +39,10 @@ const PartDetailPage = () => {
      }
    }, []);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     const fetchPart = async () => {
-      if (partId) {
+      if (partId && isMounted) { // Check isMounted before fetching
         setIsLoading(true);
         try {
              const partData = await getAutoPartById(partId);
@@ -60,15 +57,19 @@ const PartDetailPage = () => {
          } finally {
             setIsLoading(false);
          }
-      } else {
+      } else if (!partId && isMounted) { // Handle case where partId is missing
          setIsLoading(false);
          console.warn("Part ID not found in URL parameters.");
+          toast({
+               title: "Ошибка",
+               description: "ID товара не найден.",
+               variant: "destructive",
+           });
       }
     };
 
-    if (isMounted) {
-        fetchPart();
-    }
+    fetchPart(); // Fetch data when partId or isMounted changes
+
   }, [partId, toast, isMounted]);
 
    useEffect(() => {
@@ -100,6 +101,7 @@ const PartDetailPage = () => {
          toastDescription = `${part.name} был добавлен в вашу корзину.`;
        }
 
+        // Defer toast to avoid calling during render
         setTimeout(() => {
              toast({ title: toastTitle, description: toastDescription });
         }, 0);
@@ -119,7 +121,7 @@ const PartDetailPage = () => {
     }, []);
 
 
-   if (isLoading) {
+   if (isLoading || !isMounted) { // Show loading state until mounted and data is loaded
      return (
          <div className="container mx-auto py-8">
             <Card className="w-full max-w-lg mx-auto">
@@ -154,19 +156,20 @@ const PartDetailPage = () => {
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <div className="relative w-full h-64 mb-4">
+             {/* Use next/image */}
             <Image
-              src={'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg'}
+              src={part.imageUrl || 'https://picsum.photos/600/400'} // Provide placeholder
               alt={part.name}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain rounded-md"
-              loading="lazy"
+              fill // Use fill layout
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes
+              className="object-contain rounded-md" // Use object-contain for potentially different aspect ratios
+              priority // Prioritize image on detail page
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.srcset = 'https://picsum.photos/600/400';
                 target.src = 'https://picsum.photos/600/400';
               }}
-              data-ai-hint={`${part.category} ${part.brand} part detail`}
+              data-ai-hint={part.dataAiHint || `${part.category} ${part.brand} part detail`} // Add hint
             />
           </div>
            <p className="text-lg font-semibold mb-2">{formatPrice(part.price)}</p>
@@ -187,7 +190,8 @@ const PartDetailPage = () => {
                 </div>
             )}
           <div className="mt-6 w-full">
-            <Button onClick={handleAddToCart} className="w-full" disabled={part.stock !== undefined && part.stock <= 0}>
+             {/* Add to Cart Button */}
+            <Button onClick={handleAddToCart} className="w-full bg-[#535353ff] hover:bg-[#535353ff]/90" disabled={part.stock !== undefined && part.stock <= 0}>
              {part.stock !== undefined && part.stock <= 0 ? 'Нет в наличии' : 'В корзину'}
             </Button>
           </div>
@@ -198,5 +202,3 @@ const PartDetailPage = () => {
 };
 
 export default PartDetailPage;
-
-

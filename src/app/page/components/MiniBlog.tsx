@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from 'next/image';
+import Image from 'next/image'; // Import next/image
 
 const blogPosts = [
   {
@@ -32,14 +32,16 @@ export const MiniBlog: React.FC = () => {
           {blogPosts.map((post) => (
             <Card key={post.id} className="overflow-hidden group">
                <Link href={post.href ?? '#'} passHref legacyBehavior={false} className="block">
+                 {/* Use next/image */}
                   <Image
                       src={post.imageUrl}
                       alt={post.title}
-                      width={600}
-                      height={400}
+                      width={600} // Provide explicit width
+                      height={400} // Provide explicit height
                       className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                       onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')}
-                       data-ai-hint={post.dataAiHint}
+                      loading="lazy" // Lazy load blog images
+                      onError={(e) => (e.currentTarget.src = 'https://picsum.photos/600/400')} // Fallback
+                      data-ai-hint={post.dataAiHint}
                       />
                   <CardContent className="p-4">
                        <CardTitle className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors">{post.title}</CardTitle>
@@ -54,5 +56,3 @@ export const MiniBlog: React.FC = () => {
      </section>
   );
 };
-
-

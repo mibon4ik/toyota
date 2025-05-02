@@ -1,8 +1,6 @@
-
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -10,7 +8,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    // Configure allowed domains for next/image
     remotePatterns: [
       {
         protocol: 'https',
@@ -24,30 +21,26 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      { // Add example.com to allowed hostnames
+      {
         protocol: 'https',
-        hostname: 'example.com',
+        hostname: 'content.onliner.by', // Allow images from content.onliner.by
         port: '',
         pathname: '/**',
       },
-      { // Allow images from content.onliner.by
-        protocol: 'https',
-        hostname: 'content.onliner.by',
-        port: '',
-        pathname: '/**',
-      }
-      // Add other domains if needed
+      // Add other domains if needed, like 'example.com' if used
+      // {
+      //   protocol: 'https',
+      //   hostname: 'example.com',
+      //   port: '',
+      //   pathname: '/**',
+      // },
     ],
-    // Optionally, specify device sizes and image sizes for better optimization
+    // Optionally specify device sizes and image sizes for better optimization
     // deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     // imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     // formats: ['image/avif', 'image/webp'], // Enable AVIF and WebP
   },
    swcMinify: true, // Enable SWC minification for production builds
-   // Remove experimental flags if not strictly needed or causing issues
-  // experimental: {
-  //   appDir: true, // Assuming App Router is used
-  // },
    // Ensure HTTP/2 is enabled if deployed on a supporting platform (Vercel enables by default)
    // No direct config here, depends on deployment environment.
 };

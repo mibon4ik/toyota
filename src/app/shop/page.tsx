@@ -36,9 +36,10 @@ const ShopLoadingFallback = () => (
 
 
 const ShopPage = () => {
-  // No need for state or effects here if they are moved to ShopContent
   return (
     // Wrap the client component that uses useSearchParams in Suspense
+    // This ensures that components depending on searchParams render correctly
+    // without causing hydration mismatches or build errors.
     <Suspense fallback={<ShopLoadingFallback />}>
       <ShopContent />
     </Suspense>
