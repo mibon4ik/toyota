@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -27,6 +28,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'avatars.mds.yandex.net', // Add Yandex avatars domain
+        port: '',
+        pathname: '/**',
+      },
       // Add other domains if needed, like 'example.com' if used
       // {
       //   protocol: 'https',
@@ -46,3 +53,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
