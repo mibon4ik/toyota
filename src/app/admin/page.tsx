@@ -35,6 +35,26 @@ const AdminPage = () => {
     console.log("AdminPage: Mounted.");
   }, []);
 
+  const fetchProducts = useCallback(async () => {
+     setIsLoadingProducts(true);
+     setErrorProducts(null);
+      try {
+        const fetchedProducts = await getAllAutoParts();
+        console.log("AdminPage: Fetched products:", fetchedProducts.length);
+        setProducts(fetchedProducts);
+      } catch (fetchError) {
+        console.error("AdminPage: Failed to fetch products:", fetchError);
+        setErrorProducts("Не удалось загрузить список товаров.");
+        toast({
+          title: "Ошибка загрузки товаров",
+          description: "Не удалось загрузить список товаров. Попробуйте позже.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingProducts(false);
+      }
+  }, [toast]); // Added toast dependency
+
   const checkAdminAndFetchData = useCallback(async () => {
     if (!isMounted) {
       console.log("AdminPage: Skipping fetch on server.");
@@ -42,9 +62,9 @@ const AdminPage = () => {
     }
      console.log("AdminPage: Running auth check and data fetch (client-side).");
      setIsLoadingUsers(true);
-     setIsLoadingProducts(true);
+    //  setIsLoadingProducts(true); // Product loading handled by fetchProducts
      setErrorUsers(null);
-     setErrorProducts(null);
+    //  setErrorProducts(null);
 
      const authTokenCookie = getCookie('authToken');
      const isLoggedInCookie = getCookie('isLoggedIn');
@@ -111,7 +131,7 @@ const AdminPage = () => {
           }
           router.push('/auth/login');
           setIsLoadingUsers(false);
-          setIsLoadingProducts(false);
+        //   setIsLoadingProducts(false); // Product loading handled by fetchProducts
           return;
      }
 
@@ -134,24 +154,11 @@ const AdminPage = () => {
          setIsLoadingUsers(false);
      }
 
-     // Fetch Products
-     try {
-        const fetchedProducts = await getAllAutoParts();
-        console.log("AdminPage: Fetched products:", fetchedProducts.length);
-        setProducts(fetchedProducts);
-      } catch (fetchError) {
-        console.error("AdminPage: Failed to fetch products:", fetchError);
-        setErrorProducts("Не удалось загрузить список товаров.");
-        toast({
-          title: "Ошибка загрузки товаров",
-          description: "Не удалось загрузить список товаров. Попробуйте позже.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoadingProducts(false);
-      }
+     // Fetch Products initially
+     fetchProducts();
 
-  }, [isMounted, router, toast]);
+
+  }, [isMounted, router, toast, fetchProducts]); // Added fetchProducts dependency
 
   useEffect(() => {
     checkAdminAndFetchData();
@@ -187,12 +194,15 @@ const AdminPage = () => {
     setSelectedProduct(null);
   };
 
+  // Modify handleProductUpdated to refetch products
   const handleProductUpdated = (updatedProduct: AutoPart) => {
-    setProducts(prevProducts =>
-      prevProducts.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
-    );
-    // Optionally re-fetch all products if needed, but updating state is more efficient
-    // checkAdminAndFetchData(); // Re-fetches everything
+    // Optionally update state immediately for responsiveness (minor visual lag possible)
+    // setProducts(prevProducts =>
+    //   prevProducts.map(p => (p.id === updatedProduct.id ? updatedProduct : p))
+    // );
+
+    // Refetch all products to ensure the list is up-to-date
+    fetchProducts();
   };
 
    if (!isMounted || isLoadingUsers || isLoadingProducts) {

@@ -1,11 +1,10 @@
-
 [
   {
     "id": "bps-001",
     "name": "Передние тормозные колодки",
     "brand": "Toyota Genuine",
     "price": 37750,
-    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
+    "imageUrl": "https://avatars.mds.yandex.net/get-entity_search/10812459/985368502/S600xU_2x",
     "description": "Оригинальные передние тормозные колодки для превосходного торможения.",
     "category": "Тормоза",
     "compatibleVehicles": [
@@ -13,7 +12,7 @@
       "Toyota RAV4 2019+"
     ],
     "sku": "TG-8901-F",
-    "stock": 50,
+    "stock": 50000000,
     "rating": 4.8,
     "reviewCount": 120,
     "dataAiHint": "brake pads"
