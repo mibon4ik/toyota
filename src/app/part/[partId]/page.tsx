@@ -155,7 +155,7 @@ const PartDetailPage = () => {
         <CardContent className="flex flex-col items-center">
           <div className="relative w-full h-64 mb-4">
             <Image
-              src={part.imageUrl || 'https://picsum.photos/600/400'}
+              src={'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg'}
               alt={part.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -166,7 +166,7 @@ const PartDetailPage = () => {
                 target.srcset = 'https://picsum.photos/600/400';
                 target.src = 'https://picsum.photos/600/400';
               }}
-              data-ai-hint={`${part.category} ${part.brand} part detail`} // Add hint
+              data-ai-hint={`${part.category} ${part.brand} part detail`}
             />
           </div>
            <p className="text-lg font-semibold mb-2">{formatPrice(part.price)}</p>
@@ -199,4 +199,4 @@ const PartDetailPage = () => {
 
 export default PartDetailPage;
 
-    
+

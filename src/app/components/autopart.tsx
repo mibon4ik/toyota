@@ -43,7 +43,7 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
         <CardContent className="flex flex-col items-center flex-grow p-4 pt-0">
              <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3 relative aspect-video" aria-label={`Посмотреть изображение ${product.name}`}>
                     <Image
-                        src={product.imageUrl || 'https://picsum.photos/300/200'}
+                        src={'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg'}
                         alt={product.name}
                         fill
                         sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
@@ -54,7 +54,7 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
                             target.srcset = 'https://picsum.photos/300/200';
                             target.src = 'https://picsum.photos/300/200';
                          }}
-                         data-ai-hint={product.dataAiHint || `${product.category} part`} // Use provided hint or generate a basic one
+                         data-ai-hint={product.dataAiHint || `${product.category} part`}
                     />
             </Link>
             <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
@@ -70,4 +70,4 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
 
 export default Autopart;
 
-    
+

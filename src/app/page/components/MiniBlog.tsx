@@ -10,14 +10,14 @@ const blogPosts = [
   {
     id: 'blog-1',
     title: 'Важность регулярной замены масла',
-    imageUrl: 'https://picsum.photos/seed/oilchange/600/400',
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     href: '/blog/oil-changes',
     dataAiHint: "engine oil change"
   },
   {
     id: 'blog-2',
     title: 'Выбор правильных тормозных колодок для вашего автомобиля',
-    imageUrl: 'https://picsum.photos/seed/brakepads/600/400',
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     href: '/blog/brake-pads',
     dataAiHint: "brake pads selection"
   },
@@ -55,4 +55,4 @@ export const MiniBlog: React.FC = () => {
   );
 };
 
-    
+

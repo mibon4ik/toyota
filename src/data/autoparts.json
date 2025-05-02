@@ -5,7 +5,7 @@
     "name": "Передние тормозные колодки",
     "brand": "Toyota Genuine",
     "price": 37750,
-    "imageUrl": "https://picsum.photos/seed/bps001/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Оригинальные передние тормозные колодки для превосходного торможения.",
     "category": "Тормоза",
     "compatibleVehicles": [
@@ -15,14 +15,15 @@
     "sku": "TG-8901-F",
     "stock": 50,
     "rating": 4.8,
-    "reviewCount": 120
+    "reviewCount": 120,
+    "dataAiHint": "brake pads"
   },
   {
     "id": "afl-002",
     "name": "Воздушный фильтр двигателя",
     "brand": "Denso",
     "price": 9000,
-    "imageUrl": "https://picsum.photos/seed/afl002/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Высококачественный воздушный фильтр для оптимальной работы двигателя.",
     "category": "Фильтры",
     "compatibleVehicles": [
@@ -32,14 +33,15 @@
     "sku": "DN-17801",
     "stock": 150,
     "rating": 4.5,
-    "reviewCount": 85
+    "reviewCount": 85,
+    "dataAiHint": "air filter"
   },
   {
     "id": "oil-003",
     "name": "Синтетическое моторное масло 0W-20",
     "brand": "Mobil 1",
     "price": 17500,
-    "imageUrl": "https://picsum.photos/seed/oil003/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Полностью синтетическое масло для улучшенной защиты и производительности.",
     "category": "Двигатель",
     "compatibleVehicles": [
@@ -48,14 +50,15 @@
     "sku": "M1-0W20-5Q",
     "stock": 80,
     "rating": 4.9,
-    "reviewCount": 210
+    "reviewCount": 210,
+    "dataAiHint": "engine oil"
   },
   {
     "id": "shk-004",
     "name": "Задние амортизаторы",
     "brand": "KYB",
     "price": 60000,
-    "imageUrl": "https://picsum.photos/seed/shk004/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Газонаполненные амортизаторы для комфортной и стабильной езды.",
     "category": "Подвеска",
     "compatibleVehicles": [
@@ -65,14 +68,15 @@
     "sku": "KYB-349041",
     "stock": 30,
     "rating": 4.6,
-    "reviewCount": 55
+    "reviewCount": 55,
+    "dataAiHint": "shock absorbers"
   },
   {
     "id": "lhd-005",
     "name": "Светодиодная лампа для фары (H11)",
     "brand": "Philips",
     "price": 24995,
-    "imageUrl": "https://picsum.photos/seed/lhd005/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Яркие и долговечные светодиодные лампы для лучшей видимости.",
     "category": "Электрика",
     "compatibleVehicles": [
@@ -81,14 +85,15 @@
     "sku": "PH-H11LED-X2",
     "stock": 75,
     "rating": 4.7,
-    "reviewCount": 92
+    "reviewCount": 92,
+    "dataAiHint": "headlight bulb"
   },
   {
     "id": "acc-006",
     "name": "Всесезонные коврики (комплект)",
     "brand": "WeatherTech",
     "price": 75000,
-    "imageUrl": "https://picsum.photos/seed/acc006/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Прочные коврики для защиты салона от грязи и влаги.",
     "category": "Аксессуары",
     "compatibleVehicles": [
@@ -98,14 +103,15 @@
     "sku": "WT-441301-441302",
     "stock": 40,
     "rating": 4.9,
-    "reviewCount": 150
+    "reviewCount": 150,
+    "dataAiHint": "floor mats"
   },
   {
     "id": "bdy-007",
     "name": "Крышка зеркала (левая, окрашенная)",
     "brand": "Toyota Genuine",
     "price": 32500,
-    "imageUrl": "https://picsum.photos/seed/bdy007/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Оригинальная крышка зеркала, окрашенная в цвет кузова (требуется указание цвета).",
     "category": "Кузов",
     "compatibleVehicles": [
@@ -114,14 +120,15 @@
     "sku": "TG-87945-VAR",
     "stock": 25,
     "rating": 4.5,
-    "reviewCount": 15
+    "reviewCount": 15,
+    "dataAiHint": "side mirror cover"
   },
   {
     "id": "flt-008",
     "name": "Салонный фильтр (угольный)",
     "brand": "Bosch",
     "price": 11250,
-    "imageUrl": "https://picsum.photos/seed/flt008/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Угольный салонный фильтр для очистки воздуха от пыли и запахов.",
     "category": "Фильтры",
     "compatibleVehicles": [
@@ -131,14 +138,15 @@
     "sku": "BSH-6055C",
     "stock": 120,
     "rating": 4.6,
-    "reviewCount": 70
+    "reviewCount": 70,
+    "dataAiHint": "cabin air filter"
   },
   {
     "id": "bps-009",
     "name": "Задние тормозные диски (пара)",
     "brand": "Brembo",
     "price": 85000,
-    "imageUrl": "https://picsum.photos/seed/bps009/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Высокоуглеродистые тормозные диски для улучшенного теплоотвода и производительности.",
     "category": "Тормоза",
     "compatibleVehicles": [
@@ -148,14 +156,15 @@
     "sku": "BRM-09.A717.11",
     "stock": 20,
     "rating": 4.7,
-    "reviewCount": 45
+    "reviewCount": 45,
+    "dataAiHint": "brake rotors"
   },
   {
     "id": "oil-010",
     "name": "Масляный фильтр",
     "brand": "Toyota Genuine",
     "price": 5000,
-    "imageUrl": "https://picsum.photos/seed/oil010/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Оригинальный масляный фильтр для максимальной фильтрации.",
     "category": "Фильтры",
     "compatibleVehicles": [
@@ -164,14 +173,15 @@
     "sku": "TG-90915-YZZD3",
     "stock": 250,
     "rating": 4.9,
-    "reviewCount": 300
+    "reviewCount": 300,
+    "dataAiHint": "oil filter"
   },
   {
     "id": "spk-011",
     "name": "Свечи зажигания (Иридиевые, 4 шт.)",
     "brand": "NGK",
     "price": 22000,
-    "imageUrl": "https://picsum.photos/seed/spk011/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Иридиевые свечи зажигания для долговечности и стабильной искры.",
     "category": "Двигатель",
     "compatibleVehicles": [
@@ -181,14 +191,15 @@
     "sku": "NGK-LFR6AIX-11",
     "stock": 90,
     "rating": 4.8,
-    "reviewCount": 115
+    "reviewCount": 115,
+    "dataAiHint": "spark plugs"
   },
   {
     "id": "ele-012",
     "name": "Аккумулятор",
     "brand": "Interstate",
     "price": 65000,
-    "imageUrl": "https://picsum.photos/seed/ele012/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Надежный автомобильный аккумулятор с высокой пусковой мощностью.",
     "category": "Электрика",
     "compatibleVehicles": [
@@ -198,14 +209,15 @@
     "sku": "IST-MTX-24F",
     "stock": 35,
     "rating": 4.4,
-    "reviewCount": 60
+    "reviewCount": 60,
+    "dataAiHint": "car battery"
   },
   {
     "id": "sus-013",
     "name": "Стойки стабилизатора (передние, пара)",
     "brand": "Moog",
     "price": 18000,
-    "imageUrl": "https://picsum.photos/seed/sus013/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Усиленные стойки стабилизатора для улучшения управляемости.",
     "category": "Подвеска",
     "compatibleVehicles": [
@@ -215,14 +227,15 @@
     "sku": "MOG-K80898",
     "stock": 60,
     "rating": 4.5,
-    "reviewCount": 40
+    "reviewCount": 40,
+    "dataAiHint": "stabilizer links"
   },
   {
     "id": "blb-014",
     "name": "Лампа стоп-сигнала (LED, 2 шт.)",
     "brand": "Sylvania",
     "price": 7500,
-    "imageUrl": "https://picsum.photos/seed/blb014/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Яркие светодиодные лампы для стоп-сигналов.",
     "category": "Электрика",
     "compatibleVehicles": [
@@ -231,14 +244,15 @@
     "sku": "SYL-7443R-LED",
     "stock": 180,
     "rating": 4.6,
-    "reviewCount": 95
+    "reviewCount": 95,
+    "dataAiHint": "brake light bulb"
   },
   {
     "id": "acc-015",
     "name": "Багажник на крышу (поперечины)",
     "brand": "Thule",
     "price": 140000,
-    "imageUrl": "https://picsum.photos/seed/acc015/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Аэродинамические поперечины для перевозки грузов на крыше.",
     "category": "Аксессуары",
     "compatibleVehicles": [
@@ -248,14 +262,15 @@
     "sku": "THL-WINGBAR-EVO",
     "stock": 15,
     "rating": 4.7,
-    "reviewCount": 35
+    "reviewCount": 35,
+    "dataAiHint": "roof rack crossbars"
   },
   {
     "id": "wpr-016",
     "name": "Щетки стеклоочистителя (комплект)",
     "brand": "Bosch",
     "price": 12000,
-    "imageUrl": "https://picsum.photos/seed/wpr016/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Всесезонные щетки стеклоочистителя для чистого обзора.",
     "category": "Кузов",
     "compatibleVehicles": [
@@ -266,14 +281,15 @@
     "sku": "BSH-ICON-SET",
     "stock": 200,
     "rating": 4.7,
-    "reviewCount": 180
+    "reviewCount": 180,
+    "dataAiHint": "wiper blades"
   },
   {
     "id": "flt-017",
     "name": "Топливный фильтр",
     "brand": "Denso",
     "price": 15000,
-    "imageUrl": "https://picsum.photos/seed/flt017/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Фильтр тонкой очистки топлива для защиты топливной системы.",
     "category": "Фильтры",
     "compatibleVehicles": [
@@ -283,14 +299,15 @@
     "sku": "DN-23390",
     "stock": 55,
     "rating": 4.6,
-    "reviewCount": 50
+    "reviewCount": 50,
+    "dataAiHint": "fuel filter"
   },
   {
     "id": "eng-018",
     "name": "Ремень ГРМ (комплект с роликами)",
     "brand": "Gates",
     "price": 45000,
-    "imageUrl": "https://picsum.photos/seed/eng018/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Комплект для замены ремня ГРМ, включая ролики и натяжитель.",
     "category": "Двигатель",
     "compatibleVehicles": [
@@ -300,14 +317,15 @@
     "sku": "GTS-TCKWP295",
     "stock": 25,
     "rating": 4.8,
-    "reviewCount": 70
+    "reviewCount": 70,
+    "dataAiHint": "timing belt kit"
   },
   {
     "id": "rad-019",
     "name": "Радиатор охлаждения двигателя",
     "brand": "Spectra Premium",
     "price": 70000,
-    "imageUrl": "https://picsum.photos/seed/rad019/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Высококачественный радиатор для эффективного охлаждения двигателя.",
     "category": "Двигатель",
     "compatibleVehicles": [
@@ -316,14 +334,15 @@
     "sku": "SPR-CU13217",
     "stock": 18,
     "rating": 4.3,
-    "reviewCount": 30
+    "reviewCount": 30,
+    "dataAiHint": "radiator"
   },
   {
     "id": "tir-020",
     "name": "Датчик давления в шинах (TPMS)",
     "brand": "Toyota Genuine",
     "price": 28000,
-    "imageUrl": "https://picsum.photos/seed/tir020/300/200",
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
     "description": "Оригинальный датчик TPMS для контроля давления в шинах.",
     "category": "Электрика",
     "compatibleVehicles": [
@@ -332,6 +351,58 @@
     "sku": "TG-42607-0C070",
     "stock": 100,
     "rating": 4.7,
-    "reviewCount": 65
+    "reviewCount": 65,
+    "dataAiHint": "tpms sensor"
+  },
+  {
+    "id": "ext-021",
+    "name": "Выхлопная труба (задняя секция)",
+    "brand": "Walker",
+    "price": 55000,
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
+    "description": "Задняя секция выхлопной трубы для замены изношенной.",
+    "category": "Выхлопная система",
+    "compatibleVehicles": [
+      "Toyota Sienna 2011-2016"
+    ],
+    "sku": "WLK-54723",
+    "stock": 42,
+    "rating": 4.4,
+    "reviewCount": 38,
+    "dataAiHint": "exhaust pipe"
+  },
+  {
+    "id": "clh-022",
+    "name": "Комплект сцепления",
+    "brand": "Exedy",
+    "price": 110000,
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
+    "description": "Полный комплект сцепления для механической коробки передач.",
+    "category": "Трансмиссия",
+    "compatibleVehicles": [
+      "Toyota Tacoma 2.7L 2005-2015"
+    ],
+    "sku": "EXD-KTY07",
+    "stock": 15,
+    "rating": 4.8,
+    "reviewCount": 25,
+    "dataAiHint": "clutch kit"
+  },
+  {
+    "id": "mir-023",
+    "name": "Боковое зеркало (правое, с подогревом)",
+    "brand": "TYC",
+    "price": 48000,
+    "imageUrl": "https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg",
+    "description": "Правое боковое зеркало с функцией подогрева.",
+    "category": "Кузов",
+    "compatibleVehicles": [
+      "Toyota RAV4 2013-2018"
+    ],
+    "sku": "TYC-5230492",
+    "stock": 33,
+    "rating": 4.2,
+    "reviewCount": 41,
+    "dataAiHint": "side mirror"
   }
 ]

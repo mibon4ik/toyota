@@ -30,6 +30,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      { // Allow images from content.onliner.by
+        protocol: 'https',
+        hostname: 'content.onliner.by',
+        port: '',
+        pathname: '/**',
+      }
       // Add other domains if needed
     ],
     // Optionally, specify device sizes and image sizes for better optimization

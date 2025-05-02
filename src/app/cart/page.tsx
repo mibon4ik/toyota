@@ -9,6 +9,8 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { getCookie } from 'cookies-next';
+import { useRouter } from 'next/navigation';
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -18,6 +20,7 @@ const CartPage = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     setIsMounted(true);
@@ -127,7 +130,7 @@ const CartPage = () => {
                   <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
                     <div className="relative w-20 h-20 flex-shrink-0">
                        <Image
-                         src={item.imageUrl || 'https://picsum.photos/100/100'}
+                         src={'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg'}
                          alt={item.name}
                          fill
                          sizes="80px"
@@ -214,4 +217,4 @@ const CartPage = () => {
 
 export default CartPage;
 
-    
+

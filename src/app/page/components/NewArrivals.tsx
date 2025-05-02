@@ -6,14 +6,14 @@ import type { AutoPart } from '@/types/autopart';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-// Keep the newArrivals data here or fetch it if needed
+
 const newArrivals: AutoPart[] = [
  {
     id: 'lhd-005-new',
     name: 'Светодиодная лампа для фары (H11) - Новинка',
     brand: 'Philips',
     price: 24995,
-    imageUrl: 'https://picsum.photos/seed/lhd005new/300/200', // Keep placeholder, add hint if needed
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     description: 'Яркие и долговечные светодиодные лампы для лучшей видимости.',
     category: 'Электрика',
     compatibleVehicles: ['Различные модели Toyota/Lexus'],
@@ -26,7 +26,7 @@ const newArrivals: AutoPart[] = [
     name: 'Всесезонные коврики (комплект) - Новинка',
     brand: 'WeatherTech',
     price: 75000,
-    imageUrl: 'https://picsum.photos/seed/acc006new/300/200', // Keep placeholder, add hint if needed
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     description: 'Прочные коврики для защиты салона от грязи и влаги.',
     category: 'Аксессуары',
     compatibleVehicles: ['Toyota RAV4 2019+', 'Toyota Highlander 2020+'],
@@ -39,7 +39,7 @@ const newArrivals: AutoPart[] = [
     name: 'Синтетическое моторное масло 5W-30 - Новинка',
     brand: 'Castrol',
     price: 18500,
-    imageUrl: 'https://picsum.photos/seed/oil003dupnew/300/200', // Keep placeholder, add hint if needed
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     description: 'Полностью синтетическое масло для универсальной защиты.',
     category: 'Двигатель',
     compatibleVehicles: ['Большинство моделей'],
@@ -52,7 +52,7 @@ const newArrivals: AutoPart[] = [
     name: 'Задние амортизаторы - Новинка',
     brand: 'KYB',
     price: 60000,
-    imageUrl: 'https://picsum.photos/seed/shk004new/300/200', // Keep placeholder, add hint if needed
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     description: 'Газонаполненные амортизаторы для комфортной и стабильной езды.',
     category: 'Подвеска',
     compatibleVehicles: ['Toyota Sienna 2015+', 'Lexus RX350 2016+'],
@@ -65,7 +65,7 @@ const newArrivals: AutoPart[] = [
     name: 'Салонный фильтр (угольный) - Новинка',
     brand: 'Bosch',
     price: 11250,
-    imageUrl: 'https://picsum.photos/seed/flt008new/300/200', // Keep placeholder, add hint if needed
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     description: 'Угольный салонный фильтр для очистки воздуха от пыли и запахов.',
     category: 'Фильтры',
     compatibleVehicles: ['Toyota Corolla 2015+', 'Toyota C-HR 2018+'],
@@ -99,4 +99,4 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
   );
 };
 
-    
+

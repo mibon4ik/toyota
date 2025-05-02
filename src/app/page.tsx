@@ -13,7 +13,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Dynamically import sections that are further down the page
+
 const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
   ssr: false,
   loading: () => <Skeleton className="h-40 w-full" />,
@@ -44,7 +44,7 @@ const banners = [
   {
     id: 'banner-1',
     title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://picsum.photos/seed/summersale/1200/400',
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     buttonText: 'Купить сейчас',
     href: '/shop?sale=true',
     dataAiHint: "car parts summer sale"
@@ -52,7 +52,7 @@ const banners = [
   {
     id: 'banner-2',
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400',
+     imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     buttonText: 'Посмотреть новинки',
     href: '/shop?sort=newest',
     dataAiHint: "new car parts arrivals"
@@ -112,9 +112,10 @@ const HomePage = () => {
         toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
 
-       setTimeout(() => {
-            toast({ title: toastTitle, description: toastDescription });
-       }, 0);
+      // Use setTimeout to defer the toast call outside of the render cycle
+      setTimeout(() => {
+        toast({ title: toastTitle, description: toastDescription });
+      }, 0);
 
       return updatedCart;
     });
@@ -124,7 +125,6 @@ const HomePage = () => {
 
   return (
     <div className="fade-in space-y-12">
-      {/* Banner Carousel */}
         <div className="space-y-4">
             {banners.map((banner, index) => (
                 <Card key={banner.id} className="overflow-hidden">
@@ -181,4 +181,4 @@ const HomePage = () => {
 
   export default HomePage;
 
-    
+
