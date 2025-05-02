@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, {useState, useEffect, useCallback, useMemo} from 'react';
-import { getAutoPartsByCategory} from "@/services/autoparts";
+import { getAutoPartsByCategory, getAllAutoParts} from '@/services/autoparts'; // Added getAllAutoParts
 import type { AutoPart } from '@/types/autopart';
 import Autopart from "@/app/components/autopart";
 import {useToast} from "@/hooks/use-toast";
@@ -54,16 +55,27 @@ export const ShopContent = () => {
      if (storedCart) {
        try {
          const parsedCart: CartItem[] = JSON.parse(storedCart);
-         if (Array.isArray(parsedCart) && parsedCart.every(item => typeof item.id === 'string' && typeof item.name === 'string' && typeof item.price === 'number' && typeof item.quantity === 'number')) {
+         if (Array.isArray(parsedCart) && parsedCart.every(item =>
+             item && // Check if item is not null/undefined
+             typeof item.id === 'string' &&
+             typeof item.name === 'string' &&
+             typeof item.price === 'number' &&
+             typeof item.quantity === 'number' &&
+             typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+         )) {
            setCartItems(parsedCart);
          } else {
-           console.warn("Invalid cart data found in localStorage. Clearing cart.");
+           console.warn("Invalid cart data found in localStorage (ShopContent). Clearing cart.");
            localStorage.removeItem('cartItems');
+           setCartItems([]); // Clear state too
          }
        } catch (e) {
-         console.error("Error parsing cart items from localStorage:", e);
-         localStorage.removeItem('cartItems');
+         console.error("Error parsing cart items from localStorage (ShopContent):", e);
+         localStorage.removeItem('cartItems'); // Clear corrupted data
+          setCartItems([]); // Clear state too
        }
+     } else {
+         setCartItems([]);
      }
    }, []);
 
@@ -80,13 +92,16 @@ export const ShopContent = () => {
     setError(null);
     try {
       const categoryToFetch = selectedCategory === 'all' ? null : selectedCategory;
-      const allCategoryParts = await getAutoPartsByCategory(categoryToFetch);
-      console.log(`Fetched ${allCategoryParts.length} parts for category ${selectedCategory}`);
+      // Fetch based on category or get all if 'all' or no category
+      const baseProducts = categoryToFetch
+                            ? await getAutoPartsByCategory(categoryToFetch)
+                            : await getAllAutoParts();
+      console.log(`Fetched ${baseProducts.length} base parts for category ${selectedCategory}`);
 
-      let filteredProducts = allCategoryParts;
+      let filteredProducts = baseProducts;
       if (searchTerm) {
         const lowerSearchTerm = searchTerm.toLowerCase();
-        filteredProducts = allCategoryParts.filter(product =>
+        filteredProducts = baseProducts.filter(product =>
           product.name.toLowerCase().includes(lowerSearchTerm) ||
           product.brand.toLowerCase().includes(lowerSearchTerm) ||
           (product.sku && product.sku.toLowerCase().includes(lowerSearchTerm)) ||
@@ -127,7 +142,7 @@ export const ShopContent = () => {
 
    const handleAddToCart = useCallback((product: AutoPart) => {
      if (!isMounted) return;
-     console.log("Adding to cart:", product.name);
+     console.log("Adding to cart (ShopContent):", product.name, "with ImageUrl:", product.imageUrl);
 
      setCartItems(currentItems => {
        const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
@@ -142,11 +157,12 @@ export const ShopContent = () => {
          toastTitle = "Количество обновлено!";
          toastDescription = `Количество ${product.name} в корзине увеличено.`;
        } else {
+         // Ensure all necessary product details, including imageUrl, are added
          updatedCart = [...currentItems, { ...product, quantity: 1 }];
          toastTitle = "Товар добавлен в корзину!";
          toastDescription = `${product.name} был добавлен в вашу корзину.`;
        }
-        console.log("Updated cart state (pending):", updatedCart);
+        console.log("Updated cart state (ShopContent, pending):", updatedCart);
 
        setTimeout(() => {
             toast({
@@ -168,15 +184,36 @@ export const ShopContent = () => {
     const handleSearchSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         console.log("Search submitted with term:", searchTerm);
-        fetchProducts();
+        fetchProducts(); // Refetch products based on the new search term and category
     };
 
    const handleCategoryChange = (value: string) => {
      console.log("Category changed to:", value);
      setSelectedCategory(value);
+     // Optionally update URL here if needed, or rely on useEffect to fetch
+     // router.push(`/shop?category=${value}`); // Example if direct navigation is desired
    };
 
     const displayedProducts = useMemo(() => {
+        if (!isMounted) {
+             // Render skeleton if not mounted yet to avoid hydration mismatch
+            return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                    {[...Array(10)].map((_, index) => (
+                        <Card key={index} className="w-full overflow-hidden">
+                             <CardHeader className="p-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
+                             <CardContent className="flex flex-col items-center p-4 pt-0">
+                                <Skeleton className="h-28 w-full mb-3 rounded-md" />
+                                <Skeleton className="h-4 w-1/3 mb-1" />
+                                <Skeleton className="h-5 w-1/2 mb-3" />
+                                <Skeleton className="h-9 w-full" />
+                             </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            );
+        }
+
         if (isLoading) {
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -210,11 +247,11 @@ export const ShopContent = () => {
         return (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {products.map((product) => (
-                    <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} data-ai-hint={`${product.category} ${product.brand}`} />
+                    <Autopart key={product.id} product={product} onAddToCart={handleAddToCart} />
                 ))}
             </div>
         );
-    }, [isLoading, error, products, searchTerm, selectedCategory, handleAddToCart]);
+    }, [isLoading, error, products, searchTerm, selectedCategory, handleAddToCart, isMounted]); // Added isMounted
 
 
   return (
@@ -256,5 +293,3 @@ export const ShopContent = () => {
     </div>
   );
 };
-
-    

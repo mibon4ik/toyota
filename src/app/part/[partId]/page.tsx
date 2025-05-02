@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState, useEffect, useCallback} from 'react';
@@ -9,6 +10,7 @@ import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from 'next/image'; // Import next/image
+import { formatPrice } from '@/lib/utils'; // Import formatPrice
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -29,13 +31,28 @@ const PartDetailPage = () => {
      if (storedCart) {
        try {
          const parsedCart: CartItem[] = JSON.parse(storedCart);
-         if (Array.isArray(parsedCart)) {
-           setCartItems(parsedCart);
-         }
+         // Enhanced validation
+          if (Array.isArray(parsedCart) && parsedCart.every(item =>
+              item && // Check if item is not null/undefined
+              typeof item.id === 'string' &&
+              typeof item.name === 'string' &&
+              typeof item.price === 'number' &&
+              typeof item.quantity === 'number' &&
+              typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+          )) {
+            setCartItems(parsedCart);
+          } else {
+            console.warn("Invalid cart data found in localStorage (PartDetail). Clearing cart.");
+            localStorage.removeItem('cartItems');
+             setCartItems([]); // Clear state too
+          }
        } catch (e) {
-         console.error("Error parsing cart from localStorage on init:", e);
+         console.error("Error parsing cart from localStorage on init (PartDetail):", e);
          localStorage.removeItem('cartItems');
+         setCartItems([]); // Clear state too
        }
+     } else {
+          setCartItems([]);
      }
    }, []);
 
@@ -68,7 +85,9 @@ const PartDetailPage = () => {
       }
     };
 
-    fetchPart(); // Fetch data when partId or isMounted changes
+    if(isMounted) {
+         fetchPart(); // Fetch data when partId or isMounted changes
+    }
 
   }, [partId, toast, isMounted]);
 
@@ -82,6 +101,7 @@ const PartDetailPage = () => {
 
    const handleAddToCart = useCallback(() => {
      if (!part || !isMounted) return;
+     console.log("Adding to cart (PartDetail):", part.name, "with ImageUrl:", part.imageUrl);
 
      setCartItems(currentItems => {
        const existingItemIndex = currentItems.findIndex(item => item.id === part.id);
@@ -96,29 +116,22 @@ const PartDetailPage = () => {
          toastTitle = "Количество обновлено!";
          toastDescription = `Количество ${part.name} в корзине увеличено.`;
        } else {
+         // Ensure the full 'part' object (including imageUrl) is added
          updatedCart = [...currentItems, { ...part, quantity: 1 }];
          toastTitle = "Добавлено в корзину!";
          toastDescription = `${part.name} был добавлен в вашу корзину.`;
        }
+        console.log("Updated cart state (PartDetail, pending):", updatedCart);
 
         // Defer toast to avoid calling during render
         setTimeout(() => {
              toast({ title: toastTitle, description: toastDescription });
+             console.log("Toast displayed for:", part.name);
         }, 0);
 
         return updatedCart;
      });
    }, [part, toast, isMounted]);
-
-
-    const formatPrice = useCallback((price: number): string => {
-      return new Intl.NumberFormat('ru-KZ', {
-        style: 'currency',
-        currency: 'KZT',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(price);
-    }, []);
 
 
    if (isLoading || !isMounted) { // Show loading state until mounted and data is loaded
@@ -158,6 +171,7 @@ const PartDetailPage = () => {
           <div className="relative w-full h-64 mb-4">
              {/* Use next/image */}
             <Image
+              key={part.imageUrl} // Add key
               src={part.imageUrl || 'https://picsum.photos/600/400'} // Provide placeholder
               alt={part.name}
               fill // Use fill layout
@@ -165,6 +179,7 @@ const PartDetailPage = () => {
               className="object-contain rounded-md" // Use object-contain for potentially different aspect ratios
               priority // Prioritize image on detail page
               onError={(e) => {
+                 console.error(`Error loading image for ${part.name}: ${part.imageUrl}`);
                 const target = e.target as HTMLImageElement;
                 target.srcset = 'https://picsum.photos/600/400';
                 target.src = 'https://picsum.photos/600/400';

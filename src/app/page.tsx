@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import Autopart from "@/app/components/autopart";
+import Autopart from "@/app/components/autopart"; // Autopart is used within dynamic components
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
@@ -75,13 +76,28 @@ const HomePage = () => {
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
-        if (Array.isArray(parsedCart)) {
+        // Enhanced validation
+        if (Array.isArray(parsedCart) && parsedCart.every(item =>
+            item && // Check if item is not null/undefined
+            typeof item.id === 'string' &&
+            typeof item.name === 'string' &&
+            typeof item.price === 'number' &&
+            typeof item.quantity === 'number' &&
+            typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+        )) {
           setCartItems(parsedCart);
+        } else {
+           console.warn("Invalid cart data found in localStorage (HomePage). Clearing cart.");
+           localStorage.removeItem('cartItems');
+           setCartItems([]); // Clear state too
         }
       } catch (e) {
-        console.error("Error parsing cart from localStorage:", e);
+        console.error("Error parsing cart from localStorage (HomePage):", e);
         localStorage.removeItem('cartItems');
+         setCartItems([]); // Clear state too
       }
+    } else {
+        setCartItems([]);
     }
   }, []);
 
@@ -93,8 +109,10 @@ const HomePage = () => {
     }
   }, [cartItems, isMounted]);
 
+  // Define handleAddToCart in the parent component
   const handleAddToCart = useCallback((product: AutoPart) => {
     if (!isMounted) return; // Prevent execution on server or before mount
+    console.log("Adding to cart (HomePage):", product.name, "with ImageUrl:", product.imageUrl);
 
     setCartItems(currentItems => {
       const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
@@ -110,16 +128,17 @@ const HomePage = () => {
         toastTitle = "Количество обновлено!";
         toastDescription = `Количество ${product.name} в корзине увеличено.`;
       } else {
-        // Add new item with quantity 1
+        // Add new item with quantity 1, ensuring imageUrl is included
         updatedCart = [...currentItems, { ...product, quantity: 1 }];
         toastTitle = "Товар добавлен в корзину!";
         toastDescription = `${product.name} был добавлен в вашу корзину.`;
       }
 
       // Defer toast to avoid calling it during render
-      setTimeout(() => {
-        toast({ title: toastTitle, description: toastDescription });
-      }, 0);
+       setTimeout(() => {
+           toast({ title: toastTitle, description: toastDescription });
+           console.log("Toast displayed for:", product.name);
+       }, 0);
 
       return updatedCart; // Return the updated cart state
     });
@@ -185,7 +204,7 @@ const HomePage = () => {
             ))}
         </div>
 
-       {/* Wrap dynamic components in Suspense */}
+       {/* Wrap dynamic components in Suspense and pass handleAddToCart */}
        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
          <CompatibilityChecker onAddToCart={handleAddToCart} />
        </Suspense>

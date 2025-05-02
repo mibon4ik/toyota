@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface HitsOfSalesProps {
-  onAddToCart: (product: AutoPart) => void;
+  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
 }
 
 export const HitsOfSales: React.FC<HitsOfSalesProps> = ({ onAddToCart }) => {
@@ -20,15 +21,15 @@ export const HitsOfSales: React.FC<HitsOfSalesProps> = ({ onAddToCart }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate fetching popular products - replace with actual logic if available
-      // For now, fetch all and take a slice, or implement a proper endpoint/service
       const allProducts = await getAllAutoParts();
-      // Example: Define "popular" as the first 10 products for demonstration
-      const popular = allProducts.slice(0, 10).map(p => ({
-        ...p,
-         // Add placeholder dataAiHint if missing, based on category/brand
-        dataAiHint: p.dataAiHint || `${p.category} ${p.brand}`
-      }));
+      // Example: Define "popular" based on rating or reviewCount, or just slice
+      const popular = allProducts
+        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) // Example sorting
+        .slice(0, 10) // Take top 10
+        .map(p => ({
+          ...p,
+          dataAiHint: p.dataAiHint || `${p.category} ${p.brand}`
+        }));
       setPopularProducts(popular);
     } catch (fetchError: any) {
       console.error("Error fetching popular products:", fetchError);
@@ -67,6 +68,7 @@ export const HitsOfSales: React.FC<HitsOfSalesProps> = ({ onAddToCart }) => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {popularProducts.map((product) => (
+              // Pass the onAddToCart function down to each Autopart
               <Autopart key={product.id} product={product} onAddToCart={onAddToCart} />
             ))}
           </div>

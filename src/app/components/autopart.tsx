@@ -1,35 +1,29 @@
+
 'use client';
 import React, { useCallback } from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import type { AutoPart } from '@/types/autopart';
-import {useToast} from "@/hooks/use-toast";
+// import {useToast} from "@/hooks/use-toast"; // Toast is handled in the parent now
 import Link from "next/link";
 import Image from 'next/image'; // Import next/image
+import { formatPrice } from '@/lib/utils'; // Import formatPrice
 
 interface AutopartProps {
   product: AutoPart;
-  onAddToCart: (product: AutoPart) => void;
+  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
 }
 
 const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
-  const { toast } = useToast();
+  // const { toast } = useToast(); // Toast logic moved to parent
 
   const handleButtonClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-       e.preventDefault();
-       e.stopPropagation();
+       e.preventDefault(); // Prevent link navigation if button inside link
+       e.stopPropagation(); // Stop event bubbling up if needed
+       // Call the parent's addToCart function, passing the full product object
        onAddToCart(product);
+       // Toast is now triggered in the parent component (ShopPage or HomePage)
    }, [onAddToCart, product]);
-
-
-  const formatPrice = useCallback((price: number): string => {
-      return new Intl.NumberFormat('ru-KZ', {
-        style: 'currency',
-        currency: 'KZT',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(price);
-    }, []);
 
   return (
     <Card className="w-full product-card flex flex-col h-full overflow-hidden group">
@@ -46,6 +40,7 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
              <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3 relative aspect-video" aria-label={`Посмотреть изображение ${product.name}`}>
                     {/* Use next/image component */}
                     <Image
+                        key={product.imageUrl} // Add key to help React detect changes
                         src={product.imageUrl || 'https://picsum.photos/300/200'} // Provide a default placeholder
                         alt={product.name}
                         fill // Use fill layout
@@ -54,6 +49,7 @@ const Autopart: React.FC<AutopartProps> = ({ product, onAddToCart }) => {
                         loading="lazy" // Keep lazy loading for non-critical images
                          onError={(e) => {
                             // Fallback to picsum on error
+                             console.error(`Error loading image for ${product.name}: ${product.imageUrl}`);
                             const target = e.target as HTMLImageElement;
                             target.srcset = 'https://picsum.photos/300/200'; // Provide a base src for srcset calculation
                             target.src = 'https://picsum.photos/300/200';

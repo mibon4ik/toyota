@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useCallback } from 'react';
@@ -11,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
 
 interface CompatibilityCheckerProps {
-  onAddToCart: (product: AutoPart) => void;
+  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
 }
 
 type CompatiblePartsResult = AutoPart[] | null;
@@ -150,6 +151,7 @@ export const CompatibilityChecker: React.FC<CompatibilityCheckerProps> = ({ onAd
             {compatibleParts.length > 0 ? (
                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                   {compatibleParts.map((product) => (
+                  // Pass the onAddToCart function down to each Autopart
                   <Autopart key={product.id} product={product} onAddToCart={onAddToCart} />
                   ))}
                </div>

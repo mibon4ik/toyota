@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,6 +12,7 @@ import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
+import { formatPrice } from '@/lib/utils'; // Import formatPrice
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -29,17 +31,28 @@ const CartPage = () => {
     if (storedCart) {
       try {
         const parsedCart: CartItem[] = JSON.parse(storedCart);
-        // Basic validation to ensure it's an array of objects with necessary properties
-        if (Array.isArray(parsedCart) && parsedCart.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
+        // Enhanced validation
+        if (Array.isArray(parsedCart) && parsedCart.every(item =>
+            item && // Check if item is not null/undefined
+            typeof item.id === 'string' &&
+            typeof item.name === 'string' &&
+            typeof item.price === 'number' &&
+            typeof item.quantity === 'number' &&
+            typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+        )) {
           setCartItems(parsedCart);
         } else {
-          console.warn("Invalid cart data found in localStorage. Clearing cart.");
+          console.warn("Invalid cart data found in localStorage (missing properties or wrong types). Clearing cart.");
           localStorage.removeItem('cartItems');
+          setCartItems([]); // Clear state too
         }
       } catch (e) {
         console.error("Error parsing cart items from localStorage:", e);
         localStorage.removeItem('cartItems'); // Clear corrupted data
+        setCartItems([]); // Clear state too
       }
+    } else {
+         setCartItems([]); // Ensure cart is empty if nothing in storage
     }
   }, []);
 
@@ -89,26 +102,18 @@ const CartPage = () => {
   }, []);
 
   const removeItem = useCallback((id: string) => {
+    const itemToRemove = cartItems.find(item => item.id === id);
     setCartItems(currentItems => currentItems.filter(item => item.id !== id));
     // Defer toast to avoid calling during render
     setTimeout(() => {
         toast({
           title: "Товар удален!",
-          description: "Товар удален из корзины",
+          description: `${itemToRemove?.name || 'Товар'} удален из корзины`,
           variant: "destructive" // Or another appropriate variant
         });
     }, 0);
-  }, [toast]);
+  }, [cartItems, toast]);
 
-  const formatPrice = useCallback((price: number): string => {
-    // Formats price to KZT currency
-    return new Intl.NumberFormat('ru-KZ', {
-      style: 'currency',
-      currency: 'KZT',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price);
-  }, []);
 
   // Show loading state until mounted
   if (!isMounted) {
@@ -142,6 +147,8 @@ const CartPage = () => {
                     {/* Image */}
                     <div className="relative w-20 h-20 flex-shrink-0">
                        <Image
+                         // Using item.imageUrl as the key might help React detect changes
+                         key={item.imageUrl}
                          src={item.imageUrl || 'https://picsum.photos/100/100'} // Use the imageUrl from the cart item
                          alt={item.name}
                          fill // Use fill layout
@@ -149,6 +156,7 @@ const CartPage = () => {
                          className="object-cover rounded-md border"
                          onError={(e) => {
                            // Fallback on error
+                           console.error(`Error loading image for ${item.name}: ${item.imageUrl}`);
                            const target = e.target as HTMLImageElement;
                            target.srcset = 'https://picsum.photos/100/100';
                            target.src = 'https://picsum.photos/100/100';

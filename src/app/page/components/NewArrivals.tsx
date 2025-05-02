@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 interface NewArrivalsProps {
-  onAddToCart: (product: AutoPart) => void;
+  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
 }
 
 export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
@@ -22,14 +23,16 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simulate fetching new arrivals - replace with actual logic if available
-      // For now, fetch all and take a different slice, or sort by a 'dateAdded' field if it exists
+      // Simulate fetching new arrivals - maybe sort by a hypothetical 'dateAdded' or just slice differently
       const allProducts = await getAllAutoParts();
-      // Example: Define "new" as the products from index 10 to 14 for demonstration
-       const arrivals = allProducts.slice(10, 15).map(p => ({
-        ...p,
-        dataAiHint: p.dataAiHint || `${p.category} ${p.brand}` // Add placeholder hint
-      }));
+      // Example: Define "new" as products added recently (or just a slice for demo)
+      const arrivals = allProducts
+         // .sort((a, b) => (b.dateAdded ?? 0) - (a.dateAdded ?? 0)) // Hypothetical sorting
+        .slice(0, 5) // Take first 5 as "new" for demo
+        .map(p => ({
+          ...p,
+          dataAiHint: p.dataAiHint || `${p.category} ${p.brand}`
+        }));
       setNewArrivals(arrivals);
     } catch (fetchError: any) {
       console.error("Error fetching new arrivals:", fetchError);
@@ -69,6 +72,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {newArrivals.map((product) => (
+                 // Pass the onAddToCart function down to each Autopart
                 <Autopart key={product.id} product={product} onAddToCart={onAddToCart}/>
               ))}
             </div>
