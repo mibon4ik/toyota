@@ -12,7 +12,7 @@ import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { getCookie } from 'cookies-next';
 import { useRouter } from 'next/navigation';
-import { formatPrice } from '@/lib/utils'; // Import formatPrice
+import { formatPrice } from '@/lib/utils';
 
 interface CartItem extends AutoPart {
   quantity: number;
@@ -30,19 +30,29 @@ const CartPage = () => {
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
       try {
-        const parsedCart: CartItem[] = JSON.parse(storedCart);
+        let parsedCart: CartItem[] = JSON.parse(storedCart);
         // Enhanced validation
-        if (Array.isArray(parsedCart) && parsedCart.every(item =>
+        if (Array.isArray(parsedCart)) {
+          // Filter out items with clearly invalid properties or invalid image URLs
+          const validCartItems = parsedCart.filter(item =>
             item && // Check if item is not null/undefined
             typeof item.id === 'string' &&
             typeof item.name === 'string' &&
             typeof item.price === 'number' &&
             typeof item.quantity === 'number' &&
-            typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
-        )) {
-          setCartItems(parsedCart);
+            typeof item.imageUrl === 'string' &&
+            !item.imageUrl.includes('example.com') // Filter out placeholder URLs
+          );
+
+          if (validCartItems.length !== parsedCart.length) {
+             console.warn("Invalid cart items found and removed from localStorage.");
+             localStorage.setItem('cartItems', JSON.stringify(validCartItems)); // Update storage with valid items
+          }
+
+          setCartItems(validCartItems);
+
         } else {
-          console.warn("Invalid cart data found in localStorage (missing properties or wrong types). Clearing cart.");
+          console.warn("Invalid cart data format found in localStorage. Clearing cart.");
           localStorage.removeItem('cartItems');
           setCartItems([]); // Clear state too
         }
@@ -109,7 +119,7 @@ const CartPage = () => {
         toast({
           title: "Товар удален!",
           description: `${itemToRemove?.name || 'Товар'} удален из корзины`,
-          variant: "destructive" // Or another appropriate variant
+          variant: "destructive"
         });
     }, 0);
   }, [cartItems, toast]);
@@ -121,7 +131,6 @@ const CartPage = () => {
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
             <p className="text-center text-muted-foreground">Загрузка корзины...</p>
-            {/* Optional: Add skeleton loader here */}
         </div>
     );
   }
