@@ -34,13 +34,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      // Add other domains if needed, like 'example.com' if used
-      // {
-      //   protocol: 'https',
-      //   hostname: 'example.com',
-      //   port: '',
-      //   pathname: '/**',
-      // },
+      {
+        protocol: 'https',
+        hostname: 'example.com', // Add example.com to allow fallback images if any exist
+        port: '',
+        pathname: '/**',
+      },
     ],
     // Optionally specify device sizes and image sizes for better optimization
     // deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
