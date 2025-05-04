@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -5,23 +6,29 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { getCookie, deleteCookie } from 'cookies-next';
+import { getCookie, deleteCookie, setCookie } from 'cookies-next';
 import type { User } from '@/types/user';
+import type { Order } from '@/types/order'; // Import Order type
 import { UserList } from './components/UserList';
 import { AddProductForm } from './components/AddProductForm';
-import { ProductList } from './components/ProductList'; // Import ProductList
-import { EditProductForm } from './components/EditProductForm'; // Import EditProductForm
-import { getAllUsers, verifyPassword } from '@/lib/auth'; // Added verifyPassword for potential future checks
-import { getAllAutoParts } from '@/services/autoparts'; // Import service to fetch products
-import type { AutoPart } from '@/types/autopart'; // Import AutoPart type
+import { ProductList } from './components/ProductList';
+import { EditProductForm } from './components/EditProductForm';
+import { OrderList } from './components/OrderList'; // Import OrderList
+import { getAllUsers, verifyPassword } from '@/lib/auth';
+import { getAllAutoParts } from '@/services/autoparts';
+import { getAllOrders } from '@/services/orders'; // Import service to fetch orders
+import type { AutoPart } from '@/types/autopart';
 
 const AdminPage = () => {
   const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
-  const [products, setProducts] = useState<AutoPart[]>([]); // State for products
+  const [products, setProducts] = useState<AutoPart[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]); // State for orders
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true); // Loading state for products
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true); // Loading state for orders
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
-  const [errorProducts, setErrorProducts] = useState<string | null>(null); // Error state for products
+  const [errorProducts, setErrorProducts] = useState<string | null>(null);
+  const [errorOrders, setErrorOrders] = useState<string | null>(null); // Error state for orders
   const router = useRouter();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
@@ -54,7 +61,29 @@ const AdminPage = () => {
         setIsLoadingProducts(false);
         console.log("AdminPage: Finished fetching products.");
       }
-  }, [toast]); // Added toast dependency
+  }, [toast]);
+
+  const fetchOrders = useCallback(async () => {
+     console.log("AdminPage: Fetching orders...");
+     setIsLoadingOrders(true);
+     setErrorOrders(null);
+      try {
+        const fetchedOrders = await getAllOrders();
+        console.log("AdminPage: Fetched orders count:", fetchedOrders.length);
+        setOrders(fetchedOrders);
+      } catch (fetchError) {
+        console.error("AdminPage: Failed to fetch orders:", fetchError);
+        setErrorOrders("Не удалось загрузить список заказов.");
+        toast({
+          title: "Ошибка загрузки заказов",
+          description: "Не удалось загрузить список заказов. Попробуйте позже.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingOrders(false);
+        console.log("AdminPage: Finished fetching orders.");
+      }
+  }, [toast]);
 
   const checkAdminAndFetchData = useCallback(async () => {
     if (!isMounted) {
@@ -64,6 +93,8 @@ const AdminPage = () => {
      console.log("AdminPage: Running auth check and data fetch (client-side).");
      setIsLoadingUsers(true);
      setErrorUsers(null);
+     setIsLoadingProducts(true); // Ensure products loading state is reset
+     setIsLoadingOrders(true); // Ensure orders loading state is reset
 
      const authTokenCookie = getCookie('authToken');
      const isLoggedInCookie = getCookie('isLoggedIn');
@@ -80,7 +111,6 @@ const AdminPage = () => {
          } catch (e) {
              console.error("AdminPage: Error parsing loggedInUser cookie:", e);
              isAdmin = false;
-             // Clean up inconsistent state
              deleteCookie('authToken', { path: '/' });
              deleteCookie('isLoggedIn', { path: '/' });
              deleteCookie('loggedInUser', { path: '/' });
@@ -92,7 +122,6 @@ const AdminPage = () => {
          }
      } else {
          console.log("AdminPage: Auth cookies not found or incomplete.");
-          // Try restoring from localStorage
          const localIsLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isLoggedIn') : null;
          const localUser = typeof window !== 'undefined' ? localStorage.getItem('loggedInUser') : null;
          if (localIsLoggedIn === 'true' && localUser) {
@@ -103,7 +132,6 @@ const AdminPage = () => {
                   if (!isAdmin) {
                       console.log("AdminPage: User from localStorage is not admin.");
                   } else {
-                      // Restore cookies if missing but localStorage is present (e.g., browser restart)
                       const token = btoa(JSON.stringify({ id: loggedInUser.id, username: loggedInUser.username, isAdmin: loggedInUser.isAdmin })); // Simplified token
                       const cookieOptions = { maxAge: 60 * 60 * 24 * 7, path: '/' };
                       setCookie('authToken', token, cookieOptions);
@@ -130,7 +158,6 @@ const AdminPage = () => {
              description: "У вас нет прав для доступа к этой странице.",
              variant: "destructive",
          });
-          // Clear cookies and localStorage just in case
           deleteCookie('authToken', { path: '/' });
           deleteCookie('isLoggedIn', { path: '/' });
           deleteCookie('loggedInUser', { path: '/' });
@@ -141,6 +168,8 @@ const AdminPage = () => {
           }
           router.push('/auth/login');
           setIsLoadingUsers(false);
+          setIsLoadingProducts(false); // Stop loading if redirecting
+          setIsLoadingOrders(false); // Stop loading if redirecting
           return;
      }
 
@@ -163,17 +192,16 @@ const AdminPage = () => {
          setIsLoadingUsers(false);
      }
 
-     // Fetch Products initially
-     await fetchProducts(); // Ensure products are fetched after admin check
+     // Fetch Products and Orders in parallel
+     await Promise.all([fetchProducts(), fetchOrders()]);
 
-
-  }, [isMounted, router, toast, fetchProducts]);
+  }, [isMounted, router, toast, fetchProducts, fetchOrders]); // Add fetchOrders dependency
 
   useEffect(() => {
-    if (isMounted) { // Ensure checkAdminAndFetchData runs only after mount
+    if (isMounted) {
         checkAdminAndFetchData();
     }
-  }, [checkAdminAndFetchData, isMounted]); // Add isMounted dependency
+  }, [checkAdminAndFetchData, isMounted]);
 
   const handleLogout = useCallback(() => {
       console.log("AdminPage: Logout initiated.");
@@ -205,15 +233,13 @@ const AdminPage = () => {
     setSelectedProduct(null);
   };
 
-
   const handleProductUpdated = useCallback((updatedProduct: AutoPart) => {
       console.log("AdminPage: Product updated, refetching product list...");
-      // Refetch all products to ensure the list is up-to-date
       fetchProducts();
   }, [fetchProducts]);
 
    // Show loading indicator until mount and initial data fetch attempts are complete
-   if (!isMounted || isLoadingUsers || isLoadingProducts) {
+   if (!isMounted || isLoadingUsers || isLoadingProducts || isLoadingOrders) {
         return (
             <div className="container mx-auto py-8">
                 <Card className="w-full p-4">
@@ -222,7 +248,7 @@ const AdminPage = () => {
                     </CardHeader>
                     <CardContent>
                         <p className="text-center text-muted-foreground">Загрузка данных...</p>
-                        {/* Optional: Add skeletons here */}
+                        {/* Add skeletons for users, products, and orders */}
                     </CardContent>
                 </Card>
             </div>
@@ -237,23 +263,20 @@ const AdminPage = () => {
         </CardHeader>
         <CardContent className="space-y-12">
            <UserList users={users} isLoading={isLoadingUsers} error={errorUsers} />
-
+           <OrderList orders={orders} isLoading={isLoadingOrders} error={errorOrders} /> {/* Display Orders */}
            <ProductList
              products={products}
              isLoading={isLoadingProducts}
              error={errorProducts}
              onEdit={handleEditProduct}
             />
-
            <AddProductForm />
-
             <EditProductForm
               product={selectedProduct}
               isOpen={isEditModalOpen}
               onClose={handleCloseEditModal}
               onProductUpdated={handleProductUpdated}
             />
-
         </CardContent>
           <div className="mt-8 flex justify-center">
             <Button onClick={handleLogout} variant="outline">Выйти</Button>
@@ -264,3 +287,4 @@ const AdminPage = () => {
 };
 
 export default AdminPage;
+
