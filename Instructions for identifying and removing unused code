@@ -1,0 +1,40 @@
+OK. To identify unused code, I need to analyze your project. Unfortunately, I can't do that directly. However, I can provide instructions that you can follow to determine this yourself. 
+
+Here's how you can identify and remove unused code in your Next.js project:
+
+**1. Identify Unused Code with a Code Coverage Tool:**
+
+*   **VS Code Coverage Extension:**
+
+    *   Install a code coverage extension for VS Code, such as "Coverage Gutters" or "Code Coverage."
+    *   Configure the extension to run your test suite (if you have one) or to analyze your code directly.
+    *   The extension will highlight lines of code that are not being executed, indicating potential unused code.
+*   **Next.js Bundle Analyzer:**
+    *  Install: `npm install --save-dev webpack-bundle-analyzer`
+    *   Add this to your `next.config.js`:
+    ```javascript
+    const withBundleAnalyzer = require('@next/bundle-analyzer')({
+      enabled: process.env.ANALYZE === 'true',
+    })
+    module.exports = withBundleAnalyzer({})
+    ```
+    *  Run: `ANALYZE=true npm run build` and it will open a treemap where you can explore your bundles to identify unneeded modules that are bloating your bundle sizes
+*   **Chrome DevTools Coverage:**
+    1.  Open Chrome DevTools (F12 or Ctrl+Shift+I).
+    2.  Go to the "Coverage" tab (you may need to enable it in the DevTools settings).
+    3.  Click the "Reload" button in the Coverage tab to start recording code coverage.
+    4.  Use your app and click on the elements.
+    5.  The Coverage tool will show you which lines of code were executed and which were not.
+**2. Remove Dead Code**
+
+*   Remove console.log statements that are no longer necessary for debugging.
+*   Delete any unused functions, variables, or components.
+*   Delete commented out code
+
+**3. Delete Unused Imports**
+
+*   Remove import statements for modules or functions that are not used in the file. Modern IDEs can often automatically detect unused imports and highlight them.
+
+**4. Example scenarios**
+
+*   Component libraries such as @mui often have tree shaking, where the compiler only adds the components that have been loaded. However, many components are similar and can be replaced, such as creating your own button rather than importing button from a component library. Another example would be a custom CSS framework that is a lot more lightweight and better optimized. In most cases, use CSS modules.
