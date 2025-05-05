@@ -1,3 +1,4 @@
+
 'use server';
 
 import fs from 'fs/promises';
@@ -15,7 +16,6 @@ const ensureDataDirExists = async (): Promise<void> => {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       await fs.mkdir(dataDir, { recursive: true });
-      console.log(`Created data directory: ${dataDir}`);
     } else {
       console.error("Error accessing data directory:", error);
       throw new Error("Could not access data directory.");
@@ -31,7 +31,6 @@ async function readUsersFile(): Promise<User[]> {
     return JSON.parse(data || '[]');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      console.log("users.json not found, returning empty array.");
       return [];
     }
     if (error instanceof SyntaxError) {
@@ -68,7 +67,7 @@ async function createAdminUserObject(): Promise<User> {
       username: 'admin',
       firstName: 'Admin',
       lastName: 'User',
-
+      email: 'admin@admin.com',
       phoneNumber: '0000000000',
       password: hashedPassword,
       carMake: 'N/A',
@@ -88,15 +87,20 @@ async function ensureAdminUser(): Promise<void> {
 
     if (adminIndex > -1) {
         const adminUser = users[adminIndex];
+        let passwordMatches = false;
+        try {
+           passwordMatches = await bcrypt.compare('admin', adminUser.password || '');
+        } catch {
+            // Ignore bcrypt errors if hash is invalid, will overwrite below
+        }
 
-        if (adminUser.password !== correctHashedPassword || !adminUser.isAdmin) {
-             console.log("Updating admin user details...");
+        if (!passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com') {
              adminUser.password = correctHashedPassword;
              adminUser.isAdmin = true;
+             adminUser.email = 'admin@admin.com';
              needsUpdate = true;
         }
     } else {
-        console.log("Admin user not found, creating...");
         const adminUser = await createAdminUserObject();
         users.unshift(adminUser);
         needsUpdate = true;
@@ -104,7 +108,6 @@ async function ensureAdminUser(): Promise<void> {
 
     if (needsUpdate) {
         await writeUsersFile(users);
-        console.log("Admin user ensured in users.json.");
     }
 }
 
@@ -175,32 +178,24 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
 
 
 export async function verifyPassword(username: string, passwordInput: string): Promise<User | null> {
-  console.log(`Verifying password for username: ${username}`);
   await ensureAdminUser();
 
   const user = await getUserByUsername(username);
 
   if (!user) {
-    console.log(`User not found: ${username}`);
     return null;
   }
   if (!user.password) {
-      console.warn(`User ${username} found, but has no password hash set.`);
       return null;
   }
 
-  console.log(`User ${username} found. Comparing passwords...`);
   try {
     const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
-    console.log(`Password comparison result for ${username}: ${passwordsMatch}`);
 
     if (passwordsMatch) {
-
       const { password, ...userWithoutPassword } = user;
-      console.log(`Password verification successful for ${username}.`);
       return userWithoutPassword as User;
     } else {
-      console.log(`Password verification failed for ${username}.`);
       return null;
     }
   } catch (error) {
@@ -216,15 +211,85 @@ export async function getAllUsers(): Promise<Omit<User, 'password'>[]> {
   return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
 }
 
+// Function to update user details (excluding password)
+export async function updateUser(userId: string, updatedData: Partial<Omit<User, 'id' | 'password'>>): Promise<Omit<User, 'password'>> {
+  await ensureAdminUser();
+  let users = await readUsersFile();
+  const userIndex = users.findIndex(u => u.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error(`Пользователь с ID "${userId}" не найден.`);
+  }
+
+  // Prevent updating ID or password with this function
+  const { id, password, ...dataToUpdate } = updatedData;
+
+  // Ensure username uniqueness if changed
+  if (dataToUpdate.username && dataToUpdate.username !== users[userIndex].username) {
+      const usernameExists = users.some(u => u.username === dataToUpdate.username && u.id !== userId);
+      if (usernameExists) {
+          throw new Error('Этот логин уже используется другим пользователем.');
+      }
+  }
+   // Ensure email uniqueness if changed and provided
+   if (dataToUpdate.email && dataToUpdate.email !== users[userIndex].email) {
+     const emailExists = users.some(u => u.email && u.email === dataToUpdate.email && u.id !== userId);
+     if (emailExists) {
+         throw new Error('Этот email уже используется другим пользователем.');
+     }
+   }
+   // Ensure VIN uniqueness if changed
+   if (dataToUpdate.vinCode && dataToUpdate.vinCode.toUpperCase() !== users[userIndex].vinCode.toUpperCase()) {
+     const vinExists = users.some(u => u.vinCode?.toUpperCase() === dataToUpdate.vinCode?.toUpperCase() && u.id !== userId);
+     if (vinExists) {
+       throw new Error('Этот VIN-код уже зарегистрирован для другого пользователя.');
+     }
+   }
+
+
+  const updatedUser = {
+    ...users[userIndex],
+    ...dataToUpdate,
+    vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode, // Ensure uppercase VIN
+    isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin, // Handle boolean update
+  };
+
+  users[userIndex] = updatedUser;
+  await writeUsersFile(users);
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+  return userWithoutPassword;
+}
+
+// Function to update only the user's password
+export async function updateUserPassword(userId: string, newPasswordInput: string): Promise<void> {
+  await ensureAdminUser();
+  let users = await readUsersFile();
+  const userIndex = users.findIndex(u => u.id === userId);
+
+  if (userIndex === -1) {
+    throw new Error(`Пользователь с ID "${userId}" не найден.`);
+  }
+
+  if (!newPasswordInput || newPasswordInput.length < 8) {
+     throw new Error('Новый пароль должен содержать не менее 8 символов.');
+     // Add more password complexity checks if needed
+  }
+
+  const hashedPassword = await bcrypt.hash(newPasswordInput, 10);
+  users[userIndex].password = hashedPassword;
+
+  await writeUsersFile(users);
+}
+
 
 (async () => {
     try {
-        console.log("Ensuring admin user exists on startup...");
         await ensureAdminUser();
-        console.log("Admin user check complete.");
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
 
 
     }
 })();
+

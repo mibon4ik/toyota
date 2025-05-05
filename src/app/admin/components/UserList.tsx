@@ -1,23 +1,25 @@
+
 "use client";
 
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button"; // Import Button
 import type { User } from '@/types/user';
 
 interface UserListProps {
   users: Omit<User, 'password'>[];
   isLoading: boolean;
   error: string | null;
+  onEdit: (user: Omit<User, 'password'>) => void; // Callback for edit action
 }
 
-export const UserList: React.FC<UserListProps> = ({ users, isLoading, error }) => {
+export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onEdit }) => {
 
   if (isLoading) {
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
-        {/* Skeleton Loader */}
         <div className="space-y-3">
             <Skeleton className="h-8 w-full rounded-md" />
             <Skeleton className="h-10 w-full rounded-md" />
@@ -54,7 +56,6 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error }) =
         <Table>
           <TableHeader>
             <TableRow>
-              {/* <TableHead>ID</TableHead> */}
               <TableHead>Логин</TableHead>
               <TableHead>Имя</TableHead>
               <TableHead>Телефон</TableHead>
@@ -62,12 +63,12 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error }) =
               <TableHead>Модель</TableHead>
               <TableHead>VIN</TableHead>
               <TableHead>Admin</TableHead>
+              <TableHead>Действия</TableHead> {/* Added Actions column */}
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
               <TableRow key={user.id}>
-                {/* <TableCell className="text-xs">{user.id}</TableCell> */}
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
                 <TableCell>{user.phoneNumber}</TableCell>
@@ -75,6 +76,11 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error }) =
                 <TableCell>{user.carModel}</TableCell>
                 <TableCell className="font-mono text-xs tracking-wider">{user.vinCode}</TableCell>
                 <TableCell>{user.isAdmin ? 'Да' : 'Нет'}</TableCell>
+                <TableCell>
+                   <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
+                     Изменить
+                   </Button>
+                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
