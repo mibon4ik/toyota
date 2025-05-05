@@ -11,5 +11,18 @@
     "carModel": "AdminModel",
     "vinCode": "ADMINVINCODE00000",
     "isAdmin": true
+  },
+  {
+    "id": "1746448355931",
+    "username": "mibon4ik",
+    "firstName": "mibon4ik",
+    "lastName": "mibon4ik",
+    "email": "mibon4ik@mibon4ik.com",
+    "phoneNumber": "+77768236545",
+    "password": "$2a$10$1qpJvl5EnBhz6C20DQr.1uahrnDJX0brzC8DLPXmh116mx4PJYn2W",
+    "carMake": "BMW",
+    "carModel": "M5",
+    "vinCode": "1HGCM82633A123456",
+    "isAdmin": false
   }
 ]
