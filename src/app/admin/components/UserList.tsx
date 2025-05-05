@@ -62,13 +62,13 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
               <TableHead>Машина</TableHead>
               <TableHead>VIN</TableHead>
               <TableHead>Admin</TableHead>
-              <TableHead>Пароль (Hash)</TableHead> {/* Password column */}
+              <TableHead>Пароль (Hash)</TableHead>
               <TableHead>Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              // Ensure no extra whitespace inside the TableRow mapping
+              // Ensure no extra whitespace inside the TableRow mapping or between TableCells
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
@@ -76,14 +76,12 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
                 <TableCell>{user.carMake} {user.carModel}</TableCell>
                 <TableCell className="font-mono text-xs tracking-wider">{user.vinCode}</TableCell>
                 <TableCell>{user.isAdmin ? 'Да' : 'Нет'}</TableCell>
-                 <TableCell className="text-xs font-mono text-muted-foreground truncate max-w-[100px]" title={user.password}>
-                    {user.password ? `${user.password.substring(0, 10)}...` : 'N/A'} {/* Show truncated hash */}
-                 </TableCell>
+                <TableCell className="text-xs font-mono text-muted-foreground truncate max-w-[100px]" title={user.password}>
+                   {user.password ? `${user.password.substring(0, 10)}...` : 'N/A'}
+                </TableCell>
                 <TableCell>
-                   <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
-                     Изменить
-                   </Button>
-                 </TableCell>
+                   <Button variant="outline" size="sm" onClick={() => onEdit(user)}>Изменить</Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

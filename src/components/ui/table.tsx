@@ -58,7 +58,8 @@ const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => (
-  <tr // Ensure no leading/trailing whitespace here
+  // No whitespace between opening tag and children, or closing tag
+  <tr
     ref={ref}
     className={cn(
       "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
@@ -73,6 +74,7 @@ const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
+  // No whitespace between opening tag and children, or closing tag
   <th
     ref={ref}
     className={cn(
@@ -88,6 +90,7 @@ const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ className, ...props }, ref) => (
+  // No whitespace between opening tag and children, or closing tag
   <td
     ref={ref}
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
@@ -100,6 +103,7 @@ const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
   React.HTMLAttributes<HTMLTableCaptionElement>
 >(({ className, ...props }, ref) => (
+  // No whitespace between opening tag and children, or closing tag
   <caption
     ref={ref}
     className={cn("mt-4 text-sm text-muted-foreground", className)}
