@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -57,13 +58,13 @@ const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
 >(({ className, ...props }, ref) => (
-  <tr
+  <tr // Ensure no leading/trailing whitespace here
     ref={ref}
     className={cn(
       "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
       className
     )}
-    {...props}
+    {...props} // props.children will be rendered inside by React
   />
 ))
 TableRow.displayName = "TableRow"

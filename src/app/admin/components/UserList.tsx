@@ -68,6 +68,7 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
           </TableHeader>
           <TableBody>
             {users.map((user) => (
+              // Ensure no extra whitespace inside the TableRow mapping
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
