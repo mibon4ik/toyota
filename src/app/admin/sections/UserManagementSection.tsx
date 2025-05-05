@@ -9,11 +9,11 @@ import { getAllUsers } from '@/lib/auth';
 import { useToast } from "@/hooks/use-toast";
 
 export const UserManagementSection: React.FC = () => {
-  const [users, setUsers] = useState<Omit<User, 'password'>[]>([]);
+  const [users, setUsers] = useState<User[]>([]); // State now holds full User objects
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [errorUsers, setErrorUsers] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Omit<User, 'password'> | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null); // State now holds full User object or null
   const { toast } = useToast();
 
   const fetchUsers = useCallback(async () => {
@@ -39,7 +39,7 @@ export const UserManagementSection: React.FC = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  const handleEditUser = (user: Omit<User, 'password'>) => {
+  const handleEditUser = (user: User) => { // Accepts full User object
     setSelectedUser(user);
     setIsEditModalOpen(true);
   };
@@ -56,13 +56,13 @@ export const UserManagementSection: React.FC = () => {
   return (
     <div className="space-y-8 mt-6">
       <UserList
-        users={users}
+        users={users} // Pass full user objects
         isLoading={isLoadingUsers}
         error={errorUsers}
         onEdit={handleEditUser}
       />
       <EditUserForm
-        user={selectedUser}
+        user={selectedUser} // Pass full selected user object
         isOpen={isEditModalOpen}
         onClose={handleCloseEditModal}
         onUserUpdated={handleUserUpdated}

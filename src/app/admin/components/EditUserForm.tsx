@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { updateUser, updateUserPassword } from '@/lib/auth'; // Import update functions
+import { updateUser, updateUserPassword } from '@/lib/auth';
 import type { User } from '@/types/user';
 
 const userSchema = z.object({
@@ -24,17 +24,16 @@ const userSchema = z.object({
   carModel: z.string().min(1, 'Модель машины обязательна'),
   vinCode: z.string().length(17, 'VIN должен содержать 17 символов').regex(/^[A-HJ-NPR-Z0-9]{17}$/i, 'Неверный формат VIN'),
   isAdmin: z.boolean().optional(),
-  // Password is optional during edit unless explicitly changed
   newPassword: z.string().min(8, 'Пароль должен содержать минимум 8 символов').optional().or(z.literal('')),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
 
 interface EditUserFormProps {
-  user: Omit<User, 'password'> | null;
+  user: User | null; // Now expects full User object
   isOpen: boolean;
   onClose: () => void;
-  onUserUpdated: () => void; // Callback after successful update
+  onUserUpdated: () => void;
 }
 
 export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClose, onUserUpdated }) => {
@@ -66,7 +65,7 @@ export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClos
       setValue('newPassword', ''); // Clear password field on open
       setError(null);
     } else if (!isOpen) {
-      reset(); // Reset form when closing
+      reset();
       setError(null);
     }
   }, [user, isOpen, reset, setValue]);
@@ -102,8 +101,8 @@ export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClos
         title: 'Пользователь обновлен!',
         description: `Данные пользователя "${data.username}" успешно обновлены.`,
       });
-      onUserUpdated(); // Notify parent component
-      onClose(); // Close the dialog
+      onUserUpdated();
+      onClose();
     } catch (error: any) {
       console.error("Ошибка обновления пользователя:", error);
       setError(error.message || 'Не удалось обновить пользователя. Попробуйте позже.');
@@ -200,7 +199,8 @@ export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClos
              <Checkbox
                 id="edit-isAdmin"
                 {...register('isAdmin')}
-                checked={!!register('isAdmin').value} // Ensure controlled component behavior
+                 // Explicitly check the 'checked' state from the form value
+                 checked={!!user?.isAdmin} // Use the initial user data to set checked state
                  onCheckedChange={(checked) => setValue('isAdmin', Boolean(checked), { shouldValidate: true })}
                 disabled={isLoading}
             />

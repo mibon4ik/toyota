@@ -31,11 +31,13 @@ async function readUsersFile(): Promise<User[]> {
     return JSON.parse(data || '[]');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      return [];
+       // If file doesn't exist, initialize with admin user
+       const adminUser = await createAdminUserObject();
+       await writeUsersFile([adminUser]);
+       return [adminUser];
     }
     if (error instanceof SyntaxError) {
         console.error("Error parsing users.json:", error);
-
         throw new Error("User data file is corrupted.");
     }
     console.error("Error reading users file:", error);
@@ -89,18 +91,21 @@ async function ensureAdminUser(): Promise<void> {
         const adminUser = users[adminIndex];
         let passwordMatches = false;
         try {
+           // Check if current stored password is correct
            passwordMatches = await bcrypt.compare('admin', adminUser.password || '');
         } catch {
-            // Ignore bcrypt errors if hash is invalid, will overwrite below
+             passwordMatches = false; // Assume password needs update if hash is invalid
         }
 
-        if (!passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com') {
+        if (!passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
+             // Update password hash, ensure isAdmin is true, and email is correct
              adminUser.password = correctHashedPassword;
              adminUser.isAdmin = true;
              adminUser.email = 'admin@admin.com';
              needsUpdate = true;
         }
     } else {
+        // Add admin user if not found
         const adminUser = await createAdminUserObject();
         users.unshift(adminUser);
         needsUpdate = true;
@@ -172,8 +177,8 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
   await writeUsersFile(users);
 
 
-  const { password, ...userWithoutPassword } = userWithId;
-  return userWithoutPassword as User;
+  // Return the user object *including* the password hash for admin view
+  return userWithId;
 }
 
 
@@ -193,6 +198,7 @@ export async function verifyPassword(username: string, passwordInput: string): P
     const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
 
     if (passwordsMatch) {
+      // Return user data WITHOUT password for session/client-side use
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword as User;
     } else {
@@ -205,10 +211,10 @@ export async function verifyPassword(username: string, passwordInput: string): P
 }
 
 
-export async function getAllUsers(): Promise<Omit<User, 'password'>[]> {
+export async function getAllUsers(): Promise<User[]> { // Return full User objects
   await ensureAdminUser();
   const users = await readUsersFile();
-  return users.map(({ password, ...userWithoutPassword }) => userWithoutPassword);
+  return users; // Return the full user objects including password hash
 }
 
 // Function to update user details (excluding password)
@@ -250,8 +256,8 @@ export async function updateUser(userId: string, updatedData: Partial<Omit<User,
   const updatedUser = {
     ...users[userIndex],
     ...dataToUpdate,
-    vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode, // Ensure uppercase VIN
-    isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin, // Handle boolean update
+    vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode,
+    isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin,
   };
 
   users[userIndex] = updatedUser;
@@ -273,7 +279,6 @@ export async function updateUserPassword(userId: string, newPasswordInput: strin
 
   if (!newPasswordInput || newPasswordInput.length < 8) {
      throw new Error('Новый пароль должен содержать не менее 8 символов.');
-     // Add more password complexity checks if needed
   }
 
   const hashedPassword = await bcrypt.hash(newPasswordInput, 10);
@@ -288,8 +293,5 @@ export async function updateUserPassword(userId: string, newPasswordInput: strin
         await ensureAdminUser();
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
-
-
     }
 })();
-

@@ -4,14 +4,14 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button"; // Import Button
+import { Button } from "@/components/ui/button";
 import type { User } from '@/types/user';
 
 interface UserListProps {
-  users: Omit<User, 'password'>[];
+  users: User[]; // Now expects full User object including password
   isLoading: boolean;
   error: string | null;
-  onEdit: (user: Omit<User, 'password'>) => void; // Callback for edit action
+  onEdit: (user: User) => void; // Expects full User object
 }
 
 export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onEdit }) => {
@@ -22,9 +22,9 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
         <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
         <div className="space-y-3">
             <Skeleton className="h-8 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
-            <Skeleton className="h-10 w-full rounded-md" />
+            {[...Array(3)].map((_, i) => (
+                 <Skeleton key={i} className="h-10 w-full rounded-md" />
+            ))}
         </div>
          <p className="text-center text-muted-foreground mt-4">Загрузка пользователей...</p>
       </div>
@@ -59,11 +59,11 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
               <TableHead>Логин</TableHead>
               <TableHead>Имя</TableHead>
               <TableHead>Телефон</TableHead>
-              <TableHead>Марка</TableHead>
-              <TableHead>Модель</TableHead>
+              <TableHead>Машина</TableHead>
               <TableHead>VIN</TableHead>
               <TableHead>Admin</TableHead>
-              <TableHead>Действия</TableHead> {/* Added Actions column */}
+              <TableHead>Пароль (Hash)</TableHead> {/* Password column */}
+              <TableHead>Действия</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -72,10 +72,12 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
                 <TableCell className="font-medium">{user.username}</TableCell>
                 <TableCell>{user.firstName} {user.lastName}</TableCell>
                 <TableCell>{user.phoneNumber}</TableCell>
-                <TableCell>{user.carMake}</TableCell>
-                <TableCell>{user.carModel}</TableCell>
+                <TableCell>{user.carMake} {user.carModel}</TableCell>
                 <TableCell className="font-mono text-xs tracking-wider">{user.vinCode}</TableCell>
                 <TableCell>{user.isAdmin ? 'Да' : 'Нет'}</TableCell>
+                 <TableCell className="text-xs font-mono text-muted-foreground truncate max-w-[100px]" title={user.password}>
+                    {user.password ? `${user.password.substring(0, 10)}...` : 'N/A'} {/* Show truncated hash */}
+                 </TableCell>
                 <TableCell>
                    <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
                      Изменить
@@ -89,3 +91,4 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
     </div>
   );
 };
+
