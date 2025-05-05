@@ -10,6 +10,7 @@ import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
 import { setCookie } from 'cookies-next';
 import type { User } from '@/types/user';
+import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
 
 export const RegistrationForm = () => {
   const [username, setUsername] = useState('');
@@ -45,6 +46,7 @@ export const RegistrationForm = () => {
           isAdmin: user.isAdmin || false,
       };
       try {
+        // Basic base64 encoding for demonstration. Replace with a proper JWT strategy if needed.
         return btoa(JSON.stringify(userData));
       } catch (e) {
         console.error("Error generating token:", e);
@@ -56,8 +58,7 @@ export const RegistrationForm = () => {
     e.preventDefault();
     setError('');
 
-
-
+    // --- Client-side validation ---
     if (!username || !firstName || !lastName || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) {
       setError('Пожалуйста, заполните все обязательные поля.');
       return;
@@ -66,10 +67,12 @@ export const RegistrationForm = () => {
       setError('Неверный формат электронной почты.');
       return;
     }
+    // VIN: 17 alphanumeric characters, excluding I, O, Q
     if (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
       setError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
       return;
     }
+    // Password: min 8 chars, 1 uppercase, 1 digit
     if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
       setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
       return;
@@ -78,6 +81,7 @@ export const RegistrationForm = () => {
       setError('Пароли не совпадают.');
       return;
     }
+    // --- End Client-side validation ---
 
     setIsLoading(true);
 
@@ -88,11 +92,12 @@ export const RegistrationForm = () => {
         lastName,
         email: email || undefined,
         phoneNumber,
-        password,
+        password, // Send plain password to server for hashing
         carMake,
         carModel,
         vinCode: vinCode.toUpperCase(),
       };
+      // Server-side function handles hashing and saving
       const registeredUser = await createUser(newUserPayload);
 
 
@@ -100,17 +105,28 @@ export const RegistrationForm = () => {
 
 
        const token = generateToken(registeredUser);
-       const cookieOptions = {
-           maxAge: 60 * 60 * 24 * 7,
-           path: '/',
-       };
+        // Define common cookie options
+        const cookieOptions: CookieSerializeOptions = {
+          maxAge: 60 * 60 * 24 * 7, // 1 week
+          path: '/',
+          sameSite: 'lax', // Recommended for most cases
+          // Secure should be true in production (HTTPS) and false in local HTTP development
+          secure: process.env.NODE_ENV === 'production',
+          // Domain is omitted to default to the current host
+        };
+
+       // Omit password before storing in cookie/localStorage
+       const { password: _omittedPassword, ...userToStore } = registeredUser;
+
+       console.log("Setting cookies with options:", cookieOptions);
        setCookie('authToken', token, cookieOptions);
        setCookie('isLoggedIn', 'true', cookieOptions);
-       setCookie('loggedInUser', JSON.stringify(registeredUser), cookieOptions);
+       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
 
+       // --- localStorage for cross-tab sync ---
        if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('loggedInUser', JSON.stringify(registeredUser));
+            localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
             console.log("Dispatching authStateChanged event after registration...");
             window.dispatchEvent(new Event('authStateChanged'));
              console.log("authStateChanged event dispatched.");
@@ -123,15 +139,15 @@ export const RegistrationForm = () => {
       });
 
 
-       console.log("Redirecting to / after registration in 150ms...");
-       setTimeout(() => {
-            router.push('/');
-            console.log("Redirection initiated.");
-       }, 150);
+       console.log("Redirecting to / after registration...");
+        // Use replace to avoid adding registration page to history
+       router.replace('/');
+        console.log("Redirection initiated.");
 
 
     } catch (err: any) {
       console.error("Registration error:", err);
+      // Display server-side validation errors (e.g., unique constraints)
       setError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
     } finally {
       setIsLoading(false);
@@ -244,10 +260,10 @@ export const RegistrationForm = () => {
           required
           minLength={17}
           maxLength={17}
-          pattern="[A-HJ-NPR-Z0-9]{17}"
+          pattern="[A-HJ-NPR-Z0-9]{17}" // Pattern for client-side hint
           title="VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
           disabled={isLoading}
-          className="uppercase tracking-widest [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="uppercase tracking-widest font-mono [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // Added mono font and tracking
            autoComplete="off"
         />
       </div>
@@ -261,7 +277,7 @@ export const RegistrationForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            pattern="(?=.*\d)(?=.*[A-Z]).{8,}"
+            pattern="(?=.*\d)(?=.*[A-Z]).{8,}" // Pattern for client-side hint
             title="Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру."
             disabled={isLoading}
              autoComplete="new-password"

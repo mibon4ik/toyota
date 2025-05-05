@@ -1,10 +1,10 @@
-
 'use server';
 
 import fs from 'fs/promises';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import type { User } from '@/types/user';
+import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
 
 const usersFilePath = path.join(process.cwd(), 'src', 'data', 'users.json');
 const dataDir = path.dirname(usersFilePath);
@@ -188,20 +188,25 @@ export async function verifyPassword(username: string, passwordInput: string): P
   const user = await getUserByUsername(username);
 
   if (!user) {
+      console.log(`verifyPassword: User not found for username: ${username}`);
     return null;
   }
   if (!user.password) {
+       console.log(`verifyPassword: User ${username} has no password hash set.`);
       return null;
   }
 
   try {
+      console.log(`verifyPassword: Comparing password for ${username}`);
     const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
 
     if (passwordsMatch) {
-      // Return user data WITHOUT password for session/client-side use
-      const { password, ...userWithoutPassword } = user;
-      return userWithoutPassword as User;
+        console.log(`verifyPassword: Password match for ${username}.`);
+      // Return user data WITHOUT password hash for session/client-side use
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword as User; // Ensure correct type casting
     } else {
+       console.log(`verifyPassword: Password mismatch for ${username}.`);
       return null;
     }
   } catch (error) {

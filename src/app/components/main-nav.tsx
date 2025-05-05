@@ -6,18 +6,20 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-// Removed import for MobileNav
+// Correct import path for MobileNav
+import { MobileNav } from "@/components/ui/mobile-nav"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
 import { getCookie, deleteCookie } from 'cookies-next';
-import type { User } from '@/types/user'; // Import User type
+import type { User } from '@/types/user';
+import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
+
 
 interface CartItem {
   id: string;
   quantity: number;
-  // Add other necessary properties from AutoPart if needed for calculation
 }
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
@@ -26,13 +28,11 @@ export function MainNav({ className, ...props }: MainNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [cartItemCount, setCartItemCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Default to false initially
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null); // Default to null
-  const [isMounted, setIsMounted] = useState(false); // Track client-side mount
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
-  // Function to update cart count from localStorage
   const updateCartCount = useCallback(() => {
-    // console.log("MainNav: Updating cart count..."); // Less verbose logging
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cartItems');
       if (storedCart) {
@@ -40,10 +40,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
           const cartItems: CartItem[] = JSON.parse(storedCart);
           if (Array.isArray(cartItems)) {
             const totalCount = cartItems.reduce((total: number, item: CartItem) => total + (item.quantity || 0), 0);
-            setCartItemCount(current => {
-              // if (current !== totalCount) console.log(`MainNav: Cart count updated to ${totalCount}`);
-              return totalCount;
-            });
+            setCartItemCount(totalCount);
           } else {
              setCartItemCount(0);
           }
@@ -55,14 +52,22 @@ export function MainNav({ className, ...props }: MainNavProps) {
         setCartItemCount(0);
       }
     }
-  }, []); // No state dependencies needed as it reads directly
+  }, []);
 
   const handleLogout = useCallback(() => {
     console.log("MainNav: Logout initiated.");
-    // Clear cookies first - specify path for robustness
-    deleteCookie('authToken', { path: '/' });
-    deleteCookie('isLoggedIn', { path: '/' });
-    deleteCookie('loggedInUser', { path: '/' });
+    // Define common cookie options for deletion
+    const cookieOptions: CookieSerializeOptions = {
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      // Domain is omitted
+    };
+
+    // Clear cookies with options
+    deleteCookie('authToken', cookieOptions);
+    deleteCookie('isLoggedIn', cookieOptions);
+    deleteCookie('loggedInUser', cookieOptions);
     console.log("MainNav: Cookies cleared.");
 
     // Clear localStorage
@@ -70,132 +75,101 @@ export function MainNav({ className, ...props }: MainNavProps) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
         console.log("MainNav: localStorage cleared.");
-        // Optionally clear cart on logout? Depends on requirements.
-        // localStorage.removeItem('cartItems');
 
         // Update local state *before* dispatching event
         setIsLoggedIn(false);
         setLoggedInUser(null);
-        // setCartItemCount(0); // Reset cart count if clearing cart on logout
+        // Optionally clear cart on logout?
+        // localStorage.removeItem('cartItems');
+        // setCartItemCount(0); // Reset cart count if clearing cart
 
         // Dispatch event AFTER clearing storage and setting state
         console.log("MainNav: Dispatching authStateChanged event...");
-        // Use setTimeout to ensure state updates might have rendered
         window.dispatchEvent(new Event('authStateChanged'));
         console.log("MainNav: authStateChanged event dispatched.");
 
     } else {
-         // If window is not defined (unexpected case for logout), still update state
          console.warn("MainNav: window object not available during logout.");
          setIsLoggedIn(false);
          setLoggedInUser(null);
     }
 
-
-    // Redirect after clearing state and potentially notifying
     console.log("MainNav: Redirecting to login after logout.");
     router.push('/auth/login'); // Redirect to login
   }, [router]); // Only router dependency
 
-  // Function to update auth state from cookies and localStorage
   const updateAuthState = useCallback(() => {
-     // console.log("MainNav: Updating auth state..."); // Less verbose logging
      if (typeof window === 'undefined') {
-         console.log("MainNav: Skipping auth state update on server.");
          return; // Ensure this only runs client-side
      }
 
-     // --- Cookie Check (Primary) ---
     const loggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
-    const authTokenCookie = getCookie('authToken'); // Check auth token as well
-
-    // --- localStorage Check (Secondary/Sync) ---
-    // Primarily used for cross-tab sync or initial hydration if cookies missing
-    let loggedInLocalStorage = localStorage.getItem('isLoggedIn');
-    let userLocalStorage = localStorage.getItem('loggedInUser');
+    const authTokenCookie = getCookie('authToken');
 
     let derivedIsLoggedIn = false;
     let derivedUser: User | null = null;
 
-    // Check cookies first
     if (authTokenCookie && loggedInCookie === 'true' && userCookie) {
-        // console.log("MainNav: Valid auth cookies found.");
         try {
             derivedUser = JSON.parse(userCookie);
-            // Basic validation
             if (derivedUser && derivedUser.id && derivedUser.username) {
                 derivedIsLoggedIn = true;
-                // console.log("MainNav: User logged in (from cookie):", derivedUser.username, "Admin:", derivedUser.isAdmin);
             } else {
                  console.warn("MainNav: Invalid user data structure in cookie storage.");
-                 derivedUser = null; // Treat invalid data as logged out
+                 derivedUser = null;
                  derivedIsLoggedIn = false;
             }
         } catch (e) {
             console.error("MainNav: Error parsing user cookie:", e);
-            derivedUser = null; // Treat parse error as logged out
+            derivedUser = null;
             derivedIsLoggedIn = false;
         }
     } else {
-        // console.log("MainNav: Auth cookies incomplete or missing.");
-        // Optional: Fallback to localStorage ONLY IF necessary and cookies are missing
-        // This might be less reliable if middleware depends solely on cookies.
-        // if (loggedInLocalStorage === 'true' && userLocalStorage) {
-        //     console.log("MainNav: Attempting fallback to localStorage for auth state.");
-        //     // ... (localStorage parsing logic as before) ...
-        // }
+        // Fallback to localStorage (if cookies are missing/inconsistent)
+        let loggedInLocalStorage = localStorage.getItem('isLoggedIn');
+        let userLocalStorage = localStorage.getItem('loggedInUser');
+        if (loggedInLocalStorage === 'true' && userLocalStorage) {
+            try {
+                derivedUser = JSON.parse(userLocalStorage);
+                 if (derivedUser && derivedUser.id && derivedUser.username) {
+                     derivedIsLoggedIn = true;
+                     console.log("MainNav: Auth state restored from localStorage.");
+                 } else {
+                    console.warn("MainNav: Invalid user data structure in localStorage.");
+                    derivedUser = null;
+                    derivedIsLoggedIn = false;
+                 }
+            } catch (e) {
+                 console.error("MainNav: Error parsing user localStorage:", e);
+                 derivedUser = null;
+                 derivedIsLoggedIn = false;
+            }
+        }
     }
 
-    // If checks fail, ensure state is logged out
-    if (!derivedIsLoggedIn) {
-        derivedUser = null;
-        // Optionally clear potentially inconsistent storage if needed, but be careful
-        // deleteCookie('authToken', { path: '/' });
-        // deleteCookie('isLoggedIn', { path: '/' });
-        // deleteCookie('loggedInUser', { path: '/' });
-        // localStorage.removeItem('isLoggedIn');
-        // localStorage.removeItem('loggedInUser');
+    // Clean up storage if checks indicate not logged in but storage persists
+    if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') || localStorage.getItem('loggedInUser'))) {
+        console.log("MainNav: Cleaning up inconsistent localStorage auth state.");
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('loggedInUser');
     }
 
-
-    // Set state based on derived values ONLY if they changed to prevent loops
-    setIsLoggedIn(current => {
-        if (current !== derivedIsLoggedIn) {
-             console.log(`MainNav: Updating isLoggedIn state from ${current} to ${derivedIsLoggedIn}`);
-            return derivedIsLoggedIn;
-        }
-        return current;
-    });
-    setLoggedInUser(current => {
-        // Simple comparison for object might be sufficient here
-        if (JSON.stringify(current) !== JSON.stringify(derivedUser)) {
-             console.log(`MainNav: Updating loggedInUser state.`);
-            return derivedUser;
-        }
-        return current;
-    });
-
+    // Update state only if changed
+    setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
+    setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
 
   }, [setIsLoggedIn, setLoggedInUser]); // Add setters as dependencies
 
-  // Effect to run on mount and listen for changes
    useEffect(() => {
         if (!isMounted) {
-            console.log("MainNav: Component mounting...");
-            setIsMounted(true); // Indicate component has mounted
-            console.log("MainNav: Component mounted.");
+            setIsMounted(true);
         }
 
-        // Initial check on mount - ensure this runs after component is mounted
-        console.log("MainNav: Running initial auth and cart check.");
         updateAuthState();
         updateCartCount();
 
-
-        // Listener for direct storage changes (e.g., other tabs)
         const handleStorageChange = (event: StorageEvent) => {
-            console.log(`MainNav: Storage event detected for key: ${event.key}`);
             if (event.key === 'cartItems') {
                 updateCartCount();
             }
@@ -204,45 +178,33 @@ export function MainNav({ className, ...props }: MainNavProps) {
             }
         };
 
-        // Listener for custom event dispatched after login/logout actions
         const handleAuthStateChanged = () => {
-             console.log("MainNav: 'authStateChanged' event received.");
              updateAuthState();
         };
-        // Listener for custom event dispatched after cart updates
         const handleCartUpdated = () => {
-             // console.log("MainNav: 'cartUpdated' event received."); // Less verbose
              updateCartCount();
         };
 
-        // Attach listeners
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('authStateChanged', handleAuthStateChanged);
         window.addEventListener('cartUpdated', handleCartUpdated);
 
-
-        // Cleanup listeners on component unmount
         return () => {
-            console.log("MainNav: Cleaning up listeners.");
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('authStateChanged', handleAuthStateChanged);
             window.removeEventListener('cartUpdated', handleCartUpdated);
         };
-    // updateAuthState and updateCartCount are stable due to useCallback
-    }, [isMounted, updateAuthState, updateCartCount]); // Add isMounted dependency
+    }, [isMounted, updateAuthState, updateCartCount]);
 
 
    const navigateToCart = () => {
         router.push('/cart');
    };
 
-   // Avoid rendering interactive parts until mounted to prevent hydration errors
     if (!isMounted) {
-        // Render a skeleton or simplified version during SSR/initial client render
-        // console.log("MainNav: Rendering skeleton (not mounted).");
         return (
-            <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-                 {/* MobileNav trigger removed */}
+            <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
+                <MobileNav /> {/* Include MobileNav skeleton/trigger */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
@@ -252,31 +214,27 @@ export function MainNav({ className, ...props }: MainNavProps) {
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
-                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div> {/* Placeholder for Contacts */}
+                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                 </nav>
                  <div className="ml-auto flex items-center space-x-4">
                      <Button size="sm" variant="ghost" className="relative" disabled>
                           <Icons.shoppingCart className="h-4 w-4" />
                           <span className="sr-only">Корзина</span>
                       </Button>
-                     {/* Skeleton for Login/User info */}
                      <div className="h-8 w-20 bg-muted rounded animate-pulse"></div>
                  </div>
             </div>
         );
     }
 
-
-   // Render the final structure after mount
-   // console.log("MainNav: Rendering final structure (mounted). isLoggedIn:", isLoggedIn, "User:", loggedInUser?.username);
    return (
-     <div className={cn("flex h-16 w-full shrink-0 items-center px-6", className)} {...props}>
-        {/* MobileNav trigger removed */}
+     <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
+        <MobileNav /> {/* Add MobileNav component */}
        <Link href="/" className="mr-6 flex items-center space-x-2">
          <Icons.truck className="h-6 w-6" />
          <span className="hidden font-bold sm:inline-block">Toyota</span>
        </Link>
-       <nav className="hidden md:flex space-x-4 flex-grow"> {/* Use flex-grow to push items to the right */}
+       <nav className="hidden md:flex space-x-4 flex-grow">
          <Link href="/shop" className={cn(
            "text-sm font-medium transition-colors hover:text-foreground",
            pathname === "/shop" ? "text-foreground" : "text-muted-foreground"
@@ -306,7 +264,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
            <Button size="sm" variant="ghost" className="relative" onClick={navigateToCart}>
                <Icons.shoppingCart className="h-4 w-4" />
                <span className="sr-only">Корзина</span>
-               {/* Show cart count always, regardless of login status - updates via useEffect */}
                {cartItemCount > 0 && (
                  <Badge className="absolute -right-2 -top-2 rounded-full px-1 py-0.5 text-xs" style={{ backgroundColor: '#8dc572' }}>
                    {cartItemCount}
@@ -314,10 +271,8 @@ export function MainNav({ className, ...props }: MainNavProps) {
                )}
              </Button>
 
-           {/* Conditional rendering based on state updated by useEffect */}
            {isLoggedIn && loggedInUser ? (
              <>
-               {/* Display user info or avatar */}
                  <Avatar className="h-8 w-8">
                     {/* Add user avatar image if available */}
                     {/* <AvatarImage src={loggedInUser.avatarUrl} alt={`${loggedInUser.firstName} ${loggedInUser.lastName}`} /> */}

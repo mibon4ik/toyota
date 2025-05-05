@@ -10,6 +10,7 @@ import { Icons } from "@/components/icons";
 import { setCookie } from 'cookies-next';
 import { verifyPassword } from '@/lib/auth';
 import type { User } from '@/types/user';
+import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
 
 export const LoginForm = () => {
   const [username, setUsername] = useState('');
@@ -36,6 +37,7 @@ export const LoginForm = () => {
     };
 
     try {
+      // Basic base64 encoding for demonstration. Replace with a proper JWT strategy if needed.
       return btoa(JSON.stringify(userData));
     } catch (e) {
       console.error("Error generating token:", e);
@@ -63,23 +65,29 @@ export const LoginForm = () => {
 
 
         const token = generateToken(user);
-        const cookieOptions = {
-          maxAge: 60 * 60 * 24 * 7,
+        // Define common cookie options
+        const cookieOptions: CookieSerializeOptions = {
+          maxAge: 60 * 60 * 24 * 7, // 1 week
           path: '/',
-
+          sameSite: 'lax', // Recommended for most cases
+          // Secure should be true in production (HTTPS) and false in local HTTP development
+          secure: process.env.NODE_ENV === 'production',
+          // Domain is omitted to default to the current host, which works better for localhost and proxies
         };
 
 
+        // Omit password before storing in cookie/localStorage
         const { password: _omittedPassword, ...userToStore } = user;
 
 
-        console.log("Setting cookies...");
+        console.log("Setting cookies with options:", cookieOptions);
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
         setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
         console.log("Cookies set.");
 
 
+         // --- localStorage for cross-tab sync (remains the same) ---
          if (typeof window !== 'undefined') {
              console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
@@ -103,7 +111,7 @@ export const LoginForm = () => {
 
 
         console.log("Redirecting to / after login...");
-
+        // Use replace to avoid adding login page to history
         router.replace('/');
         console.log("Redirection initiated.");
 
@@ -118,7 +126,7 @@ export const LoginForm = () => {
 
 
   if (!isMounted) {
-
+    // Simple loading state
     return <div className="text-center text-muted-foreground">Загрузка формы входа...</div>;
   }
 
