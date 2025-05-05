@@ -1,1 +1,42 @@
-[]
+[
+  {
+    "customerInfo": {
+      "firstName": "mibon4ik",
+      "lastName": "mibon4ik",
+      "phone": "+77768236545",
+      "email": "mibon4ik@mibon4ik.com"
+    },
+    "shippingAddress": {
+      "city": "Алматы",
+      "street": "Аль фараби",
+      "house": "5",
+      "apartment": "5"
+    },
+    "items": [
+      {
+        "id": "bps-001",
+        "name": "Передние тормозные колодки",
+        "brand": "Toyota Genuine",
+        "price": 37750,
+        "imageUrl": "https://avatars.mds.yandex.net/get-entity_search/2417109/1132926161/S600xU_2x",
+        "description": "Оригинальные передние тормозные колодки для превосходного торможения.",
+        "category": "Тормоза",
+        "compatibleVehicles": [
+          "Toyota Camry 2018+",
+          "Toyota RAV4 2019+"
+        ],
+        "sku": "TG-8901-F",
+        "stock": 50000000,
+        "rating": 4.8,
+        "reviewCount": 120,
+        "dataAiHint": "brake pads",
+        "quantity": 1
+      }
+    ],
+    "totalAmount": 37750,
+    "paymentMethod": "cash_on_delivery",
+    "id": "order-1746460580044-53s2q",
+    "orderDate": "2025-05-05T15:56:20.045Z",
+    "status": "pending"
+  }
+]
