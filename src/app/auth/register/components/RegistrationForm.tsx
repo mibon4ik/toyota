@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
 import { setCookie } from 'cookies-next';
 import type { User } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
+import type { CookieSerializeOptions } from 'cookie';
 
 export const RegistrationForm = () => {
   const [username, setUsername] = useState('');
@@ -35,8 +36,6 @@ export const RegistrationForm = () => {
         setIsMounted(true);
     }, []);
 
-
-
   const generateToken = (user: User) => {
       const userData = {
           id: user.id,
@@ -46,7 +45,6 @@ export const RegistrationForm = () => {
           isAdmin: user.isAdmin || false,
       };
       try {
-        // Basic base64 encoding for demonstration. Replace with a proper JWT strategy if needed.
         return btoa(JSON.stringify(userData));
       } catch (e) {
         console.error("Error generating token:", e);
@@ -58,7 +56,6 @@ export const RegistrationForm = () => {
     e.preventDefault();
     setError('');
 
-    // --- Client-side validation ---
     if (!username || !firstName || !lastName || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) {
       setError('Пожалуйста, заполните все обязательные поля.');
       return;
@@ -67,12 +64,10 @@ export const RegistrationForm = () => {
       setError('Неверный формат электронной почты.');
       return;
     }
-    // VIN: 17 alphanumeric characters, excluding I, O, Q
     if (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
       setError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
       return;
     }
-    // Password: min 8 chars, 1 uppercase, 1 digit
     if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
       setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
       return;
@@ -81,7 +76,6 @@ export const RegistrationForm = () => {
       setError('Пароли не совпадают.');
       return;
     }
-    // --- End Client-side validation ---
 
     setIsLoading(true);
 
@@ -92,30 +86,23 @@ export const RegistrationForm = () => {
         lastName,
         email: email || undefined,
         phoneNumber,
-        password, // Send plain password to server for hashing
+        password,
         carMake,
         carModel,
         vinCode: vinCode.toUpperCase(),
       };
-      // Server-side function handles hashing and saving
       const registeredUser = await createUser(newUserPayload);
-
 
       console.log("Registration successful for:", registeredUser.username);
 
-
        const token = generateToken(registeredUser);
-        // Define common cookie options
         const cookieOptions: CookieSerializeOptions = {
-          maxAge: 60 * 60 * 24 * 7, // 1 week
+          maxAge: 60 * 60 * 24 * 7, 
           path: '/',
-          sameSite: 'lax', // Recommended for most cases
-          // Secure should be true in production (HTTPS) and false in local HTTP development
+          sameSite: 'lax', 
           secure: process.env.NODE_ENV === 'production',
-          // Domain is omitted to default to the current host
         };
 
-       // Omit password before storing in cookie/localStorage
        const { password: _omittedPassword, ...userToStore } = registeredUser;
 
        console.log("Setting cookies with options:", cookieOptions);
@@ -123,37 +110,30 @@ export const RegistrationForm = () => {
        setCookie('isLoggedIn', 'true', cookieOptions);
        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
 
-       // --- localStorage for cross-tab sync ---
        if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
             localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
             console.log("Dispatching authStateChanged event after registration...");
             window.dispatchEvent(new Event('authStateChanged'));
-             console.log("authStateChanged event dispatched.");
+            console.log("authStateChanged event dispatched.");
         }
-
 
       toast({
         title: 'Регистрация успешна!',
         description: 'Вы будете перенаправлены на главную страницу.',
       });
 
-
        console.log("Redirecting to / after registration...");
-        // Use replace to avoid adding registration page to history
        router.replace('/');
-        console.log("Redirection initiated.");
-
+       console.log("Redirection initiated.");
 
     } catch (err: any) {
       console.error("Registration error:", err);
-      // Display server-side validation errors (e.g., unique constraints)
       setError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
     } finally {
       setIsLoading(false);
     }
   };
-
 
     if (!isMounted) {
         return <div className="text-center text-muted-foreground">Загрузка формы регистрации...</div>;
@@ -260,10 +240,10 @@ export const RegistrationForm = () => {
           required
           minLength={17}
           maxLength={17}
-          pattern="[A-HJ-NPR-Z0-9]{17}" // Pattern for client-side hint
+          pattern="[A-HJ-NPR-Z0-9]{17}" 
           title="VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
           disabled={isLoading}
-          className="uppercase tracking-widest font-mono [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" // Added mono font and tracking
+          className="uppercase tracking-widest font-mono [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
            autoComplete="off"
         />
       </div>
@@ -277,7 +257,7 @@ export const RegistrationForm = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            pattern="(?=.*\d)(?=.*[A-Z]).{8,}" // Pattern for client-side hint
+            pattern="(?=.*\d)(?=.*[A-Z]).{8,}" 
             title="Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру."
             disabled={isLoading}
              autoComplete="new-password"

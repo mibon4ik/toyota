@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -50,19 +51,20 @@ const AdminPage = () => {
 
     if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
       try {
-        currentUser = JSON.parse(userCookie as string); // Cast to string
+        currentUser = JSON.parse(userCookie as string); 
         currentAdminStatus = !!currentUser?.isAdmin;
+        if (!currentAdminStatus) {
+          console.warn("AdminPage: User is logged in but not an admin. Cookie data:", currentUser);
+        }
       } catch (e) {
         console.error("AdminPage: Error parsing loggedInUser cookie:", e);
         currentAdminStatus = false;
-        // Clear potentially corrupted cookies if parsing fails
         clearAuthStorageAndRedirect();
         setIsLoadingAuth(false);
         return;
       }
     } else {
-      // If essential cookies are missing or don't indicate a logged-in state,
-      // the user is not considered authenticated for admin access.
+      console.log("AdminPage: Essential auth cookies missing or isLoggedIn is not 'true'.");
       currentAdminStatus = false;
     }
 
@@ -72,7 +74,6 @@ const AdminPage = () => {
         description: "У вас нет прав для доступа к этой странице. Вы будете перенаправлены на страницу входа.",
         variant: "destructive",
       });
-      // Ensure all auth storage is cleared if access is denied
       clearAuthStorageAndRedirect();
     }
 
@@ -84,6 +85,15 @@ const AdminPage = () => {
     if (isMounted) {
       checkAdmin();
     }
+    // Listen for auth state changes from other tabs/components
+    const handleAuthStateChanged = () => {
+        console.log("AdminPage: authStateChanged event received, re-checking admin status.");
+        checkAdmin();
+    };
+    window.addEventListener('authStateChanged', handleAuthStateChanged);
+    return () => {
+        window.removeEventListener('authStateChanged', handleAuthStateChanged);
+    };
   }, [checkAdmin, isMounted]);
 
    const handleLogout = useCallback(() => {
@@ -95,13 +105,11 @@ const AdminPage = () => {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
       window.dispatchEvent(new Event('authStateChanged'));
-      // Force navigation to ensure state is fully reset by browser
       window.location.assign('/auth/login');
     }
   }, []);
 
 
-  // Show loading state until authentication check is complete
   if (!isMounted || isLoadingAuth) {
     return (
       <div className="container mx-auto py-8">
@@ -111,8 +119,8 @@ const AdminPage = () => {
           </CardHeader>
           <CardContent>
              <div className="space-y-4">
-                <Skeleton className="h-10 w-1/3 mx-auto" /> {/* Tab Skeleton */}
-                <Skeleton className="h-64 w-full" /> {/* Content Skeleton */}
+                <Skeleton className="h-10 w-1/3 mx-auto" /> 
+                <Skeleton className="h-64 w-full" /> 
              </div>
             <p className="text-center text-muted-foreground mt-4">Проверка доступа...</p>
           </CardContent>
@@ -121,7 +129,6 @@ const AdminPage = () => {
     );
   }
 
-  // If not admin after check, the redirection should have happened, but as a fallback:
   if (!isAdmin) {
       return (
             <div className="container mx-auto py-8">
@@ -130,7 +137,6 @@ const AdminPage = () => {
       );
   }
 
-  // Render admin panel if authenticated and admin
   return (
     <div className="container mx-auto py-8">
       <Card className="w-full p-4">
