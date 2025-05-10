@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -7,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-import { MobileNav } from "@/components/ui/mobile-nav"
+// MobileNav import is removed as per request to remove the button
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +52,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   }, []);
 
   const handleLogout = useCallback(() => {
-    const deleteOptions = { path: '/' }; 
+    const deleteOptions = { path: '/' };
 
     deleteCookie('authToken', deleteOptions);
     deleteCookie('isLoggedIn', deleteOptions);
@@ -67,7 +66,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         setLoggedInUser(null);
 
         window.dispatchEvent(new Event('authStateChanged'));
-        // Force a full page navigation for clean state reset.
         window.location.assign('/auth/login');
     }
   }, []);
@@ -91,37 +89,17 @@ export function MainNav({ className, ...props }: MainNavProps) {
             if (derivedUser && derivedUser.id && derivedUser.username) {
                 derivedIsLoggedIn = true;
             } else {
-                 derivedUser = null; 
+                 derivedUser = null;
             }
         } catch (e) {
             console.error("MainNav: Error parsing loggedInUser cookie:", e);
-            derivedUser = null; 
-            // Clear potentially corrupted cookies
+            derivedUser = null;
             deleteCookie('authToken', { path: '/' });
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
         }
     }
 
-    // Fallback to localStorage for UI consistency, but cookies are source of truth
-    if (!derivedIsLoggedIn) {
-        const loggedInLocalStorage = localStorage.getItem('isLoggedIn');
-        const userLocalStorage = localStorage.getItem('loggedInUser');
-        if (loggedInLocalStorage === 'true' && userLocalStorage) {
-            try {
-                const localUserParsed: User = JSON.parse(userLocalStorage);
-                 if (localUserParsed && localUserParsed.id && localUserParsed.username) {
-                     derivedUser = localUserParsed;
-                     derivedIsLoggedIn = true; 
-                 }
-            } catch (e) {
-                 localStorage.removeItem('isLoggedIn');
-                 localStorage.removeItem('loggedInUser');
-                 derivedUser = null;
-                 derivedIsLoggedIn = false;
-            }
-        }
-    }
 
     if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') || localStorage.getItem('loggedInUser'))) {
         localStorage.removeItem('isLoggedIn');
@@ -137,7 +115,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
    useEffect(() => {
         if (!isMounted) {
             setIsMounted(true);
-            // Initial auth and cart state update
             updateAuthState();
             updateCartCount();
         }
@@ -152,7 +129,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         };
 
         const handleAuthStateChanged = () => {
-             console.log("MainNav: authStateChanged event received");
              updateAuthState();
         };
         const handleCartUpdated = () => {
@@ -178,7 +154,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
     if (!isMounted) {
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-                <MobileNav className="mr-4"/>
+                {/* MobileNav trigger removed */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
@@ -202,7 +178,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
    return (
      <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-       <MobileNav className="mr-4"/>
+       {/* MobileNav trigger removed */}
        <Link href="/" className="mr-6 flex items-center space-x-2">
          <Icons.truck className="h-6 w-6" />
          <span className="hidden font-bold sm:inline-block">Toyota</span>
