@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -69,12 +68,9 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
         console.log("MainNav: Dispatching authStateChanged event after logout.");
         window.dispatchEvent(new Event('authStateChanged'));
-        // Instead of router.replace, let the authStateChanged event trigger re-evaluation
-        // which might lead to middleware or page-specific logic handling the redirect.
-        // Or, if immediate redirect is desired:
-        window.location.assign('/auth/login'); // Or router.push('/auth/login') if preferred and works reliably
+        router.replace('/auth/login');
     }
-  }, []);
+  }, [router]);
 
 
   const updateAuthState = useCallback(() => {
@@ -99,18 +95,18 @@ export function MainNav({ className, ...props }: MainNavProps) {
                 derivedIsLoggedIn = true;
                 console.log("MainNav: Derived user as logged in:", derivedUser.username);
             } else {
-                 derivedUser = null; // Invalid user object
+                 derivedUser = null; 
                  console.warn("MainNav: Parsed user cookie but user object is invalid.");
             }
         } catch (e) {
             console.error("MainNav: Error parsing loggedInUser cookie:", e);
             derivedUser = null;
-            // If cookies are malformed, clear them to prevent inconsistent states
+            
             console.warn("MainNav: Clearing potentially corrupted auth cookies and localStorage.");
             deleteCookie('authToken', { path: '/' });
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
-            if (typeof window !== 'undefined') { // Double check for window
+            if (typeof window !== 'undefined') { 
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('loggedInUser');
             }
