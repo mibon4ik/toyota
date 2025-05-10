@@ -49,13 +49,13 @@ export const LoginForm = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    console.log("Login attempt with username:", username);
+    console.log("Login attempt with username:", username.trim()); // Trim username for verification
 
     try {
-        const user = await verifyPassword(username, password);
+        const user = await verifyPassword(username.trim(), password); // Use trimmed username
 
         if (!user) {
-          console.log("Login failed: Invalid credentials for username:", username);
+          console.log("Login failed: Invalid credentials for username:", username.trim());
           setError('Неверные учетные данные');
           setIsLoading(false);
           return;
@@ -99,7 +99,7 @@ export const LoginForm = () => {
         });
 
         console.log("Redirecting to / after login...");
-        router.replace('/');
+        router.replace('/'); // Redirect to home page
         console.log("Redirection initiated.");
 
     } catch (err) {
@@ -123,7 +123,7 @@ export const LoginForm = () => {
           type="text"
           placeholder="Логин"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)} // Keep direct value, trim on submit
           required
           disabled={isLoading}
           autoComplete="username"

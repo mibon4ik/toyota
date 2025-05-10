@@ -4,7 +4,6 @@ import fs from 'fs/promises';
 import path from 'path';
 import bcrypt from 'bcryptjs';
 import type { User } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
 
 const usersFilePath = path.join(process.cwd(), 'src', 'data', 'users.json');
 const dataDir = path.dirname(usersFilePath);
@@ -31,7 +30,6 @@ async function readUsersFile(): Promise<User[]> {
     return JSON.parse(data || '[]');
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-       // If file doesn't exist, initialize with admin user
        const adminUser = await createAdminUserObject();
        await writeUsersFile([adminUser]);
        return [adminUser];
@@ -82,7 +80,7 @@ async function createAdminUserObject(): Promise<User> {
 
 async function ensureAdminUser(): Promise<void> {
     let users = await readUsersFile();
-    const adminIndex = users.findIndex(u => u.username === 'admin');
+    const adminIndex = users.findIndex(u => u.username.toLowerCase() === 'admin');
     const correctHashedPassword = await bcrypt.hash('admin', 10);
 
     let needsUpdate = false;
@@ -91,23 +89,28 @@ async function ensureAdminUser(): Promise<void> {
         const adminUser = users[adminIndex];
         let passwordMatches = false;
         try {
-           // Check if current stored password is correct
            passwordMatches = await bcrypt.compare('admin', adminUser.password || '');
         } catch {
-             passwordMatches = false; // Assume password needs update if hash is invalid
+             passwordMatches = false; 
         }
 
-        if (!passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
-             // Update password hash, ensure isAdmin is true, and email is correct
+        if (adminUser.username !== 'admin' || !passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
+             adminUser.username = 'admin'; // Ensure username is lowercase
              adminUser.password = correctHashedPassword;
              adminUser.isAdmin = true;
              adminUser.email = 'admin@admin.com';
+             // Ensure other default fields are set if missing for admin
+             adminUser.firstName = adminUser.firstName || 'Admin';
+             adminUser.lastName = adminUser.lastName || 'User';
+             adminUser.phoneNumber = adminUser.phoneNumber || '0000000000';
+             adminUser.carMake = adminUser.carMake || 'N/A';
+             adminUser.carModel = adminUser.carModel || 'N/A';
+             adminUser.vinCode = adminUser.vinCode || 'ADMINVIN000000000';
              needsUpdate = true;
         }
     } else {
-        // Add admin user if not found
         const adminUser = await createAdminUserObject();
-        users.unshift(adminUser);
+        users.unshift(adminUser); // Add to the beginning
         needsUpdate = true;
     }
 
@@ -120,7 +123,8 @@ async function ensureAdminUser(): Promise<void> {
 export async function getUserByUsername(username: string): Promise<User | undefined> {
   await ensureAdminUser();
   const users = await readUsersFile();
-  return users.find(user => user.username === username);
+  const lowercasedUsername = username.toLowerCase();
+  return users.find(user => user.username.toLowerCase() === lowercasedUsername);
 }
 
 
@@ -136,13 +140,14 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
   await ensureAdminUser();
   let users = await readUsersFile();
 
-
-  const usernameExists = users.some(user => user.username === newUser.username);
+  const lowercasedUsername = newUser.username.toLowerCase();
+  const usernameExists = users.some(user => user.username.toLowerCase() === lowercasedUsername);
   if (usernameExists) {
     throw new Error('Этот логин уже зарегистрирован.');
   }
   if (newUser.email) {
-    const emailExists = users.some(user => user.email && user.email === newUser.email);
+    const lowercasedEmail = newUser.email.toLowerCase();
+    const emailExists = users.some(user => user.email && user.email.toLowerCase() === lowercasedEmail);
     if (emailExists) {
         throw new Error('Этот адрес электронной почты уже зарегистрирован.');
     }
@@ -156,12 +161,11 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
   }
 
 
-
   const hashedPassword = await bcrypt.hash(newUser.password, 10);
 
   const userWithId: User = {
     id: Date.now().toString(),
-    username: newUser.username,
+    username: newUser.username, // Store as provided, but comparison is case-insensitive
     firstName: newUser.firstName,
     lastName: newUser.lastName,
     email: newUser.email || undefined,
@@ -176,53 +180,44 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
   users.push(userWithId);
   await writeUsersFile(users);
 
-
-  // Return the user object *including* the password hash for admin view
   return userWithId;
 }
 
 
-export async function verifyPassword(username: string, passwordInput: string): Promise<User | null> {
+export async function verifyPassword(usernameInput: string, passwordInput: string): Promise<User | null> {
   await ensureAdminUser();
-
-  const user = await getUserByUsername(username);
+  // Use case-insensitive search for username
+  const user = await getUserByUsername(usernameInput);
 
   if (!user) {
-      console.log(`verifyPassword: User not found for username: ${username}`);
     return null;
   }
   if (!user.password) {
-       console.log(`verifyPassword: User ${username} has no password hash set.`);
-      return null;
+    return null;
   }
 
   try {
-      console.log(`verifyPassword: Comparing password for ${username}`);
     const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
 
     if (passwordsMatch) {
-        console.log(`verifyPassword: Password match for ${username}.`);
-      // Return user data WITHOUT password hash for session/client-side use
       const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword as User; // Ensure correct type casting
+      return userWithoutPassword as User;
     } else {
-       console.log(`verifyPassword: Password mismatch for ${username}.`);
       return null;
     }
   } catch (error) {
-    console.error(`Error during password comparison for ${username}:`, error);
+    console.error(`Error during password comparison for ${usernameInput}:`, error);
     return null;
   }
 }
 
 
-export async function getAllUsers(): Promise<User[]> { // Return full User objects
+export async function getAllUsers(): Promise<User[]> { 
   await ensureAdminUser();
   const users = await readUsersFile();
-  return users; // Return the full user objects including password hash
+  return users; 
 }
 
-// Function to update user details (excluding password)
 export async function updateUser(userId: string, updatedData: Partial<Omit<User, 'id' | 'password'>>): Promise<Omit<User, 'password'>> {
   await ensureAdminUser();
   let users = await readUsersFile();
@@ -232,24 +227,20 @@ export async function updateUser(userId: string, updatedData: Partial<Omit<User,
     throw new Error(`Пользователь с ID "${userId}" не найден.`);
   }
 
-  // Prevent updating ID or password with this function
   const { id, password, ...dataToUpdate } = updatedData;
 
-  // Ensure username uniqueness if changed
-  if (dataToUpdate.username && dataToUpdate.username !== users[userIndex].username) {
-      const usernameExists = users.some(u => u.username === dataToUpdate.username && u.id !== userId);
+  if (dataToUpdate.username && dataToUpdate.username.toLowerCase() !== users[userIndex].username.toLowerCase()) {
+      const usernameExists = users.some(u => u.username.toLowerCase() === dataToUpdate.username!.toLowerCase() && u.id !== userId);
       if (usernameExists) {
           throw new Error('Этот логин уже используется другим пользователем.');
       }
   }
-   // Ensure email uniqueness if changed and provided
-   if (dataToUpdate.email && dataToUpdate.email !== users[userIndex].email) {
-     const emailExists = users.some(u => u.email && u.email === dataToUpdate.email && u.id !== userId);
+   if (dataToUpdate.email && dataToUpdate.email.toLowerCase() !== (users[userIndex].email || '').toLowerCase()) {
+     const emailExists = users.some(u => u.email && u.email.toLowerCase() === dataToUpdate.email!.toLowerCase() && u.id !== userId);
      if (emailExists) {
          throw new Error('Этот email уже используется другим пользователем.');
      }
    }
-   // Ensure VIN uniqueness if changed
    if (dataToUpdate.vinCode && dataToUpdate.vinCode.toUpperCase() !== users[userIndex].vinCode.toUpperCase()) {
      const vinExists = users.some(u => u.vinCode?.toUpperCase() === dataToUpdate.vinCode?.toUpperCase() && u.id !== userId);
      if (vinExists) {
@@ -261,6 +252,7 @@ export async function updateUser(userId: string, updatedData: Partial<Omit<User,
   const updatedUser = {
     ...users[userIndex],
     ...dataToUpdate,
+    username: dataToUpdate.username || users[userIndex].username, // Preserve case if not changing
     vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode,
     isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin,
   };
@@ -272,7 +264,6 @@ export async function updateUser(userId: string, updatedData: Partial<Omit<User,
   return userWithoutPassword;
 }
 
-// Function to update only the user's password
 export async function updateUserPassword(userId: string, newPasswordInput: string): Promise<void> {
   await ensureAdminUser();
   let users = await readUsersFile();
@@ -298,5 +289,7 @@ export async function updateUserPassword(userId: string, newPasswordInput: strin
         await ensureAdminUser();
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
+        // Depending on the severity, you might want to exit the process
+        // process.exit(1); 
     }
 })();
