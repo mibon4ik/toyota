@@ -35,23 +35,21 @@ export function middleware(request: NextRequest) {
         console.log(`Middleware: Parsed user cookie for admin check. User: ${user.username}, isAdmin: ${isAdmin}`);
       } catch (e) {
         console.error("Middleware: Error parsing user cookie for admin check:", e);
-        const response = NextResponse.redirect(new URL('/auth/login', request.url));
-         response.cookies.delete('authToken', { path: '/' });
-         response.cookies.delete('isLoggedIn', { path: '/' });
-         response.cookies.delete('loggedInUser', { path: '/' });
-        return response;
+        // Malformed user cookie. Redirect to login.
+        // Avoid deleting cookies here; let client-side (main-nav) handle sync based on potentially cleared cookie.
+        return NextResponse.redirect(new URL('/auth/login', request.url));
       }
     } else {
-       console.log(`Middleware: Inconsistent auth state (loggedIn but no user data or invalid user cookie). Redirecting to /auth/login and clearing cookies.`);
-       const response = NextResponse.redirect(new URL('/auth/login', request.url));
-        response.cookies.delete('authToken', { path: '/' });
-        response.cookies.delete('isLoggedIn', { path: '/' });
-        response.cookies.delete('loggedInUser', { path: '/' });
-       return response;
+       // authToken and isLoggedIn are true, but userCookie is missing. Inconsistent state.
+       console.log(`Middleware: Inconsistent auth state (isLoggedIn true, but loggedInUser cookie missing for /admin). Redirecting to /auth/login.`);
+       // Redirect to login. Client-side will eventually clear localStorage if cookies are truly gone.
+       // Do not delete cookies from middleware in this specific case to avoid race conditions
+       // with client-side state management.
+       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
 
     if (!isAdmin) {
-      console.log(`Middleware: Non-admin user accessing /admin. Redirecting to /`);
+      console.log(`Middleware: Non-admin user attempting to access /admin. Redirecting to /`);
       return NextResponse.redirect(new URL('/', request.url));
     }
 

@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -6,7 +7,6 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-// MobileNav import is removed as per request to remove the button
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +43,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
              setCartItemCount(0);
           }
         } catch (e) {
+          console.error("MainNav: Error parsing cart items from localStorage for count:", e);
           setCartItemCount(0);
         }
       } else {
@@ -52,6 +53,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   }, []);
 
   const handleLogout = useCallback(() => {
+    console.log("MainNav: handleLogout called.");
     const deleteOptions = { path: '/' };
 
     deleteCookie('authToken', deleteOptions);
@@ -65,20 +67,27 @@ export function MainNav({ className, ...props }: MainNavProps) {
         setIsLoggedIn(false);
         setLoggedInUser(null);
 
+        console.log("MainNav: Dispatching authStateChanged event after logout.");
         window.dispatchEvent(new Event('authStateChanged'));
-        window.location.assign('/auth/login');
+        // Instead of router.replace, let the authStateChanged event trigger re-evaluation
+        // which might lead to middleware or page-specific logic handling the redirect.
+        // Or, if immediate redirect is desired:
+        window.location.assign('/auth/login'); // Or router.push('/auth/login') if preferred and works reliably
     }
   }, []);
 
 
   const updateAuthState = useCallback(() => {
      if (typeof window === 'undefined') {
+         console.log("MainNav: updateAuthState called on server, returning.");
          return;
      }
+    console.log("MainNav: updateAuthState called on client.");
 
     const authTokenCookie = getCookie('authToken');
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
+    console.log(`MainNav: Cookies read - authToken: ${!!authTokenCookie}, isLoggedIn: ${isLoggedInCookie}, userCookie: ${!!userCookie}`);
 
     let derivedIsLoggedIn = false;
     let derivedUser: User | null = null;
@@ -88,32 +97,60 @@ export function MainNav({ className, ...props }: MainNavProps) {
             derivedUser = JSON.parse(userCookie as string);
             if (derivedUser && derivedUser.id && derivedUser.username) {
                 derivedIsLoggedIn = true;
+                console.log("MainNav: Derived user as logged in:", derivedUser.username);
             } else {
-                 derivedUser = null;
+                 derivedUser = null; // Invalid user object
+                 console.warn("MainNav: Parsed user cookie but user object is invalid.");
             }
         } catch (e) {
             console.error("MainNav: Error parsing loggedInUser cookie:", e);
             derivedUser = null;
+            // If cookies are malformed, clear them to prevent inconsistent states
+            console.warn("MainNav: Clearing potentially corrupted auth cookies and localStorage.");
             deleteCookie('authToken', { path: '/' });
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
+            if (typeof window !== 'undefined') { // Double check for window
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('loggedInUser');
+            }
         }
+    } else {
+         console.log("MainNav: Essential auth cookies missing or isLoggedInCookie not 'true'. User derived as logged out.");
     }
 
 
-    if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') || localStorage.getItem('loggedInUser'))) {
+    if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('loggedInUser'))) {
+        console.warn("MainNav: Cookies indicate logged out, but localStorage has auth items. Clearing localStorage.");
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
     }
     
-    setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
-    setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
+    console.log(`MainNav: Setting isLoggedIn to ${derivedIsLoggedIn}`);
+    setIsLoggedIn(current => {
+      if (current !== derivedIsLoggedIn) {
+        console.log(`MainNav: isLoggedIn state changed from ${current} to ${derivedIsLoggedIn}`);
+        return derivedIsLoggedIn;
+      }
+      return current;
+    });
+
+    setLoggedInUser(current => {
+      const currentString = JSON.stringify(current);
+      const derivedString = JSON.stringify(derivedUser);
+      if (currentString !== derivedString) {
+        console.log(`MainNav: loggedInUser state changed.`);
+        return derivedUser;
+      }
+      return current;
+    });
 
   }, []);
 
 
    useEffect(() => {
         if (!isMounted) {
+            console.log("MainNav: Component mounting. Setting isMounted to true and performing initial updates.");
             setIsMounted(true);
             updateAuthState();
             updateCartCount();
@@ -121,25 +158,31 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'cartItems') {
+                console.log("MainNav: cartItems changed in localStorage (storage event). Updating cart count.");
                 updateCartCount();
             }
              if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
+                 console.log(`MainNav: ${event.key} changed in localStorage (storage event). Updating auth state.`);
                  updateAuthState();
             }
         };
 
         const handleAuthStateChanged = () => {
+             console.log("MainNav: authStateChanged event received. Updating auth state.");
              updateAuthState();
         };
         const handleCartUpdated = () => {
+             console.log("MainNav: cartUpdated event received. Updating cart count.");
              updateCartCount();
         };
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('authStateChanged', handleAuthStateChanged);
         window.addEventListener('cartUpdated', handleCartUpdated);
+        console.log("MainNav: Event listeners added.");
 
         return () => {
+            console.log("MainNav: Component unmounting. Removing event listeners.");
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('authStateChanged', handleAuthStateChanged);
             window.removeEventListener('cartUpdated', handleCartUpdated);
@@ -154,7 +197,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
     if (!isMounted) {
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-                {/* MobileNav trigger removed */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
@@ -178,7 +220,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
    return (
      <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-       {/* MobileNav trigger removed */}
        <Link href="/" className="mr-6 flex items-center space-x-2">
          <Icons.truck className="h-6 w-6" />
          <span className="hidden font-bold sm:inline-block">Toyota</span>
