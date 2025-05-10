@@ -1,7 +1,6 @@
-
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +28,6 @@ export const LoginForm = () => {
 
 
   const generateToken = (user: User) => {
-    // Ensure all necessary user fields are included for the token/storage, except password
     const userData = {
       id: user.id,
       username: user.username,
@@ -40,13 +38,13 @@ export const LoginForm = () => {
       carMake: user.carMake,
       carModel: user.carModel,
       vinCode: user.vinCode,
-      isAdmin: user.isAdmin || false,
+      isAdmin: user.isAdmin || false, // Crucial: Ensure isAdmin is part of the token/stored data
     };
 
     try {
-      return btoa(JSON.stringify(userData)); // Base64 encode the user data string
+      return btoa(JSON.stringify(userData)); 
     } catch (e) {
-      return `error-${Date.now()}`; // Fallback token
+      return `error-${Date.now()}`;
     }
   };
 
@@ -63,13 +61,16 @@ export const LoginForm = () => {
           setIsLoading(false);
           return;
         }
-
-
-        const userToStore = user; 
+        
+        // user object from verifyPassword already excludes the password hash
+        const userToStore: User = {
+            ...user,
+            isAdmin: user.isAdmin || false, // Ensure isAdmin is correctly set for storage
+        };
 
         const token = generateToken(userToStore); 
         const cookieOptions: CookieSerializeOptions = {
-          maxAge: 60 * 60 * 24 * 7, // 1 week
+          maxAge: 60 * 60 * 24 * 7, 
           path: '/',
           sameSite: 'lax',
           secure: process.env.NODE_ENV === 'production',
@@ -82,14 +83,15 @@ export const LoginForm = () => {
          if (typeof window !== 'undefined') {
              localStorage.setItem('isLoggedIn', 'true');
              localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); 
-             window.dispatchEvent(new Event('authStateChanged'));
+             window.dispatchEvent(new Event('authStateChanged')); 
          }
 
         toast({
             title: "Вход выполнен!",
             description: userToStore.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
-
+        
+        // Redirect after all state updates and cookie settings
         router.replace('/'); 
     } catch (err) {
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');

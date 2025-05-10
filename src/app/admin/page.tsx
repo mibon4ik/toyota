@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -18,7 +17,7 @@ const AdminPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false); // Renamed for clarity
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
@@ -37,94 +36,77 @@ const AdminPage = () => {
     router.replace('/auth/login');
   }, [router]);
 
-  const checkAdmin = useCallback(async () => {
-    if (!isMounted) {
-      return;
-    }
+  const checkAdminStatus = useCallback(async () => {
+    if (!isMounted) return;
     setIsLoadingAuth(true);
 
-    const authTokenCookie = getCookie('authToken');
+    const authToken = getCookie('authToken');
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
-    let currentAdminStatus = false;
     let currentUser: User | null = null;
+    let currentIsAdmin = false;
 
-    if (authTokenCookie && isLoggedInCookie === 'true') {
-      if (userCookie) {
-        try {
-          currentUser = JSON.parse(userCookie as string);
-          currentAdminStatus = !!currentUser?.isAdmin;
-          if (!currentAdminStatus) {
-            console.warn("AdminPage: User is logged in but not an admin. Cookie data:", currentUser);
+    if (authToken && isLoggedInCookie === 'true') {
+        if (userCookie) {
+            try {
+                currentUser = JSON.parse(userCookie as string);
+                currentIsAdmin = currentUser?.isAdmin === true; // Explicitly check for true
+            } catch (e) {
+                console.error("AdminPage: Error parsing loggedInUser cookie:", e);
+                // Proceed to clear auth as cookie is corrupted
+            }
+        }
+        // If userCookie is missing or parsing failed, but other auth cookies exist,
+        // it's an inconsistent state. It's safer to treat as not logged in or not admin.
+        if (!currentUser || !currentIsAdmin) {
+            console.warn("AdminPage: User not admin or user data missing/corrupted. User:", currentUser);
             toast({
-              title: "Доступ запрещен",
-              description: "У вас нет прав администратора для доступа к этой странице.",
-              variant: "destructive",
+                title: "Доступ запрещен",
+                description: "У вас нет прав администратора или проблема с сессией.",
+                variant: "destructive",
             });
-            router.replace('/'); // Redirect to a non-admin page like home
-            setIsAdmin(false);
+            setIsAdminUser(false); // Ensure state reflects non-admin status
+            // Don't clear auth here, let main-nav handle full logout if necessary on redirect
+            // This prevents a loop if this check runs before main-nav's auth sync
+            router.replace('/'); // Redirect to home for non-admins or if data is faulty
             setIsLoadingAuth(false);
             return;
-          }
-        } catch (e) {
-          console.error("AdminPage: Error parsing loggedInUser cookie:", e);
-          toast({
-            title: "Ошибка аутентификации",
-            description: "Проблема с данными пользователя. Пожалуйста, войдите снова.",
-            variant: "destructive",
-          });
-          clearAuthStorageAndRedirect(); // Clear all auth data and redirect to login
-          setIsAdmin(false); // Ensure isAdmin is false before redirecting
-          setIsLoadingAuth(false);
-          return;
         }
-      } else {
-        console.warn("AdminPage: authToken and isLoggedIn cookies present, but loggedInUser cookie is missing.");
+    } else {
+        // Not logged in based on cookies
+        console.log("AdminPage: User not logged in. Redirecting to login.");
         toast({
-          title: "Ошибка аутентификации",
-          description: "Неполные данные аутентификации. Пожалуйста, войдите снова.",
-          variant: "destructive",
+            title: "Доступ запрещен",
+            description: "Пожалуйста, войдите как администратор.",
+            variant: "destructive",
         });
-        clearAuthStorageAndRedirect(); // Clear all auth data and redirect to login
-        setIsAdmin(false); // Ensure isAdmin is false
+        // No need to clear here, middleware should handle unauthenticated access
+        setIsAdminUser(false);
+        router.replace('/auth/login');
         setIsLoadingAuth(false);
         return;
-      }
-    } else {
-      console.log("AdminPage: Essential auth cookies missing or isLoggedIn is not 'true'. Redirecting to login.");
-      toast({
-        title: "Доступ запрещен",
-        description: "У вас нет прав для доступа к этой странице. Вы будете перенаправлены на страницу входа.",
-        variant: "destructive",
-      });
-      // If essential cookies are missing, it means user is not logged in or state is corrupted.
-      // Clear any potentially lingering partial auth data and redirect.
-      clearAuthStorageAndRedirect();
-      setIsAdmin(false); // Ensure isAdmin is false
-      setIsLoadingAuth(false);
-      return;
     }
     
-    // If we reach here, user is logged in and is an admin
-    setIsAdmin(currentAdminStatus); // Should be true
+    // If we reach here, user is logged in AND is an admin
+    setIsAdminUser(true);
     setIsLoadingAuth(false);
-  }, [isMounted, toast, clearAuthStorageAndRedirect, router]);
+  }, [isMounted, toast, router]);
+
 
   useEffect(() => {
     if (isMounted) {
-      checkAdmin();
+      checkAdminStatus();
     }
     const handleAuthStateChanged = () => {
-        console.log("AdminPage: authStateChanged event received, re-checking admin status.");
-        if (isMounted) { // Ensure component is still mounted
-          checkAdmin();
+        if (isMounted) {
+          checkAdminStatus();
         }
     };
     window.addEventListener('authStateChanged', handleAuthStateChanged);
     return () => {
         window.removeEventListener('authStateChanged', handleAuthStateChanged);
     };
-  }, [checkAdmin, isMounted]);
+  }, [checkAdminStatus, isMounted]);
 
    const handleLogout = useCallback(() => {
     clearAuthStorageAndRedirect();
@@ -150,7 +132,8 @@ const AdminPage = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdminUser) { // Use the clearer state variable name
+      // Message already shown by checkAdminStatus, this is a fallback if redirect hasn't completed
       return (
             <div className="container mx-auto py-8">
                <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>

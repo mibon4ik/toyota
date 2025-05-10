@@ -50,24 +50,23 @@ export function MainNav({ className, ...props }: MainNavProps) {
     }
   }, []);
 
-  const handleLogout = useCallback(() => {
-    const deleteOptions = { path: '/' };
-
-    deleteCookie('authToken', deleteOptions);
-    deleteCookie('isLoggedIn', deleteOptions);
-    deleteCookie('loggedInUser', deleteOptions);
-
+  const clearAuthStorageAndRedirect = useCallback(() => {
+    deleteCookie('authToken', { path: '/' });
+    deleteCookie('isLoggedIn', { path: '/' });
+    deleteCookie('loggedInUser', { path: '/' });
     if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-
-        window.dispatchEvent(new Event('authStateChanged'));
-        router.replace('/auth/login');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('loggedInUser');
+      setIsLoggedIn(false); // Update state immediately
+      setLoggedInUser(null); // Update state immediately
+      window.dispatchEvent(new Event('authStateChanged'));
     }
+    router.replace('/auth/login');
   }, [router]);
+
+  const handleLogout = useCallback(() => {
+    clearAuthStorageAndRedirect();
+  }, [clearAuthStorageAndRedirect]);
 
 
   const updateAuthState = useCallback(() => {
@@ -86,17 +85,15 @@ export function MainNav({ className, ...props }: MainNavProps) {
         derivedUser = JSON.parse(lsUser);
         if (derivedUser && derivedUser.id && derivedUser.username) {
           derivedIsLoggedIn = true;
-          // Ensure cookies are consistent if localStorage says logged in
           const authTokenCookie = getCookie('authToken');
           if (!authTokenCookie) {
-             // This state is unusual: localStorage says logged in, but critical cookie is missing.
-             // Might indicate cookie clearing or expiration. For client-side, trust localStorage temporarily.
-             // Server-side checks will rely on cookies.
+             // localStorage says logged in, but critical cookie is missing.
+             // This could be an issue or just a state mismatch. Trust localStorage for UI.
           }
         } else {
-          derivedUser = null;
+          derivedUser = null; // Invalid user object
           derivedIsLoggedIn = false;
-          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('isLoggedIn'); // Clear inconsistent localStorage
           localStorage.removeItem('loggedInUser');
         }
       } catch (e) {
@@ -106,7 +103,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         localStorage.removeItem('loggedInUser');
       }
     } else {
-      // localStorage does not indicate logged in, check cookies
       const authTokenCookie = getCookie('authToken');
       const isLoggedInCookie = getCookie('isLoggedIn');
       const userCookie = getCookie('loggedInUser');
@@ -116,7 +112,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
           derivedUser = JSON.parse(userCookie as string);
           if (derivedUser && derivedUser.id && derivedUser.username) {
             derivedIsLoggedIn = true;
-            // Sync to localStorage if cookies have auth but localStorage doesn't
             if (lsIsLoggedIn !== 'true' || !lsUser) {
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('loggedInUser', JSON.stringify(derivedUser));
@@ -124,11 +119,10 @@ export function MainNav({ className, ...props }: MainNavProps) {
           } else {
             derivedUser = null;
             derivedIsLoggedIn = false;
-            // Clear corrupted/invalid cookies and ensure localStorage is also clear
-            deleteCookie('authToken', { path: '/' });
+            deleteCookie('authToken', { path: '/' }); // Clear invalid cookies
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
-            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('isLoggedIn'); // Ensure localStorage is also clear
             localStorage.removeItem('loggedInUser');
           }
         } catch (e) {
@@ -141,8 +135,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
           localStorage.removeItem('loggedInUser');
         }
       } else {
-         // Both localStorage and cookies indicate logged out
-         // Ensure localStorage is clear if cookies are missing/indicate logout
          if (lsIsLoggedIn === 'true' || lsUser) {
              localStorage.removeItem('isLoggedIn');
              localStorage.removeItem('loggedInUser');
@@ -150,48 +142,26 @@ export function MainNav({ className, ...props }: MainNavProps) {
       }
     }
     
-    setIsLoggedIn(current => {
-      if (current !== derivedIsLoggedIn) {
-        return derivedIsLoggedIn;
-      }
-      return current;
-    });
+    // Update state only if it has changed to prevent infinite loops
+    setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
+    setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
 
-    setLoggedInUser(current => {
-      const currentString = current ? JSON.stringify(current) : null;
-      const derivedString = derivedUser ? JSON.stringify(derivedUser) : null;
-      if (currentString !== derivedString) {
-        return derivedUser;
-      }
-      return current;
-    });
-
-  }, [setIsLoggedIn, setLoggedInUser]);
+  }, []); // Removed setIsLoggedIn and setLoggedInUser from deps
 
 
    useEffect(() => {
         if (!isMounted) {
             setIsMounted(true);
-            // Perform initial auth and cart update on client-side mount
             updateAuthState();
             updateCartCount();
         }
 
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'cartItems') {
-                updateCartCount();
-            }
-             if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
-                 updateAuthState();
-            }
+            if (event.key === 'cartItems') updateCartCount();
+            if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') updateAuthState();
         };
-
-        const handleAuthStateChanged = () => {
-             updateAuthState();
-        };
-        const handleCartUpdated = () => {
-             updateCartCount();
-        };
+        const handleAuthStateChanged = () => updateAuthState();
+        const handleCartUpdated = () => updateCartCount();
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('authStateChanged', handleAuthStateChanged);
@@ -210,7 +180,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
    };
 
     if (!isMounted) {
-        // Skeleton or minimal UI for SSR / pre-hydration
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
                 <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -218,7 +187,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-4 flex-grow">
-                  {/* Skeleton for nav links */}
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
@@ -229,7 +197,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
                           <Icons.shoppingCart className="h-4 w-4" />
                           <span className="sr-only">Корзина</span>
                       </Button>
-                     {/* Skeleton for auth section */}
                      <div className="h-8 w-20 bg-muted rounded animate-pulse"></div>
                  </div>
             </div>
