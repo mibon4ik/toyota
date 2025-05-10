@@ -6,10 +6,9 @@ import { usePathname, useRouter } from "next/navigation"
 
 import { cn } from "@/lib/utils"
 import { Icons } from "@/components/icons"
-// Correct import path for MobileNav
 import { MobileNav } from "@/components/ui/mobile-nav"
 import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
 import { getCookie, deleteCookie } from 'cookies-next';
@@ -53,7 +52,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   }, []);
 
   const handleLogout = useCallback(() => {
-    const deleteOptions = { path: '/' };
+    const deleteOptions = { path: '/' }; // Ensure path matches where cookies were set
 
     deleteCookie('authToken', deleteOptions);
     deleteCookie('isLoggedIn', deleteOptions);
@@ -67,15 +66,13 @@ export function MainNav({ className, ...props }: MainNavProps) {
         setLoggedInUser(null);
 
         window.dispatchEvent(new Event('authStateChanged'));
-        // Force a full page reload to ensure cookie state is updated for the browser
+        // Force a full page navigation to ensure cookie state is updated for the browser
+        // and all component states are reset.
         window.location.assign('/auth/login');
-    } else {
-         setIsLoggedIn(false);
-         setLoggedInUser(null);
-         // Fallback redirect if window is not available (less likely path for UI logout)
-         router.replace('/auth/login');
     }
-  }, [router, setIsLoggedIn, setLoggedInUser]);
+    // No 'else' needed as client-side logout will always have 'window'
+  }, []);
+
 
   const updateAuthState = useCallback(() => {
      if (typeof window === 'undefined') {
@@ -89,40 +86,49 @@ export function MainNav({ className, ...props }: MainNavProps) {
     let derivedIsLoggedIn = false;
     let derivedUser: User | null = null;
 
+    // Primary source of truth: Cookies
     if (authTokenCookie && loggedInCookie === 'true' && userCookie) {
         try {
-            derivedUser = JSON.parse(userCookie as string); // Cast userCookie to string
+            derivedUser = JSON.parse(userCookie as string);
             if (derivedUser && derivedUser.id && derivedUser.username) {
                 derivedIsLoggedIn = true;
             } else {
-                 derivedUser = null;
-                 derivedIsLoggedIn = false;
+                 derivedUser = null; // Invalid user object
             }
         } catch (e) {
-            derivedUser = null;
-            derivedIsLoggedIn = false;
+            derivedUser = null; // Parsing error
+            // Optionally, clear corrupted cookies here as well if robust error handling is needed in main-nav
+            // deleteCookie('authToken', { path: '/' });
+            // deleteCookie('isLoggedIn', { path: '/' });
+            // deleteCookie('loggedInUser', { path: '/' });
         }
-    } else {
-        // Fallback to localStorage if cookies are missing (e.g. after a hard refresh or in some edge cases)
+    }
+
+    // Fallback to localStorage for UI consistency if cookies are missing (e.g. after hard refresh on other tabs)
+    // This does NOT grant access or set cookies, only updates UI state.
+    if (!derivedIsLoggedIn) {
         let loggedInLocalStorage = localStorage.getItem('isLoggedIn');
         let userLocalStorage = localStorage.getItem('loggedInUser');
         if (loggedInLocalStorage === 'true' && userLocalStorage) {
             try {
-                derivedUser = JSON.parse(userLocalStorage);
-                 if (derivedUser && derivedUser.id && derivedUser.username) {
+                const localUserParsed: User = JSON.parse(userLocalStorage);
+                 if (localUserParsed && localUserParsed.id && localUserParsed.username) {
+                     // Reflect localStorage state in UI, but don't consider this a "full" login for sensitive actions
+                     // MainNav reflects this state; protected pages like /admin will re-verify with cookies.
+                     derivedUser = localUserParsed;
                      derivedIsLoggedIn = true;
-                 } else {
-                    derivedUser = null;
-                    derivedIsLoggedIn = false;
                  }
             } catch (e) {
+                 // Corrupted localStorage, clear it
+                 localStorage.removeItem('isLoggedIn');
+                 localStorage.removeItem('loggedInUser');
                  derivedUser = null;
                  derivedIsLoggedIn = false;
             }
         }
     }
 
-    // If no valid auth state found, ensure localStorage is also clear
+    // If no valid auth state found (neither cookies nor localStorage), ensure localStorage is also clear
     if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') || localStorage.getItem('loggedInUser'))) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
@@ -132,12 +138,12 @@ export function MainNav({ className, ...props }: MainNavProps) {
     setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
     setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
 
-  }, [setIsLoggedIn, setLoggedInUser]);
+  }, []);
+
 
    useEffect(() => {
         if (!isMounted) {
             setIsMounted(true);
-            // Initial auth and cart state update on mount
             updateAuthState();
             updateCartCount();
         }
@@ -174,7 +180,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         router.push('/cart');
    };
 
-    // Skeleton loader while component is not yet mounted
     if (!isMounted) {
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
@@ -184,7 +189,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-4 flex-grow">
-                  {/* Skeleton for nav links */}
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
@@ -195,7 +199,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
                           <Icons.shoppingCart className="h-4 w-4" />
                           <span className="sr-only">Корзина</span>
                       </Button>
-                     {/* Skeleton for login/user area */}
                      <div className="h-8 w-20 bg-muted rounded animate-pulse"></div>
                  </div>
             </div>

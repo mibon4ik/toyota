@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -7,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { getCookie, deleteCookie, setCookie } from 'cookies-next';
+import { getCookie, deleteCookie } from 'cookies-next';
 import type { User } from '@/types/user';
-import type { Order } from '@/types/order';
-import type { AutoPart } from '@/types/autopart';
 import { ProductManagementSection } from './sections/ProductManagementSection';
 import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
@@ -27,83 +24,61 @@ const AdminPage = () => {
     setIsMounted(true);
   }, []);
 
+  const clearAuthStorageAndRedirect = useCallback(() => {
+    deleteCookie('authToken', { path: '/' });
+    deleteCookie('isLoggedIn', { path: '/' });
+    deleteCookie('loggedInUser', { path: '/' });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('loggedInUser');
+      window.dispatchEvent(new Event('authStateChanged'));
+    }
+    router.replace('/auth/login');
+  }, [router]);
+
   const checkAdmin = useCallback(async () => {
-     if (!isMounted) {
-       return;
-     }
+    if (!isMounted) {
+      return;
+    }
     setIsLoadingAuth(true);
 
     const authTokenCookie = getCookie('authToken');
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
-    let adminStatus = false;
-    let loggedInUser: User | null = null;
+    let currentAdminStatus = false;
+    let currentUser: User | null = null;
 
     if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
       try {
-        loggedInUser = JSON.parse(userCookie);
-        adminStatus = !!loggedInUser?.isAdmin;
+        currentUser = JSON.parse(userCookie as string); // Cast to string
+        currentAdminStatus = !!currentUser?.isAdmin;
       } catch (e) {
         console.error("AdminPage: Error parsing loggedInUser cookie:", e);
-        adminStatus = false;
-        // Clear potentially corrupted cookies
-        deleteCookie('authToken', { path: '/' });
-        deleteCookie('isLoggedIn', { path: '/' });
-        deleteCookie('loggedInUser', { path: '/' });
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('loggedInUser');
-            window.dispatchEvent(new Event('authStateChanged'));
-        }
+        currentAdminStatus = false;
+        // Clear potentially corrupted cookies if parsing fails
+        clearAuthStorageAndRedirect();
+        setIsLoadingAuth(false);
+        return;
       }
     } else {
-      const localIsLoggedIn = typeof window !== 'undefined' ? localStorage.getItem('isLoggedIn') : null;
-      const localUser = typeof window !== 'undefined' ? localStorage.getItem('loggedInUser') : null;
-      if (localIsLoggedIn === 'true' && localUser) {
-        try {
-          loggedInUser = JSON.parse(localUser);
-          adminStatus = !!loggedInUser?.isAdmin;
-          if (adminStatus) {
-             // Restore cookies if admin is logged in via localStorage
-            const token = btoa(JSON.stringify({ id: loggedInUser.id, username: loggedInUser.username, isAdmin: loggedInUser.isAdmin }));
-            const cookieOptions = { maxAge: 60 * 60 * 24 * 7, path: '/' };
-            setCookie('authToken', token, cookieOptions);
-            setCookie('isLoggedIn', 'true', cookieOptions);
-            setCookie('loggedInUser', JSON.stringify(loggedInUser), cookieOptions);
-          }
-        } catch (e) {
-          console.error("AdminPage: Error parsing localStorage user data:", e);
-          adminStatus = false;
-          if (typeof window !== 'undefined') {
-             localStorage.removeItem('isLoggedIn');
-             localStorage.removeItem('loggedInUser');
-             window.dispatchEvent(new Event('authStateChanged'));
-          }
-        }
-      }
+      // If essential cookies are missing or don't indicate a logged-in state,
+      // the user is not considered authenticated for admin access.
+      currentAdminStatus = false;
     }
 
-    if (!adminStatus) {
+    if (!currentAdminStatus) {
       toast({
         title: "Доступ запрещен",
-        description: "У вас нет прав для доступа к этой странице.",
+        description: "У вас нет прав для доступа к этой странице. Вы будете перенаправлены на страницу входа.",
         variant: "destructive",
       });
-      // Ensure cookies/localStorage are cleared if access is denied
-      deleteCookie('authToken', { path: '/' });
-      deleteCookie('isLoggedIn', { path: '/' });
-      deleteCookie('loggedInUser', { path: '/' });
-       if (typeof window !== 'undefined') {
-         localStorage.removeItem('isLoggedIn');
-         localStorage.removeItem('loggedInUser');
-         window.dispatchEvent(new Event('authStateChanged'));
-      }
-      router.push('/auth/login');
+      // Ensure all auth storage is cleared if access is denied
+      clearAuthStorageAndRedirect();
     }
 
-    setIsAdmin(adminStatus);
+    setIsAdmin(currentAdminStatus);
     setIsLoadingAuth(false);
-  }, [isMounted, router, toast]);
+  }, [isMounted, toast, clearAuthStorageAndRedirect]);
 
   useEffect(() => {
     if (isMounted) {
@@ -111,7 +86,7 @@ const AdminPage = () => {
     }
   }, [checkAdmin, isMounted]);
 
-  const handleLogout = useCallback(() => {
+   const handleLogout = useCallback(() => {
     deleteCookie('authToken', { path: '/' });
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
@@ -120,9 +95,10 @@ const AdminPage = () => {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
       window.dispatchEvent(new Event('authStateChanged'));
+      // Force navigation to ensure state is fully reset by browser
+      window.location.assign('/auth/login');
     }
-    router.push('/auth/login');
-  }, [router]);
+  }, []);
 
 
   // Show loading state until authentication check is complete
@@ -149,7 +125,7 @@ const AdminPage = () => {
   if (!isAdmin) {
       return (
             <div className="container mx-auto py-8">
-               <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>
+               <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
             </div>
       );
   }
