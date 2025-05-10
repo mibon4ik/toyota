@@ -29,19 +29,25 @@ export const LoginForm = () => {
 
 
   const generateToken = (user: User) => {
+    // Ensure all necessary user fields are included for the token/storage, except password
     const userData = {
       id: user.id,
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      carMake: user.carMake,
+      carModel: user.carModel,
+      vinCode: user.vinCode,
       isAdmin: user.isAdmin || false,
     };
 
     try {
-      return btoa(JSON.stringify(userData));
+      return btoa(JSON.stringify(userData)); // Base64 encode the user data string
     } catch (e) {
       console.error("Error generating token:", e);
-      return `error-${Date.now()}`;
+      return `error-${Date.now()}`; // Fallback token
     }
   };
 
@@ -49,10 +55,10 @@ export const LoginForm = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    console.log("Login attempt with username:", username.trim()); // Trim username for verification
+    console.log("Login attempt with username:", username.trim());
 
     try {
-        const user = await verifyPassword(username.trim(), password); // Use trimmed username
+        const user = await verifyPassword(username.trim(), password);
 
         if (!user) {
           console.log("Login failed: Invalid credentials for username:", username.trim());
@@ -63,8 +69,11 @@ export const LoginForm = () => {
 
         console.log("Login successful for user:", user.username, "Is Admin:", user.isAdmin);
 
+        // User object from verifyPassword already excludes password
+        // If it didn't, you'd do: const { password: _omittedPassword, ...userToStore } = user;
+        const userToStore = user; // Assuming verifyPassword returns user without password hash
 
-        const token = generateToken(user);
+        const token = generateToken(userToStore); // Generate token based on user data
         const cookieOptions: CookieSerializeOptions = {
           maxAge: 60 * 60 * 24 * 7, // 1 week
           path: '/',
@@ -72,18 +81,16 @@ export const LoginForm = () => {
           secure: process.env.NODE_ENV === 'production',
         };
 
-        const { password: _omittedPassword, ...userToStore } = user;
-
         console.log("Setting cookies with options:", cookieOptions);
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
-        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
+        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store the user object
         console.log("Cookies set.");
 
          if (typeof window !== 'undefined') {
              console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
-             localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
+             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store the user object
              console.log("localStorage set.");
 
              console.log("Dispatching authStateChanged event...");
@@ -95,7 +102,7 @@ export const LoginForm = () => {
 
         toast({
             title: "Вход выполнен!",
-            description: user.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+            description: userToStore.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
 
         console.log("Redirecting to / after login...");
@@ -105,6 +112,7 @@ export const LoginForm = () => {
     } catch (err) {
         console.error("Login error:", err);
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');
+    } finally {
         setIsLoading(false);
     }
   };
@@ -123,7 +131,7 @@ export const LoginForm = () => {
           type="text"
           placeholder="Логин"
           value={username}
-          onChange={(e) => setUsername(e.target.value)} // Keep direct value, trim on submit
+          onChange={(e) => setUsername(e.target.value)}
           required
           disabled={isLoading}
           autoComplete="username"

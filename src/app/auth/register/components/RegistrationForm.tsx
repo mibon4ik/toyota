@@ -37,18 +37,24 @@ export const RegistrationForm = () => {
     }, []);
 
   const generateToken = (user: User) => {
+      // Ensure all necessary user fields are included for the token/storage, except password
       const userData = {
           id: user.id,
           username: user.username,
           firstName: user.firstName,
           lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          carMake: user.carMake,
+          carModel: user.carModel,
+          vinCode: user.vinCode,
           isAdmin: user.isAdmin || false,
       };
       try {
-        return btoa(JSON.stringify(userData));
+        return btoa(JSON.stringify(userData)); // Base64 encode the user data string
       } catch (e) {
         console.error("Error generating token:", e);
-        return `error-${Date.now()}`;
+        return `error-${Date.now()}`; // Fallback token
       }
   };
 
@@ -95,7 +101,10 @@ export const RegistrationForm = () => {
 
       console.log("Registration successful for:", registeredUser.username);
 
-       const token = generateToken(registeredUser);
+       // registeredUser from createUser already excludes password hash
+       const userToStore = registeredUser;
+
+       const token = generateToken(userToStore);
         const cookieOptions: CookieSerializeOptions = {
           maxAge: 60 * 60 * 24 * 7, 
           path: '/',
@@ -103,16 +112,15 @@ export const RegistrationForm = () => {
           secure: process.env.NODE_ENV === 'production',
         };
 
-       const { password: _omittedPassword, ...userToStore } = registeredUser;
 
        console.log("Setting cookies with options:", cookieOptions);
        setCookie('authToken', token, cookieOptions);
        setCookie('isLoggedIn', 'true', cookieOptions);
-       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions);
+       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store the user object
 
        if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('loggedInUser', JSON.stringify(userToStore));
+            localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store the user object
             console.log("Dispatching authStateChanged event after registration...");
             window.dispatchEvent(new Event('authStateChanged'));
             console.log("authStateChanged event dispatched.");
@@ -124,7 +132,7 @@ export const RegistrationForm = () => {
       });
 
        console.log("Redirecting to / after registration...");
-       router.replace('/');
+       router.replace('/'); // Redirect to home page
        console.log("Redirection initiated.");
 
     } catch (err: any) {
