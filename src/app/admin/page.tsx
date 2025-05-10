@@ -17,7 +17,7 @@ const AdminPage = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
-  const [isAdminUser, setIsAdminUser] = useState(false); // Renamed for clarity
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   useEffect(() => {
@@ -50,44 +50,42 @@ const AdminPage = () => {
         if (userCookie) {
             try {
                 currentUser = JSON.parse(userCookie as string);
-                currentIsAdmin = currentUser?.isAdmin === true; // Explicitly check for true
+                console.log("AdminPage: Parsed loggedInUser cookie:", currentUser); // DEBUG
+                if (currentUser) {
+                    console.log("AdminPage: currentUser.isAdmin value:", currentUser.isAdmin); // DEBUG
+                }
+                currentIsAdmin = currentUser?.isAdmin === true;
             } catch (e) {
                 console.error("AdminPage: Error parsing loggedInUser cookie:", e);
-                // Proceed to clear auth as cookie is corrupted
             }
         }
-        // If userCookie is missing or parsing failed, but other auth cookies exist,
-        // it's an inconsistent state. It's safer to treat as not logged in or not admin.
+        
         if (!currentUser || !currentIsAdmin) {
-            console.warn("AdminPage: User not admin or user data missing/corrupted. User:", currentUser);
+            console.warn("AdminPage: User not admin or user data missing/corrupted. CurrentUser:", currentUser, "CurrentIsAdmin:", currentIsAdmin);
             toast({
                 title: "Доступ запрещен",
                 description: "У вас нет прав администратора или проблема с сессией.",
                 variant: "destructive",
             });
-            setIsAdminUser(false); // Ensure state reflects non-admin status
-            // Don't clear auth here, let main-nav handle full logout if necessary on redirect
-            // This prevents a loop if this check runs before main-nav's auth sync
-            router.replace('/'); // Redirect to home for non-admins or if data is faulty
+            setIsAdminUser(false);
+            router.replace('/'); 
             setIsLoadingAuth(false);
             return;
         }
     } else {
-        // Not logged in based on cookies
-        console.log("AdminPage: User not logged in. Redirecting to login.");
+        console.log("AdminPage: User not logged in (cookies indicate). Redirecting to login.");
         toast({
             title: "Доступ запрещен",
             description: "Пожалуйста, войдите как администратор.",
             variant: "destructive",
         });
-        // No need to clear here, middleware should handle unauthenticated access
         setIsAdminUser(false);
         router.replace('/auth/login');
         setIsLoadingAuth(false);
         return;
     }
     
-    // If we reach here, user is logged in AND is an admin
+    console.log("AdminPage: Admin access verified. User:", currentUser?.username);
     setIsAdminUser(true);
     setIsLoadingAuth(false);
   }, [isMounted, toast, router]);
@@ -132,8 +130,7 @@ const AdminPage = () => {
     );
   }
 
-  if (!isAdminUser) { // Use the clearer state variable name
-      // Message already shown by checkAdminStatus, this is a fallback if redirect hasn't completed
+  if (!isAdminUser) { 
       return (
             <div className="container mx-auto py-8">
                <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>
