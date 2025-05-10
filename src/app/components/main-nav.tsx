@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
 import { getCookie, deleteCookie } from 'cookies-next';
-import type { User } from '@/types/user';
+import type { User, StoredUser } from '@/types/user';
 
 
 interface CartItem {
@@ -26,7 +26,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
   const router = useRouter();
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<StoredUser | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
   const updateCartCount = useCallback(() => {
@@ -57,8 +57,8 @@ export function MainNav({ className, ...props }: MainNavProps) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
-      setIsLoggedIn(false); // Update state immediately
-      setLoggedInUser(null); // Update state immediately
+      setIsLoggedIn(false); 
+      setLoggedInUser(null); 
       window.dispatchEvent(new Event('authStateChanged'));
     }
     router.replace('/auth/login');
@@ -75,25 +75,24 @@ export function MainNav({ className, ...props }: MainNavProps) {
     }
 
     let derivedIsLoggedIn = false;
-    let derivedUser: User | null = null;
+    let derivedUser: StoredUser | null = null;
 
     const lsIsLoggedIn = localStorage.getItem('isLoggedIn');
     const lsUser = localStorage.getItem('loggedInUser');
 
     if (lsIsLoggedIn === 'true' && lsUser) {
       try {
-        derivedUser = JSON.parse(lsUser);
+        derivedUser = JSON.parse(lsUser) as StoredUser;
         if (derivedUser && derivedUser.id && derivedUser.username) {
           derivedIsLoggedIn = true;
           const authTokenCookie = getCookie('authToken');
           if (!authTokenCookie) {
-             // localStorage says logged in, but critical cookie is missing.
-             // This could be an issue or just a state mismatch. Trust localStorage for UI.
+            // localStorage says logged in, but critical cookie is missing.
           }
         } else {
-          derivedUser = null; // Invalid user object
+          derivedUser = null; 
           derivedIsLoggedIn = false;
-          localStorage.removeItem('isLoggedIn'); // Clear inconsistent localStorage
+          localStorage.removeItem('isLoggedIn'); 
           localStorage.removeItem('loggedInUser');
         }
       } catch (e) {
@@ -109,7 +108,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
       if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
         try {
-          derivedUser = JSON.parse(userCookie as string);
+          derivedUser = JSON.parse(userCookie as string) as StoredUser;
           if (derivedUser && derivedUser.id && derivedUser.username) {
             derivedIsLoggedIn = true;
             if (lsIsLoggedIn !== 'true' || !lsUser) {
@@ -119,10 +118,10 @@ export function MainNav({ className, ...props }: MainNavProps) {
           } else {
             derivedUser = null;
             derivedIsLoggedIn = false;
-            deleteCookie('authToken', { path: '/' }); // Clear invalid cookies
+            deleteCookie('authToken', { path: '/' }); 
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
-            localStorage.removeItem('isLoggedIn'); // Ensure localStorage is also clear
+            localStorage.removeItem('isLoggedIn'); 
             localStorage.removeItem('loggedInUser');
           }
         } catch (e) {
@@ -142,11 +141,10 @@ export function MainNav({ className, ...props }: MainNavProps) {
       }
     }
     
-    // Update state only if it has changed to prevent infinite loops
     setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
     setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
 
-  }, []); // Removed setIsLoggedIn and setLoggedInUser from deps
+  }, []); 
 
 
    useEffect(() => {

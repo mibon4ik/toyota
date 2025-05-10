@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 import { setCookie } from 'cookies-next';
 import { verifyPassword } from '@/lib/auth';
-import type { User } from '@/types/user';
+import type { StoredUser } from '@/types/user';
 import type { CookieSerializeOptions } from 'cookie';
 
 export const LoginForm = () => {
@@ -26,8 +26,7 @@ export const LoginForm = () => {
     setIsMounted(true);
   }, []);
 
-
-  const generateToken = (user: User) => {
+  const generateToken = (user: StoredUser) => {
     const userData = {
       id: user.id,
       username: user.username,
@@ -38,7 +37,7 @@ export const LoginForm = () => {
       carMake: user.carMake,
       carModel: user.carModel,
       vinCode: user.vinCode,
-      isAdmin: user.isAdmin || false, // Crucial: Ensure isAdmin is part of the token/stored data
+      isAdmin: user.isAdmin, 
     };
 
     try {
@@ -54,7 +53,7 @@ export const LoginForm = () => {
     setIsLoading(true);
 
     try {
-        const user = await verifyPassword(username.trim(), password);
+        const user = await verifyPassword(username.trim(), password); // user is StoredUser | null
 
         if (!user) {
           setError('Неверные учетные данные');
@@ -62,11 +61,7 @@ export const LoginForm = () => {
           return;
         }
         
-        // user object from verifyPassword already excludes the password hash
-        const userToStore: User = {
-            ...user,
-            isAdmin: user.isAdmin || false, // Ensure isAdmin is correctly set for storage
-        };
+        const userToStore: StoredUser = user; // user is already StoredUser
 
         const token = generateToken(userToStore); 
         const cookieOptions: CookieSerializeOptions = {
@@ -91,7 +86,6 @@ export const LoginForm = () => {
             description: userToStore.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
         
-        // Redirect after all state updates and cookie settings
         router.replace('/'); 
     } catch (err) {
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');

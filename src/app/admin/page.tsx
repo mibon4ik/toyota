@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { getCookie, deleteCookie } from 'cookies-next';
-import type { User } from '@/types/user';
+import type { StoredUser } from '@/types/user';
 import { ProductManagementSection } from './sections/ProductManagementSection';
 import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
@@ -43,25 +43,21 @@ const AdminPage = () => {
     const authToken = getCookie('authToken');
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userCookie = getCookie('loggedInUser');
-    let currentUser: User | null = null;
+    let currentUser: StoredUser | null = null;
     let currentIsAdmin = false;
 
     if (authToken && isLoggedInCookie === 'true') {
         if (userCookie) {
             try {
                 currentUser = JSON.parse(userCookie as string);
-                console.log("AdminPage: Parsed loggedInUser cookie:", currentUser); // DEBUG
-                if (currentUser) {
-                    console.log("AdminPage: currentUser.isAdmin value:", currentUser.isAdmin); // DEBUG
-                }
                 currentIsAdmin = currentUser?.isAdmin === true;
             } catch (e) {
                 console.error("AdminPage: Error parsing loggedInUser cookie:", e);
+                // Fall through to !currentUser || !currentIsAdmin check
             }
         }
         
         if (!currentUser || !currentIsAdmin) {
-            console.warn("AdminPage: User not admin or user data missing/corrupted. CurrentUser:", currentUser, "CurrentIsAdmin:", currentIsAdmin);
             toast({
                 title: "Доступ запрещен",
                 description: "У вас нет прав администратора или проблема с сессией.",
@@ -73,7 +69,6 @@ const AdminPage = () => {
             return;
         }
     } else {
-        console.log("AdminPage: User not logged in (cookies indicate). Redirecting to login.");
         toast({
             title: "Доступ запрещен",
             description: "Пожалуйста, войдите как администратор.",
@@ -85,7 +80,6 @@ const AdminPage = () => {
         return;
     }
     
-    console.log("AdminPage: Admin access verified. User:", currentUser?.username);
     setIsAdminUser(true);
     setIsLoadingAuth(false);
   }, [isMounted, toast, router]);

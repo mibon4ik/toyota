@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -10,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
 import { setCookie } from 'cookies-next';
-import type { User } from '@/types/user';
+import type { User, StoredUser } from '@/types/user';
 import type { CookieSerializeOptions } from 'cookie';
 
 export const RegistrationForm = () => {
@@ -36,8 +35,7 @@ export const RegistrationForm = () => {
         setIsMounted(true);
     }, []);
 
-  const generateToken = (user: User) => {
-      // Ensure all necessary user fields are included for the token/storage, except password
+  const generateToken = (user: StoredUser) => {
       const userData = {
           id: user.id,
           username: user.username,
@@ -48,13 +46,13 @@ export const RegistrationForm = () => {
           carMake: user.carMake,
           carModel: user.carModel,
           vinCode: user.vinCode,
-          isAdmin: user.isAdmin || false,
+          isAdmin: user.isAdmin, 
       };
       try {
-        return btoa(JSON.stringify(userData)); // Base64 encode the user data string
+        return btoa(JSON.stringify(userData)); 
       } catch (e) {
         console.error("Error generating token:", e);
-        return `error-${Date.now()}`; // Fallback token
+        return `error-${Date.now()}`; 
       }
   };
 
@@ -97,12 +95,13 @@ export const RegistrationForm = () => {
         carModel,
         vinCode: vinCode.toUpperCase(),
       };
-      const registeredUser = await createUser(newUserPayload);
+      const registeredUser = await createUser(newUserPayload); // registeredUser is User (includes password hash)
 
-      console.log("Registration successful for:", registeredUser.username);
-
-       // registeredUser from createUser already excludes password hash
-       const userToStore = registeredUser;
+      const { password: _, ...userFieldsForStorage } = registeredUser;
+      const userToStore: StoredUser = {
+          ...userFieldsForStorage,
+          isAdmin: !!registeredUser.isAdmin, // Ensure boolean, should be false
+      };
 
        const token = generateToken(userToStore);
         const cookieOptions: CookieSerializeOptions = {
@@ -112,18 +111,14 @@ export const RegistrationForm = () => {
           secure: process.env.NODE_ENV === 'production',
         };
 
-
-       console.log("Setting cookies with options:", cookieOptions);
        setCookie('authToken', token, cookieOptions);
        setCookie('isLoggedIn', 'true', cookieOptions);
-       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store the user object
+       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); 
 
        if (typeof window !== 'undefined') {
             localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store the user object
-            console.log("Dispatching authStateChanged event after registration...");
+            localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); 
             window.dispatchEvent(new Event('authStateChanged'));
-            console.log("authStateChanged event dispatched.");
         }
 
       toast({
@@ -131,10 +126,7 @@ export const RegistrationForm = () => {
         description: 'Вы будете перенаправлены на главную страницу.',
       });
 
-       console.log("Redirecting to / after registration...");
-       router.replace('/'); // Redirect to home page
-       console.log("Redirection initiated.");
-
+       router.replace('/');
     } catch (err: any) {
       console.error("Registration error:", err);
       setError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');

@@ -3,7 +3,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import bcrypt from 'bcryptjs';
-import type { User } from '@/types/user';
+import type { User, StoredUser } from '@/types/user';
 
 const usersFilePath = path.join(process.cwd(), 'src', 'data', 'users.json');
 const dataDir = path.dirname(usersFilePath);
@@ -73,7 +73,7 @@ async function createAdminUserObject(): Promise<User> {
       carMake: 'N/A',
       carModel: 'N/A',
       vinCode: 'ADMINVIN000000000',
-      isAdmin: true,
+      isAdmin: true, // Explicitly true
     };
 }
 
@@ -94,12 +94,11 @@ async function ensureAdminUser(): Promise<void> {
              passwordMatches = false; 
         }
 
-        if (adminUser.username !== 'admin' || !passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
-             adminUser.username = 'admin'; // Ensure username is lowercase
+        if (adminUser.username !== 'admin' || !passwordMatches || adminUser.isAdmin !== true || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
+             adminUser.username = 'admin';
              adminUser.password = correctHashedPassword;
-             adminUser.isAdmin = true;
+             adminUser.isAdmin = true; // Ensure it's boolean true
              adminUser.email = 'admin@admin.com';
-             // Ensure other default fields are set if missing for admin
              adminUser.firstName = adminUser.firstName || 'Admin';
              adminUser.lastName = adminUser.lastName || 'User';
              adminUser.phoneNumber = adminUser.phoneNumber || '0000000000';
@@ -110,7 +109,7 @@ async function ensureAdminUser(): Promise<void> {
         }
     } else {
         const adminUser = await createAdminUserObject();
-        users.unshift(adminUser); // Add to the beginning
+        users.unshift(adminUser); 
         needsUpdate = true;
     }
 
@@ -131,7 +130,6 @@ export async function getUserByUsername(username: string): Promise<User | undefi
 export async function getUserByVin(vin: string): Promise<User | undefined> {
     await ensureAdminUser();
     const users = await readUsersFile();
-
     return users.find(user => user.vinCode?.toUpperCase() === vin?.toUpperCase());
 }
 
@@ -160,12 +158,11 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
     throw new Error('Password is required.');
   }
 
-
   const hashedPassword = await bcrypt.hash(newUser.password, 10);
 
   const userWithId: User = {
     id: Date.now().toString(),
-    username: newUser.username, // Store as provided, but comparison is case-insensitive
+    username: newUser.username, 
     firstName: newUser.firstName,
     lastName: newUser.lastName,
     email: newUser.email || undefined,
@@ -174,7 +171,7 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
     carMake: newUser.carMake,
     carModel: newUser.carModel,
     vinCode: newUser.vinCode.toUpperCase(),
-    isAdmin: false,
+    isAdmin: false, // Explicitly false for new users
   };
 
   users.push(userWithId);
@@ -184,9 +181,8 @@ export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'passwor
 }
 
 
-export async function verifyPassword(usernameInput: string, passwordInput: string): Promise<User | null> {
+export async function verifyPassword(usernameInput: string, passwordInput: string): Promise<StoredUser | null> {
   await ensureAdminUser();
-  // Use case-insensitive search for username
   const user = await getUserByUsername(usernameInput);
 
   if (!user) {
@@ -200,8 +196,12 @@ export async function verifyPassword(usernameInput: string, passwordInput: strin
     const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
 
     if (passwordsMatch) {
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword as User;
+      const { password: _, ...userFields } = user;
+      const verifiedUser: StoredUser = {
+        ...userFields,
+        isAdmin: !!user.isAdmin, // Ensure isAdmin is explicitly a boolean
+      };
+      return verifiedUser;
     } else {
       return null;
     }
@@ -248,19 +248,18 @@ export async function updateUser(userId: string, updatedData: Partial<Omit<User,
      }
    }
 
-
-  const updatedUser = {
+  const updatedUser: User = {
     ...users[userIndex],
     ...dataToUpdate,
-    username: dataToUpdate.username || users[userIndex].username, // Preserve case if not changing
+    username: dataToUpdate.username || users[userIndex].username, 
     vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode,
-    isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin,
+    isAdmin: dataToUpdate.isAdmin === undefined ? !!users[userIndex].isAdmin : !!dataToUpdate.isAdmin, // Ensure boolean
   };
 
   users[userIndex] = updatedUser;
   await writeUsersFile(users);
 
-  const { password: _, ...userWithoutPassword } = updatedUser;
+  const { password: _removedPassword, ...userWithoutPassword } = updatedUser;
   return userWithoutPassword;
 }
 
@@ -289,7 +288,5 @@ export async function updateUserPassword(userId: string, newPasswordInput: strin
         await ensureAdminUser();
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
-        // Depending on the severity, you might want to exit the process
-        // process.exit(1); 
     }
 })();

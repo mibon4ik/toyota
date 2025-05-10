@@ -1,13 +1,15 @@
 export interface User {
   id: string;
-  username: string; // Added username field
+  username: string;
   firstName: string;
   lastName: string;
-  email?: string; // Make email optional
+  email?: string;
   phoneNumber: string;
-  password?: string; // Password should ideally be handled server-side and hashed
+  password?: string; 
   carMake: string;
   carModel: string;
   vinCode: string;
-  isAdmin?: boolean; // Optional field for admin status
+  isAdmin?: boolean;
 }
+
+export type StoredUser = Omit<User, 'password'> & { isAdmin: boolean };
