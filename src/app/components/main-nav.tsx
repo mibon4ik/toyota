@@ -42,7 +42,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
              setCartItemCount(0);
           }
         } catch (e) {
-          console.error("MainNav: Error parsing cart items from localStorage for count:", e);
           setCartItemCount(0);
         }
       } else {
@@ -52,7 +51,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
   }, []);
 
   const handleLogout = useCallback(() => {
-    console.log("MainNav: handleLogout called.");
     const deleteOptions = { path: '/' };
 
     deleteCookie('authToken', deleteOptions);
@@ -66,7 +64,6 @@ export function MainNav({ className, ...props }: MainNavProps) {
         setIsLoggedIn(false);
         setLoggedInUser(null);
 
-        console.log("MainNav: Dispatching authStateChanged event after logout.");
         window.dispatchEvent(new Event('authStateChanged'));
         router.replace('/auth/login');
     }
@@ -74,111 +71,133 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
 
   const updateAuthState = useCallback(() => {
-     if (typeof window === 'undefined') {
-         console.log("MainNav: updateAuthState called on server, returning.");
-         return;
-     }
-    console.log("MainNav: updateAuthState called on client.");
-
-    const authTokenCookie = getCookie('authToken');
-    const isLoggedInCookie = getCookie('isLoggedIn');
-    const userCookie = getCookie('loggedInUser');
-    console.log(`MainNav: Cookies read - authToken: ${!!authTokenCookie}, isLoggedIn: ${isLoggedInCookie}, userCookie: ${!!userCookie}`);
+    if (typeof window === 'undefined') {
+      return;
+    }
 
     let derivedIsLoggedIn = false;
     let derivedUser: User | null = null;
 
-    if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
+    const lsIsLoggedIn = localStorage.getItem('isLoggedIn');
+    const lsUser = localStorage.getItem('loggedInUser');
+
+    if (lsIsLoggedIn === 'true' && lsUser) {
+      try {
+        derivedUser = JSON.parse(lsUser);
+        if (derivedUser && derivedUser.id && derivedUser.username) {
+          derivedIsLoggedIn = true;
+          // Ensure cookies are consistent if localStorage says logged in
+          const authTokenCookie = getCookie('authToken');
+          if (!authTokenCookie) {
+             // This state is unusual: localStorage says logged in, but critical cookie is missing.
+             // Might indicate cookie clearing or expiration. For client-side, trust localStorage temporarily.
+             // Server-side checks will rely on cookies.
+          }
+        } else {
+          derivedUser = null;
+          derivedIsLoggedIn = false;
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('loggedInUser');
+        }
+      } catch (e) {
+        derivedUser = null;
+        derivedIsLoggedIn = false;
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('loggedInUser');
+      }
+    } else {
+      // localStorage does not indicate logged in, check cookies
+      const authTokenCookie = getCookie('authToken');
+      const isLoggedInCookie = getCookie('isLoggedIn');
+      const userCookie = getCookie('loggedInUser');
+
+      if (authTokenCookie && isLoggedInCookie === 'true' && userCookie) {
         try {
-            derivedUser = JSON.parse(userCookie as string);
-            if (derivedUser && derivedUser.id && derivedUser.username) {
-                derivedIsLoggedIn = true;
-                console.log("MainNav: Derived user as logged in:", derivedUser.username);
-            } else {
-                 derivedUser = null; 
-                 console.warn("MainNav: Parsed user cookie but user object is invalid.");
+          derivedUser = JSON.parse(userCookie as string);
+          if (derivedUser && derivedUser.id && derivedUser.username) {
+            derivedIsLoggedIn = true;
+            // Sync to localStorage if cookies have auth but localStorage doesn't
+            if (lsIsLoggedIn !== 'true' || !lsUser) {
+                localStorage.setItem('isLoggedIn', 'true');
+                localStorage.setItem('loggedInUser', JSON.stringify(derivedUser));
             }
-        } catch (e) {
-            console.error("MainNav: Error parsing loggedInUser cookie:", e);
+          } else {
             derivedUser = null;
-            
-            console.warn("MainNav: Clearing potentially corrupted auth cookies and localStorage.");
+            derivedIsLoggedIn = false;
+            // Clear corrupted/invalid cookies and ensure localStorage is also clear
             deleteCookie('authToken', { path: '/' });
             deleteCookie('isLoggedIn', { path: '/' });
             deleteCookie('loggedInUser', { path: '/' });
-            if (typeof window !== 'undefined') { 
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('loggedInUser');
-            }
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('loggedInUser');
+          }
+        } catch (e) {
+          derivedUser = null;
+          derivedIsLoggedIn = false;
+          deleteCookie('authToken', { path: '/' });
+          deleteCookie('isLoggedIn', { path: '/' });
+          deleteCookie('loggedInUser', { path: '/' });
+          localStorage.removeItem('isLoggedIn');
+          localStorage.removeItem('loggedInUser');
         }
-    } else {
-         console.log("MainNav: Essential auth cookies missing or isLoggedInCookie not 'true'. User derived as logged out.");
-    }
-
-
-    if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('loggedInUser'))) {
-        console.warn("MainNav: Cookies indicate logged out, but localStorage has auth items. Clearing localStorage.");
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
+      } else {
+         // Both localStorage and cookies indicate logged out
+         // Ensure localStorage is clear if cookies are missing/indicate logout
+         if (lsIsLoggedIn === 'true' || lsUser) {
+             localStorage.removeItem('isLoggedIn');
+             localStorage.removeItem('loggedInUser');
+         }
+      }
     }
     
-    console.log(`MainNav: Setting isLoggedIn to ${derivedIsLoggedIn}`);
     setIsLoggedIn(current => {
       if (current !== derivedIsLoggedIn) {
-        console.log(`MainNav: isLoggedIn state changed from ${current} to ${derivedIsLoggedIn}`);
         return derivedIsLoggedIn;
       }
       return current;
     });
 
     setLoggedInUser(current => {
-      const currentString = JSON.stringify(current);
-      const derivedString = JSON.stringify(derivedUser);
+      const currentString = current ? JSON.stringify(current) : null;
+      const derivedString = derivedUser ? JSON.stringify(derivedUser) : null;
       if (currentString !== derivedString) {
-        console.log(`MainNav: loggedInUser state changed.`);
         return derivedUser;
       }
       return current;
     });
 
-  }, []);
+  }, [setIsLoggedIn, setLoggedInUser]);
 
 
    useEffect(() => {
         if (!isMounted) {
-            console.log("MainNav: Component mounting. Setting isMounted to true and performing initial updates.");
             setIsMounted(true);
+            // Perform initial auth and cart update on client-side mount
             updateAuthState();
             updateCartCount();
         }
 
         const handleStorageChange = (event: StorageEvent) => {
             if (event.key === 'cartItems') {
-                console.log("MainNav: cartItems changed in localStorage (storage event). Updating cart count.");
                 updateCartCount();
             }
              if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
-                 console.log(`MainNav: ${event.key} changed in localStorage (storage event). Updating auth state.`);
                  updateAuthState();
             }
         };
 
         const handleAuthStateChanged = () => {
-             console.log("MainNav: authStateChanged event received. Updating auth state.");
              updateAuthState();
         };
         const handleCartUpdated = () => {
-             console.log("MainNav: cartUpdated event received. Updating cart count.");
              updateCartCount();
         };
 
         window.addEventListener('storage', handleStorageChange);
         window.addEventListener('authStateChanged', handleAuthStateChanged);
         window.addEventListener('cartUpdated', handleCartUpdated);
-        console.log("MainNav: Event listeners added.");
 
         return () => {
-            console.log("MainNav: Component unmounting. Removing event listeners.");
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('authStateChanged', handleAuthStateChanged);
             window.removeEventListener('cartUpdated', handleCartUpdated);
@@ -191,6 +210,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
    };
 
     if (!isMounted) {
+        // Skeleton or minimal UI for SSR / pre-hydration
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
                 <Link href="/" className="mr-6 flex items-center space-x-2">
@@ -198,6 +218,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
                 </Link>
                 <nav className="hidden md:flex items-center space-x-4 flex-grow">
+                  {/* Skeleton for nav links */}
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
@@ -208,6 +229,7 @@ export function MainNav({ className, ...props }: MainNavProps) {
                           <Icons.shoppingCart className="h-4 w-4" />
                           <span className="sr-only">Корзина</span>
                       </Button>
+                     {/* Skeleton for auth section */}
                      <div className="h-8 w-20 bg-muted rounded animate-pulse"></div>
                  </div>
             </div>

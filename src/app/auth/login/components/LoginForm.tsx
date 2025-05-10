@@ -46,7 +46,6 @@ export const LoginForm = () => {
     try {
       return btoa(JSON.stringify(userData)); // Base64 encode the user data string
     } catch (e) {
-      console.error("Error generating token:", e);
       return `error-${Date.now()}`; // Fallback token
     }
   };
@@ -55,25 +54,20 @@ export const LoginForm = () => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
-    console.log("Login attempt with username:", username.trim());
 
     try {
         const user = await verifyPassword(username.trim(), password);
 
         if (!user) {
-          console.log("Login failed: Invalid credentials for username:", username.trim());
           setError('Неверные учетные данные');
           setIsLoading(false);
           return;
         }
 
-        console.log("Login successful for user:", user.username, "Is Admin:", user.isAdmin);
 
-        // User object from verifyPassword already excludes password
-        // If it didn't, you'd do: const { password: _omittedPassword, ...userToStore } = user;
-        const userToStore = user; // Assuming verifyPassword returns user without password hash
+        const userToStore = user; 
 
-        const token = generateToken(userToStore); // Generate token based on user data
+        const token = generateToken(userToStore); 
         const cookieOptions: CookieSerializeOptions = {
           maxAge: 60 * 60 * 24 * 7, // 1 week
           path: '/',
@@ -81,23 +75,14 @@ export const LoginForm = () => {
           secure: process.env.NODE_ENV === 'production',
         };
 
-        console.log("Setting cookies with options:", cookieOptions);
         setCookie('authToken', token, cookieOptions);
         setCookie('isLoggedIn', 'true', cookieOptions);
-        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); // Store the user object
-        console.log("Cookies set.");
+        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); 
 
          if (typeof window !== 'undefined') {
-             console.log("Setting localStorage...");
              localStorage.setItem('isLoggedIn', 'true');
-             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); // Store the user object
-             console.log("localStorage set.");
-
-             console.log("Dispatching authStateChanged event...");
+             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); 
              window.dispatchEvent(new Event('authStateChanged'));
-             console.log("authStateChanged event dispatched.");
-         } else {
-             console.warn("localStorage is not available. Auth state might not persist across tabs immediately.");
          }
 
         toast({
@@ -105,12 +90,8 @@ export const LoginForm = () => {
             description: userToStore.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
         });
 
-        console.log("Redirecting to / after login...");
-        router.replace('/'); // Redirect to home page
-        console.log("Redirection initiated.");
-
+        router.replace('/'); 
     } catch (err) {
-        console.error("Login error:", err);
         setError('Ошибка входа. Пожалуйста, попробуйте позже.');
     } finally {
         setIsLoading(false);
