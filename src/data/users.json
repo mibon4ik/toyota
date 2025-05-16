@@ -1,30 +1,17 @@
+
 [
   {
-    "id": "admin-user",
+    "id": "admin-user-default-id",
     "username": "admin",
-    "password": "admin123",
+    "password": "admin",
     "role": "admin",
     "firstName": "Admin",
     "lastName": "User",
-    "email": "admin@example.com",
+    "email": "admin@admin.com",
     "phoneNumber": "0000000000",
     "carMake": "Toyota",
     "carModel": "Land Cruiser",
     "vinCode": "ADMINVIN000000000",
     "isAdmin": true
-  },
-  {
-    "id": "user-123",
-    "username": "user",
-    "password": "user123",
-    "role": "user",
-    "firstName": "Regular",
-    "lastName": "User",
-    "email": "user@example.com",
-    "phoneNumber": "1234567890",
-    "carMake": "Toyota",
-    "carModel": "Camry",
-    "vinCode": "USERVIN0000000000",
-    "isAdmin": false
   }
 ]

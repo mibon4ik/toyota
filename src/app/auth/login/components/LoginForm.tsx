@@ -14,7 +14,7 @@ import type { StoredUser } from '@/types/user';
 
 export const LoginForm = () => {
   const [loginUsername, setLoginUsername] = useState('admin');
-  const [loginPassword, setLoginPassword] = useState('admin123');
+  const [loginPassword, setLoginPassword] = useState('admin'); // Changed to 'admin'
   const [loginError, setLoginError] = useState('');
   const navRouter = useRouter();
   const { toast: showToast } = useToast();
@@ -59,6 +59,8 @@ export const LoginForm = () => {
 
       setClientCookie('isLoggedIn', 'true', cookieConfig);
       setClientCookie('loggedInUser', JSON.stringify(userDataForStorage), cookieConfig);
+      setClientCookie('user-session', JSON.stringify(userDataForStorage), {...cookieConfig, httpOnly: false });
+
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
@@ -68,10 +70,10 @@ export const LoginForm = () => {
 
       showToast({
         title: "Вход выполнен!",
-        description: userDataForStorage.role === 'admin' ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+        description: userDataForStorage.isAdmin === true ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
-      if (userDataForStorage.role === 'admin') {
+      if (userDataForStorage.isAdmin === true) {
         navRouter.replace('/admin');
       } else {
         navRouter.replace('/dashboard');
@@ -137,3 +139,4 @@ export const LoginForm = () => {
     </form>
   );
 };
+

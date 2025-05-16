@@ -3,7 +3,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import type { User, StoredUser, UserRole } from '@/types/user';
+import type { User, StoredUser, UserAccountRole } from '@/types/user';
 
 const usersDataPath = path.join(process.cwd(), 'src', 'data', 'users.json');
 const dataDirectory = path.dirname(usersDataPath);
@@ -25,7 +25,19 @@ async function loadUsersFromFile(): Promise<User[]> {
   await checkDataDirectory();
   try {
     const fileContent = await fs.readFile(usersDataPath, 'utf-8');
-    return JSON.parse(fileContent || '[]');
+    if (!fileContent) {
+        const defaultAdmin = createDefaultAdmin();
+        await saveUsersToFile([defaultAdmin]);
+        return [defaultAdmin];
+    }
+    const users = JSON.parse(fileContent);
+    if (!Array.isArray(users)) {
+        console.warn("users.json does not contain a valid array. Initializing with default admin.");
+        const defaultAdmin = createDefaultAdmin();
+        await saveUsersToFile([defaultAdmin]);
+        return [defaultAdmin];
+    }
+    return users;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
        const defaultAdmin = createDefaultAdmin();
@@ -34,10 +46,16 @@ async function loadUsersFromFile(): Promise<User[]> {
     }
     if (error instanceof SyntaxError) {
         console.error("Error parsing users.json:", error);
-        throw new Error("User data file is corrupted.");
+        console.warn("users.json is corrupted. Initializing with default admin.");
+        const defaultAdmin = createDefaultAdmin();
+        await saveUsersToFile([defaultAdmin]);
+        return [defaultAdmin];
     }
     console.error("Error reading users file:", error);
-    throw new Error("Could not read user data.");
+    // In case of other errors, we might still want to return a default admin to prevent full crash
+    const defaultAdmin = createDefaultAdmin();
+    await saveUsersToFile([defaultAdmin]);
+    return [defaultAdmin];
   }
 }
 
@@ -57,13 +75,13 @@ async function saveUsersToFile(usersArray: User[]): Promise<void> {
 
 function createDefaultAdmin(): User {
     return {
-      id: 'admin-user-default-id', 
+      id: 'admin-user-default-id',
       username: 'admin',
-      password: 'admin123',
+      password: 'admin', // Changed to 'admin'
       role: 'admin',
       firstName: 'Admin',
       lastName: 'User',
-      email: 'admin@example.com',
+      email: 'admin@admin.com', // Changed to 'admin@admin.com'
       phoneNumber: '0000000000',
       carMake: 'Toyota',
       carModel: 'Land Cruiser',
@@ -80,16 +98,23 @@ async function setupDefaultAdmin(): Promise<void> {
 
     if (adminUserIndex > -1) {
         const adminData = currentUsers[adminUserIndex];
+        const defaultAdmin = createDefaultAdmin();
         if (
-            adminData.username !== 'admin' ||
-            adminData.password !== 'admin123' ||
-            adminData.role !== 'admin' ||
-            adminData.isAdmin !== true ||
-            adminData.email !== 'admin@example.com'
+            adminData.username !== defaultAdmin.username ||
+            adminData.password !== defaultAdmin.password ||
+            adminData.role !== defaultAdmin.role ||
+            adminData.isAdmin !== defaultAdmin.isAdmin ||
+            adminData.email !== defaultAdmin.email ||
+            adminData.firstName !== defaultAdmin.firstName ||
+            adminData.lastName !== defaultAdmin.lastName ||
+            adminData.phoneNumber !== defaultAdmin.phoneNumber ||
+            adminData.carMake !== defaultAdmin.carMake ||
+            adminData.carModel !== defaultAdmin.carModel ||
+            adminData.vinCode !== defaultAdmin.vinCode
         ) {
              currentUsers[adminUserIndex] = {
-                ...createDefaultAdmin(),
-                id: adminData.id, 
+                ...defaultAdmin,
+                id: adminData.id,
              };
              needsSave = true;
         }
@@ -111,7 +136,7 @@ export async function findUserByUsername(usernameToFind: string): Promise<User |
   return allUsers.find(user => user.username.toLowerCase() === lowercasedUsernameToFind);
 }
 
-export async function checkUserLogin(usernameProvided: string, passwordProvided: string): Promise<StoredUser | null> {
+export async function verifyUserCredentials(usernameProvided: string, passwordProvided: string): Promise<StoredUser | null> {
   await setupDefaultAdmin();
   const foundUser = await findUserByUsername(usernameProvided);
 
@@ -124,7 +149,7 @@ export async function checkUserLogin(usernameProvided: string, passwordProvided:
     const sessionUser: StoredUser = {
       ...userDetails,
       isAdmin: foundUser.role === 'admin',
-      role: foundUser.role as UserRole,
+      role: foundUser.role as UserAccountRole,
     };
     return sessionUser;
   } else {
@@ -132,7 +157,7 @@ export async function checkUserLogin(usernameProvided: string, passwordProvided:
   }
 }
 
-export async function registerNewUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'> & { password?: string }): Promise<User> {
+export async function createUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'> & { password?: string }): Promise<User> {
   await setupDefaultAdmin();
   let allUsers = await loadUsersFromFile();
 
@@ -174,13 +199,13 @@ export async function registerNewUser(userData: Omit<User, 'id' | 'role' | 'isAd
   return newUserRecord;
 }
 
-export async function fetchAllUsers(): Promise<User[]> {
+export async function getAllUsers(): Promise<User[]> {
   await setupDefaultAdmin();
   const usersList = await loadUsersFromFile();
   return usersList.map(user => ({...user, isAdmin: user.role === 'admin'}));
 }
 
-export async function modifyUser(userIdToUpdate: string, dataForUpdate: Partial<Omit<User, 'id' | 'password'>>): Promise<StoredUser> {
+export async function updateUser(userIdToUpdate: string, dataForUpdate: Partial<Omit<User, 'id' | 'password'>>): Promise<StoredUser> {
   await setupDefaultAdmin();
   let currentUsers = await loadUsersFromFile();
   const userIdx = currentUsers.findIndex(u => u.id === userIdToUpdate);
@@ -212,9 +237,16 @@ export async function modifyUser(userIdToUpdate: string, dataForUpdate: Partial<
     ...updateFields,
     username: updateFields.username || currentUsers[userIdx].username,
     vinCode: updateFields.vinCode ? updateFields.vinCode.toUpperCase() : currentUsers[userIdx].vinCode,
-    role: dataForUpdate.role ? dataForUpdate.role as UserRole : currentUsers[userIdx].role,
-    isAdmin: dataForUpdate.role ? dataForUpdate.role === 'admin' : currentUsers[userIdx].isAdmin,
+    role: dataForUpdate.isAdmin === true ? 'admin' : dataForUpdate.isAdmin === false ? 'user' : currentUsers[userIdx].role,
+    isAdmin: dataForUpdate.isAdmin !== undefined ? dataForUpdate.isAdmin : currentUsers[userIdx].isAdmin,
   };
+  
+  if (dataForUpdate.isAdmin === true) {
+    modifiedUser.role = 'admin';
+  } else if (dataForUpdate.isAdmin === false) {
+    modifiedUser.role = 'user';
+  }
+
 
   currentUsers[userIdx] = modifiedUser;
   await saveUsersToFile(currentUsers);
@@ -223,7 +255,7 @@ export async function modifyUser(userIdToUpdate: string, dataForUpdate: Partial<
   return userToReturn as StoredUser;
 }
 
-export async function changeUserPassword(userIdToChange: string, newPasswordValue: string): Promise<void> {
+export async function updateUserPassword(userIdToChange: string, newPasswordValue: string): Promise<void> {
   await setupDefaultAdmin();
   let usersArray = await loadUsersFromFile();
   const userRecordIndex = usersArray.findIndex(u => u.id === userIdToChange);
@@ -248,3 +280,4 @@ export async function changeUserPassword(userIdToChange: string, newPasswordValu
         console.error("FATAL: Failed to ensure admin user on startup:", error);
     }
 })();
+
