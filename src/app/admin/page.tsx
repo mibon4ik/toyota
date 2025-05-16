@@ -12,105 +12,93 @@ import type { StoredUser } from '@/types/user';
 import { ProductManagementSection } from './sections/ProductManagementSection';
 import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
-import { BannerManagementSection } from './sections/BannerManagementSection'; 
+import { BannerManagementSection } from './sections/BannerManagementSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const AdminPanel = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [authCheck, setAuthCheck] = useState(true);
+  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [authCheckInProgress, setAuthCheckInProgress] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const doLogout = useCallback(async () => {
+  const performLogout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      // Error during logout API call
+      // Error during logout API call, already handled client-side
     }
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
-    deleteCookie('user-session', { path: '/' });
+    // user-session is httpOnly, cleared by API
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
-      window.dispatchEvent(new Event('authStateChanged'));
+      window.dispatchEvent(new Event('authStateChanged')); // Notify other parts of UI
     }
     router.replace('/auth/login');
   }, [router]);
 
-  const checkPermissions = useCallback(async () => {
+  const verifyAdminPermissions = useCallback(async () => {
     if (!mounted) return;
-    setAuthCheck(true);
+    setAuthCheckInProgress(true);
 
-    let userCookie = getCookie('loggedInUser');
-    let activeUser: StoredUser | null = null;
+    let userFromCookie = getCookie('loggedInUser');
+    let currentUser: StoredUser | null = null;
 
-    if (userCookie) {
+    if (userFromCookie) {
       try {
-        activeUser = JSON.parse(userCookie as string);
+        currentUser = JSON.parse(userFromCookie as string);
+        console.log('AdminPanel Debug: User from cookie:', currentUser);
       } catch (e) {
-        // Error parsing cookie
+        console.error('AdminPanel Debug: Error parsing user cookie:', e);
       }
     }
     
-    if (!activeUser && typeof window !== 'undefined') {
-        const localUser = localStorage.getItem('loggedInUser');
-        if (localUser) {
+    if (!currentUser && typeof window !== 'undefined') {
+        const userFromLocalStorage = localStorage.getItem('loggedInUser');
+        if (userFromLocalStorage) {
             try {
-                activeUser = JSON.parse(localUser);
+                currentUser = JSON.parse(userFromLocalStorage);
+                console.log('AdminPanel Debug: User from localStorage:', currentUser);
             } catch (e) {
-                 // Error parsing localStorage
+                 console.error('AdminPanel Debug: Error parsing user localStorage:', e);
             }
         }
     }
     
-    const hasAdminRights = activeUser?.isAdmin === true;
+    console.log('AdminPanel Debug: Final current user for permission check:', currentUser);
+    const adminRightsConfirmed = currentUser?.isAdmin === true;
+    console.log('AdminPanel Debug: Admin rights confirmed:', adminRightsConfirmed);
 
-    if (!hasAdminRights) {
+    if (!adminRightsConfirmed) {
       toast({
         title: "Доступ запрещен",
         description: "У вас нет прав администратора или сессия истекла.",
         variant: "destructive",
       });
-      setIsAdmin(false);
-      doLogout(); 
+      setIsAdminUser(false);
+      performLogout(); 
     } else {
-      setIsAdmin(true);
+      setIsAdminUser(true);
     }
-    setAuthCheck(false);
-  }, [mounted, toast, doLogout]);
+    setAuthCheckInProgress(false);
+  }, [mounted, toast, performLogout]);
 
 
   useEffect(() => {
     if (mounted) {
-      checkPermissions();
+      verifyAdminPermissions();
     }
-    const handleAuth = () => {
-        if (mounted) {
-          checkPermissions();
-        }
-    };
-    if (typeof window !== 'undefined') {
-        window.addEventListener('authStateChanged', handleAuth);
-    }
-    return () => {
-        if (typeof window !== 'undefined') {
-            window.removeEventListener('authStateChanged', handleAuth);
-        }
-    };
-  }, [mounted, checkPermissions]);
-
-   const userLogout = useCallback(() => {
-    doLogout();
-  }, [doLogout]);
+    // Removed 'authStateChanged' listener to simplify and rely on middleware + initial check
+  }, [mounted, verifyAdminPermissions]);
 
 
-  if (!mounted || authCheck) {
+  if (!mounted || authCheckInProgress) {
     return (
       <div className="container mx-auto py-8">
         <Card className="w-full p-4">
@@ -129,10 +117,13 @@ const AdminPanel = () => {
     );
   }
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
+      // This part should ideally not be reached if middleware is effective,
+      // but serves as a fallback if client-side check fails after middleware pass.
+      // The verifyAdminPermissions function already handles redirecting to login.
       return (
             <div className="container mx-auto py-8">
-               <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
+               <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>
             </div>
       );
   }
@@ -145,11 +136,11 @@ const AdminPanel = () => {
         </CardHeader>
         <CardContent className="space-y-12">
           <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-4"> {/* Updated to 4 columns */}
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="orders">Заказы</TabsTrigger>
-              <TabsTrigger value="banners">Баннеры</TabsTrigger> {/* New Tab */}
+              <TabsTrigger value="banners">Баннеры</TabsTrigger>
             </TabsList>
             <TabsContent value="products">
               <ProductManagementSection />
@@ -160,13 +151,13 @@ const AdminPanel = () => {
             <TabsContent value="orders">
                <OrderManagementSection />
             </TabsContent>
-            <TabsContent value="banners"> {/* New Tab Content */}
+            <TabsContent value="banners">
                <BannerManagementSection />
             </TabsContent>
           </Tabs>
         </CardContent>
         <div className="mt-8 flex justify-center">
-          <Button onClick={userLogout} variant="outline">Выйти</Button>
+          <Button onClick={performLogout} variant="outline">Выйти</Button>
         </div>
       </Card>
     </div>
