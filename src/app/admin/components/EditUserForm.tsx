@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { updateUser, updateUserPassword } from '@/lib/auth';
 import type { User } from '@/types/user';
 
-const userSchema = z.object({
+const userFormSchema = z.object({
   username: z.string().min(3, 'Логин должен содержать не менее 3 символов'),
   firstName: z.string().min(1, 'Имя обязательно'),
   lastName: z.string().min(1, 'Фамилия обязательна'),
@@ -27,58 +27,57 @@ const userSchema = z.object({
   newPassword: z.string().min(8, 'Пароль должен содержать минимум 8 символов').optional().or(z.literal('')),
 });
 
-type UserFormData = z.infer<typeof userSchema>;
+type UserFormDataValues = z.infer<typeof userFormSchema>;
 
-interface EditUserFormProps {
-  user: User | null; // Now expects full User object
-  isOpen: boolean;
-  onClose: () => void;
-  onUserUpdated: () => void;
+interface EditUserDialogProps {
+  userData: User | null;
+  isDialogOpen: boolean;
+  onDialogClose: () => void;
+  onUserSaved: () => void;
 }
 
-export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClose, onUserUpdated }) => {
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export const EditUserForm: React.FC<EditUserDialogProps> = ({ userData, isDialogOpen, onDialogClose, onUserSaved }) => {
+  const { toast: showToastMessage } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const {
     register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<UserFormData>({
-    resolver: zodResolver(userSchema),
+    handleSubmit: handleFormSubmit,
+    reset: resetFormFields,
+    setValue: setFormFieldValue,
+    formState: { errors: formValidationErrors },
+  } = useForm<UserFormDataValues>({
+    resolver: zodResolver(userFormSchema),
   });
 
   useEffect(() => {
-    if (user && isOpen) {
-      setValue('username', user.username);
-      setValue('firstName', user.firstName);
-      setValue('lastName', user.lastName);
-      setValue('email', user.email || '');
-      setValue('phoneNumber', user.phoneNumber);
-      setValue('carMake', user.carMake);
-      setValue('carModel', user.carModel);
-      setValue('vinCode', user.vinCode);
-      setValue('isAdmin', user.isAdmin || false);
-      setValue('newPassword', ''); // Clear password field on open
-      setError(null);
-    } else if (!isOpen) {
-      reset();
-      setError(null);
+    if (userData && isDialogOpen) {
+      setFormFieldValue('username', userData.username);
+      setFormFieldValue('firstName', userData.firstName);
+      setFormFieldValue('lastName', userData.lastName);
+      setFormFieldValue('email', userData.email || '');
+      setFormFieldValue('phoneNumber', userData.phoneNumber);
+      setFormFieldValue('carMake', userData.carMake);
+      setFormFieldValue('carModel', userData.carModel);
+      setFormFieldValue('vinCode', userData.vinCode);
+      setFormFieldValue('isAdmin', userData.isAdmin || false);
+      setFormFieldValue('newPassword', '');
+      setErrorMessage(null);
+    } else if (!isDialogOpen) {
+      resetFormFields();
+      setErrorMessage(null);
     }
-  }, [user, isOpen, reset, setValue]);
+  }, [userData, isDialogOpen, resetFormFields, setFormFieldValue]);
 
-  const onSubmit: SubmitHandler<UserFormData> = async (data) => {
-    if (!user) return;
+  const submitUserData: SubmitHandler<UserFormDataValues> = async (data) => {
+    if (!userData) return;
 
-    setIsLoading(true);
-    setError(null);
+    setIsSaving(true);
+    setErrorMessage(null);
 
     try {
-      // Update user details (excluding password)
-      const userDataToUpdate: Partial<Omit<User, 'id' | 'password'>> = {
+      const userDetailsToUpdate: Partial<Omit<User, 'id' | 'password'>> = {
         username: data.username,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -90,135 +89,122 @@ export const EditUserForm: React.FC<EditUserFormProps> = ({ user, isOpen, onClos
         isAdmin: data.isAdmin,
       };
 
-      await updateUser(user.id, userDataToUpdate);
+      await updateUser(userData.id, userDetailsToUpdate);
 
-      // Update password if provided
       if (data.newPassword) {
-        await updateUserPassword(user.id, data.newPassword);
+        await updateUserPassword(userData.id, data.newPassword);
       }
 
-      toast({
+      showToastMessage({
         title: 'Пользователь обновлен!',
         description: `Данные пользователя "${data.username}" успешно обновлены.`,
       });
-      onUserUpdated();
-      onClose();
+      onUserSaved();
+      onDialogClose();
     } catch (error: any) {
       console.error("Ошибка обновления пользователя:", error);
-      setError(error.message || 'Не удалось обновить пользователя. Попробуйте позже.');
-      toast({
+      setErrorMessage(error.message || 'Не удалось обновить пользователя. Попробуйте позже.');
+      showToastMessage({
         title: 'Ошибка',
         description: error.message || 'Не удалось обновить пользователя. Попробуйте позже.',
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  if (!user) return null;
+  if (!userData) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isDialogOpen} onOpenChange={(open) => !open && onDialogClose()}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Редактировать пользователя: {user.username}</DialogTitle>
+          <DialogTitle>Редактировать пользователя: {userData.username}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 pt-4">
-          {/* Username */}
+        <form onSubmit={handleFormSubmit(submitUserData)} className="space-y-4 pt-4">
           <div>
             <Label htmlFor="edit-username">Логин</Label>
-            <Input id="edit-username" {...register('username')} disabled={isLoading} />
-            {errors.username && <p className="text-destructive text-xs mt-1">{errors.username.message}</p>}
+            <Input id="edit-username" {...register('username')} disabled={isSaving} />
+            {formValidationErrors.username && <p className="text-destructive text-xs mt-1">{formValidationErrors.username.message}</p>}
           </div>
 
-          {/* First Name */}
           <div>
             <Label htmlFor="edit-firstName">Имя</Label>
-            <Input id="edit-firstName" {...register('firstName')} disabled={isLoading} />
-            {errors.firstName && <p className="text-destructive text-xs mt-1">{errors.firstName.message}</p>}
+            <Input id="edit-firstName" {...register('firstName')} disabled={isSaving} />
+            {formValidationErrors.firstName && <p className="text-destructive text-xs mt-1">{formValidationErrors.firstName.message}</p>}
           </div>
 
-          {/* Last Name */}
           <div>
             <Label htmlFor="edit-lastName">Фамилия</Label>
-            <Input id="edit-lastName" {...register('lastName')} disabled={isLoading} />
-            {errors.lastName && <p className="text-destructive text-xs mt-1">{errors.lastName.message}</p>}
+            <Input id="edit-lastName" {...register('lastName')} disabled={isSaving} />
+            {formValidationErrors.lastName && <p className="text-destructive text-xs mt-1">{formValidationErrors.lastName.message}</p>}
           </div>
 
-          {/* Email */}
           <div>
             <Label htmlFor="edit-email">Email (необязательно)</Label>
-            <Input id="edit-email" type="email" {...register('email')} disabled={isLoading} />
-            {errors.email && <p className="text-destructive text-xs mt-1">{errors.email.message}</p>}
+            <Input id="edit-email" type="email" {...register('email')} disabled={isSaving} />
+            {formValidationErrors.email && <p className="text-destructive text-xs mt-1">{formValidationErrors.email.message}</p>}
           </div>
 
-          {/* Phone Number */}
           <div>
             <Label htmlFor="edit-phoneNumber">Номер телефона</Label>
-            <Input id="edit-phoneNumber" type="tel" {...register('phoneNumber')} disabled={isLoading} />
-            {errors.phoneNumber && <p className="text-destructive text-xs mt-1">{errors.phoneNumber.message}</p>}
+            <Input id="edit-phoneNumber" type="tel" {...register('phoneNumber')} disabled={isSaving} />
+            {formValidationErrors.phoneNumber && <p className="text-destructive text-xs mt-1">{formValidationErrors.phoneNumber.message}</p>}
           </div>
 
-          {/* Car Make */}
           <div>
             <Label htmlFor="edit-carMake">Марка машины</Label>
-            <Input id="edit-carMake" {...register('carMake')} disabled={isLoading} />
-            {errors.carMake && <p className="text-destructive text-xs mt-1">{errors.carMake.message}</p>}
+            <Input id="edit-carMake" {...register('carMake')} disabled={isSaving} />
+            {formValidationErrors.carMake && <p className="text-destructive text-xs mt-1">{formValidationErrors.carMake.message}</p>}
           </div>
 
-          {/* Car Model */}
           <div>
             <Label htmlFor="edit-carModel">Модель машины</Label>
-            <Input id="edit-carModel" {...register('carModel')} disabled={isLoading} />
-            {errors.carModel && <p className="text-destructive text-xs mt-1">{errors.carModel.message}</p>}
+            <Input id="edit-carModel" {...register('carModel')} disabled={isSaving} />
+            {formValidationErrors.carModel && <p className="text-destructive text-xs mt-1">{formValidationErrors.carModel.message}</p>}
           </div>
 
-          {/* VIN Code */}
           <div>
             <Label htmlFor="edit-vinCode">VIN-код</Label>
             <Input
               id="edit-vinCode"
               {...register('vinCode')}
-              disabled={isLoading}
+              disabled={isSaving}
               maxLength={17}
               className="uppercase tracking-widest font-mono"
             />
-            {errors.vinCode && <p className="text-destructive text-xs mt-1">{errors.vinCode.message}</p>}
+            {formValidationErrors.vinCode && <p className="text-destructive text-xs mt-1">{formValidationErrors.vinCode.message}</p>}
           </div>
 
-           {/* New Password */}
            <div>
             <Label htmlFor="edit-newPassword">Новый пароль (оставьте пустым, чтобы не менять)</Label>
-            <Input id="edit-newPassword" type="password" {...register('newPassword')} disabled={isLoading} autoComplete="new-password" />
-            {errors.newPassword && <p className="text-destructive text-xs mt-1">{errors.newPassword.message}</p>}
+            <Input id="edit-newPassword" type="password" {...register('newPassword')} disabled={isSaving} autoComplete="new-password" />
+            {formValidationErrors.newPassword && <p className="text-destructive text-xs mt-1">{formValidationErrors.newPassword.message}</p>}
           </div>
 
-          {/* Is Admin */}
           <div className="flex items-center space-x-2">
              <Checkbox
                 id="edit-isAdmin"
                 {...register('isAdmin')}
-                 // Explicitly check the 'checked' state from the form value
-                 checked={!!user?.isAdmin} // Use the initial user data to set checked state
-                 onCheckedChange={(checked) => setValue('isAdmin', Boolean(checked), { shouldValidate: true })}
-                disabled={isLoading}
+                 checked={!!userData?.isAdmin}
+                 onCheckedChange={(checked) => setFormFieldValue('isAdmin', Boolean(checked), { shouldValidate: true })}
+                disabled={isSaving}
             />
             <Label htmlFor="edit-isAdmin" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
               Администратор
             </Label>
-             {errors.isAdmin && <p className="text-destructive text-xs mt-1">{errors.isAdmin.message}</p>}
+             {formValidationErrors.isAdmin && <p className="text-destructive text-xs mt-1">{formValidationErrors.isAdmin.message}</p>}
           </div>
 
-          {/* General form error message */}
-          {error && <p className="text-destructive text-sm">{error}</p>}
+          {errorMessage && <p className="text-destructive text-sm">{errorMessage}</p>}
 
           <DialogFooter className="pt-4">
             <DialogClose asChild>
-              <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>Отмена</Button>
+              <Button type="button" variant="outline" onClick={onDialogClose} disabled={isSaving}>Отмена</Button>
             </DialogClose>
-            <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
-              {isLoading ? 'Сохранение...' : 'Сохранить изменения'}
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSaving}>
+              {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
             </Button>
           </DialogFooter>
         </form>

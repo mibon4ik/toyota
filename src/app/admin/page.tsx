@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -13,99 +14,102 @@ import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const AdminPage = () => {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false);
-  const [isAdminUser, setIsAdminUser] = useState(false);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+const AdminDashboardPage = () => {
+  const pageRouter = useRouter();
+  const { toast: showAppToast } = useToast();
+  const [componentMounted, setComponentMounted] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
-    setIsMounted(true);
+    setComponentMounted(true);
   }, []);
 
-  const clearAuthStorageAndRedirect = useCallback(() => {
-    deleteCookie('authToken', { path: '/' });
+  const performLogoutAndRedirect = useCallback(async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error("Error during logout API call:", error);
+    }
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
+    deleteCookie('user-session', { path: '/' });
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
       window.dispatchEvent(new Event('authStateChanged'));
     }
-    router.replace('/auth/login');
-  }, [router]);
+    pageRouter.replace('/auth/login');
+  }, [pageRouter]);
 
-  const checkAdminStatus = useCallback(async () => {
-    if (!isMounted) return;
-    setIsLoadingAuth(true);
+  const verifyAdminRole = useCallback(async () => {
+    if (!componentMounted) return;
+    setCheckingAuth(true);
 
-    const authToken = getCookie('authToken');
-    const isLoggedInCookie = getCookie('isLoggedIn');
-    const userCookie = getCookie('loggedInUser');
-    let currentUser: StoredUser | null = null;
-    let currentIsAdmin = false;
+    const userCookieData = getCookie('loggedInUser');
+    let activeUser: StoredUser | null = null;
 
-    if (authToken && isLoggedInCookie === 'true') {
-        if (userCookie) {
-            try {
-                currentUser = JSON.parse(userCookie as string);
-                currentIsAdmin = currentUser?.isAdmin === true;
-            } catch (e) {
-                console.error("AdminPage: Error parsing loggedInUser cookie:", e);
-                // Fall through to !currentUser || !currentIsAdmin check
-            }
-        }
-        
-        if (!currentUser || !currentIsAdmin) {
-            toast({
-                title: "Доступ запрещен",
-                description: "У вас нет прав администратора или проблема с сессией.",
-                variant: "destructive",
-            });
-            setIsAdminUser(false);
-            router.replace('/'); 
-            setIsLoadingAuth(false);
-            return;
-        }
-    } else {
-        toast({
-            title: "Доступ запрещен",
-            description: "Пожалуйста, войдите как администратор.",
-            variant: "destructive",
-        });
-        setIsAdminUser(false);
-        router.replace('/auth/login');
-        setIsLoadingAuth(false);
-        return;
+    if (userCookieData) {
+      try {
+        activeUser = JSON.parse(userCookieData as string);
+      } catch (e) {
+        console.error("AdminPage: Error parsing loggedInUser cookie:", e);
+      }
     }
     
-    setIsAdminUser(true);
-    setIsLoadingAuth(false);
-  }, [isMounted, toast, router]);
+    if (!activeUser && typeof window !== 'undefined') {
+        const localStorageUser = localStorage.getItem('loggedInUser');
+        if (localStorageUser) {
+            try {
+                activeUser = JSON.parse(localStorageUser);
+            } catch (e) {
+                 console.error("AdminPage: Error parsing loggedInUser from localStorage:", e);
+            }
+        }
+    }
+    
+    const isAdmin = activeUser?.role === 'admin';
+
+    if (!isAdmin) {
+      showAppToast({
+        title: "Доступ запрещен",
+        description: "У вас нет прав администратора или сессия истекла.",
+        variant: "destructive",
+      });
+      setIsCurrentUserAdmin(false);
+      performLogoutAndRedirect(); 
+    } else {
+      setIsCurrentUserAdmin(true);
+    }
+    setCheckingAuth(false);
+  }, [componentMounted, showAppToast, performLogoutAndRedirect]);
 
 
   useEffect(() => {
-    if (isMounted) {
-      checkAdminStatus();
+    if (componentMounted) {
+      verifyAdminRole();
     }
-    const handleAuthStateChanged = () => {
-        if (isMounted) {
-          checkAdminStatus();
+    const handleAuthUpdate = () => {
+        if (componentMounted) {
+          verifyAdminRole();
         }
     };
-    window.addEventListener('authStateChanged', handleAuthStateChanged);
+    if (typeof window !== 'undefined') {
+        window.addEventListener('authStateChanged', handleAuthUpdate);
+    }
     return () => {
-        window.removeEventListener('authStateChanged', handleAuthStateChanged);
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('authStateChanged', handleAuthUpdate);
+        }
     };
-  }, [checkAdminStatus, isMounted]);
+  }, [componentMounted, verifyAdminRole]);
 
-   const handleLogout = useCallback(() => {
-    clearAuthStorageAndRedirect();
-  }, [clearAuthStorageAndRedirect]);
+   const logoutUser = useCallback(() => {
+    performLogoutAndRedirect();
+  }, [performLogoutAndRedirect]);
 
 
-  if (!isMounted || isLoadingAuth) {
+  if (!componentMounted || checkingAuth) {
     return (
       <div className="container mx-auto py-8">
         <Card className="w-full p-4">
@@ -124,10 +128,10 @@ const AdminPage = () => {
     );
   }
 
-  if (!isAdminUser) { 
+  if (!isCurrentUserAdmin) {
       return (
             <div className="container mx-auto py-8">
-               <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>
+               <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
             </div>
       );
   }
@@ -157,11 +161,11 @@ const AdminPage = () => {
           </Tabs>
         </CardContent>
         <div className="mt-8 flex justify-center">
-          <Button onClick={handleLogout} variant="outline">Выйти</Button>
+          <Button onClick={logoutUser} variant="outline">Выйти</Button>
         </div>
       </Card>
     </div>
   );
 };
 
-export default AdminPage;
+export default AdminDashboardPage;

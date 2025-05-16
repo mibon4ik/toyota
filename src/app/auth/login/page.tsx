@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -6,7 +7,7 @@ import Link from "next/link";
 import { Button } from '@/components/ui/button';
 import { LoginForm } from './components/LoginForm';
 
-const LoginPage = () => {
+const UserLoginPage = () => {
   return (
     <div className="flex justify-center items-center min-h-screen">
       <Card className="w-full max-w-md p-4 sm:p-6">
@@ -14,7 +15,7 @@ const LoginPage = () => {
           <CardTitle className="text-2xl text-center">Войти</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <LoginForm /> {/* Use the LoginForm component */}
+          <LoginForm />
           <div className="mt-4 text-center">
             <p className="text-muted-foreground mb-2">Еще нет аккаунта?</p>
             <Link href="/auth/register">
@@ -27,4 +28,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default UserLoginPage;

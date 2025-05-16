@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -8,149 +9,132 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
-import { setCookie } from 'cookies-next';
 import type { User, StoredUser } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie';
+import { setCookie as setClientCookie } from 'cookies-next';
 
 export const RegistrationForm = () => {
-  const [username, setUsername] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [carMake, setCarMake] = useState('');
-  const [carModel, setCarModel] = useState('');
-  const [vinCode, setVinCode] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const { toast } = useToast();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [regUsername, setRegUsername] = useState('');
+  const [regFirstName, setRegFirstName] = useState('');
+  const [regLastName, setRegLastName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhoneNumber, setRegPhoneNumber] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [regCarMake, setRegCarMake] = useState('');
+  const [regCarModel, setRegCarModel] = useState('');
+  const [regVinCode, setRegVinCode] = useState('');
+  const [registrationError, setRegistrationError] = useState('');
+  const pageRouter = useRouter();
+  const { toast: showToastMsg } = useToast();
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [clientMounted, setClientMounted] = useState(false);
 
    useEffect(() => {
-        setIsMounted(true);
+        setClientMounted(true);
     }, []);
 
-  const generateToken = (user: StoredUser) => {
-      const userData = {
-          id: user.id,
-          username: user.username,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-          carMake: user.carMake,
-          carModel: user.carModel,
-          vinCode: user.vinCode,
-          isAdmin: user.isAdmin, 
-      };
-      try {
-        return btoa(JSON.stringify(userData)); 
-      } catch (e) {
-        console.error("Error generating token:", e);
-        return `error-${Date.now()}`; 
-      }
-  };
-
-  const handleRegistration = async (e: React.FormEvent) => {
+  const processRegistration: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
-    setError('');
+    setRegistrationError('');
 
-    if (!username || !firstName || !lastName || !phoneNumber || !password || !confirmPassword || !vinCode || !carMake || !carModel) {
-      setError('Пожалуйста, заполните все обязательные поля.');
+    if (!regUsername || !regFirstName || !regLastName || !regPhoneNumber || !regPassword || !regConfirmPassword || !regVinCode || !regCarMake || !regCarModel) {
+      setRegistrationError('Пожалуйста, заполните все обязательные поля.');
       return;
     }
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Неверный формат электронной почты.');
+    if (regEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) {
+      setRegistrationError('Неверный формат электронной почты.');
       return;
     }
-    if (vinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
-      setError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
+    if (regVinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(regVinCode)) {
+      setRegistrationError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
       return;
     }
-    if (!/^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password)) {
-      setError('Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру.');
-      return;
+    if (regPassword.length < 8) {
+         setRegistrationError('Пароль должен содержать минимум 8 символов.');
+         return;
     }
-    if (password !== confirmPassword) {
-      setError('Пароли не совпадают.');
+    if (regPassword !== regConfirmPassword) {
+      setRegistrationError('Пароли не совпадают.');
       return;
     }
 
-    setIsLoading(true);
+    setIsRegistering(true);
 
     try {
-      const newUserPayload = {
-        username,
-        firstName,
-        lastName,
-        email: email || undefined,
-        phoneNumber,
-        password,
-        carMake,
-        carModel,
-        vinCode: vinCode.toUpperCase(),
+      const newUserDetails = {
+        username: regUsername,
+        firstName: regFirstName,
+        lastName: regLastName,
+        email: regEmail || undefined,
+        phoneNumber: regPhoneNumber,
+        password: regPassword,
+        carMake: regCarMake,
+        carModel: regCarModel,
+        vinCode: regVinCode.toUpperCase(),
       };
-      const registeredUser = await createUser(newUserPayload); // registeredUser is User (includes password hash)
+      const newlyRegisteredUser: User = await createUser(newUserDetails);
 
-      const { password: _, ...userFieldsForStorage } = registeredUser;
-      const userToStore: StoredUser = {
-          ...userFieldsForStorage,
-          isAdmin: !!registeredUser.isAdmin, // Ensure boolean, should be false
-      };
-
-       const token = generateToken(userToStore);
-        const cookieOptions: CookieSerializeOptions = {
-          maxAge: 60 * 60 * 24 * 7, 
-          path: '/',
-          sameSite: 'lax', 
-          secure: process.env.NODE_ENV === 'production',
-        };
-
-       setCookie('authToken', token, cookieOptions);
-       setCookie('isLoggedIn', 'true', cookieOptions);
-       setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); 
-
-       if (typeof window !== 'undefined') {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); 
-            window.dispatchEvent(new Event('authStateChanged'));
-        }
-
-      toast({
-        title: 'Регистрация успешна!',
-        description: 'Вы будете перенаправлены на главную страницу.',
+      const loginResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: newlyRegisteredUser.username, password: newlyRegisteredUser.password }),
       });
 
-       router.replace('/');
+      if (!loginResponse.ok) {
+        const loginErrorData = await loginResponse.json();
+        throw new Error(loginErrorData.message || 'Не удалось автоматически войти после регистрации.');
+      }
+      
+      const loginData = await loginResponse.json();
+      const userToStoreInClient: StoredUser = loginData.user;
+
+      const cookieOptions = {
+        maxAge: 60 * 60 * 24 * 7, 
+        path: '/',
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+      };
+      setClientCookie('isLoggedIn', 'true', cookieOptions);
+      setClientCookie('loggedInUser', JSON.stringify(userToStoreInClient), cookieOptions);
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(userToStoreInClient));
+        window.dispatchEvent(new Event('authStateChanged'));
+      }
+
+      showToastMsg({
+        title: 'Регистрация успешна!',
+        description: 'Вы автоматически вошли в систему и будете перенаправлены.',
+      });
+
+       pageRouter.replace('/dashboard');
     } catch (err: any) {
       console.error("Registration error:", err);
-      setError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
+      setRegistrationError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
     } finally {
-      setIsLoading(false);
+      setIsRegistering(false);
     }
   };
 
-    if (!isMounted) {
+    if (!clientMounted) {
         return <div className="text-center text-muted-foreground">Загрузка формы регистрации...</div>;
     }
 
   return (
-    <form onSubmit={handleRegistration} className="space-y-4">
+    <form onSubmit={processRegistration} className="space-y-4">
        <div>
         <Label htmlFor="username">Логин</Label>
         <Input
           id="username"
           type="text"
           placeholder="Логин"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={regUsername}
+          onChange={(e) => setRegUsername(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
           autoComplete="username"
         />
       </div>
@@ -160,10 +144,10 @@ export const RegistrationForm = () => {
           id="firstName"
           type="text"
           placeholder="Имя"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
+          value={regFirstName}
+          onChange={(e) => setRegFirstName(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
           autoComplete="given-name"
         />
       </div>
@@ -173,10 +157,10 @@ export const RegistrationForm = () => {
           id="lastName"
           type="text"
           placeholder="Фамилия"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
+          value={regLastName}
+          onChange={(e) => setRegLastName(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
           autoComplete="family-name"
         />
       </div>
@@ -186,9 +170,9 @@ export const RegistrationForm = () => {
           id="email"
           type="email"
           placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isLoading}
+          value={regEmail}
+          onChange={(e) => setRegEmail(e.target.value)}
+          disabled={isRegistering}
            autoComplete="email"
         />
       </div>
@@ -198,10 +182,10 @@ export const RegistrationForm = () => {
           id="phoneNumber"
           type="tel"
           placeholder="Номер телефона"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          value={regPhoneNumber}
+          onChange={(e) => setRegPhoneNumber(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
            autoComplete="tel"
         />
       </div>
@@ -211,10 +195,10 @@ export const RegistrationForm = () => {
           id="carMake"
           type="text"
           placeholder="Марка машины"
-          value={carMake}
-          onChange={(e) => setCarMake(e.target.value)}
+          value={regCarMake}
+          onChange={(e) => setRegCarMake(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
         />
       </div>
       <div>
@@ -223,10 +207,10 @@ export const RegistrationForm = () => {
           id="carModel"
           type="text"
           placeholder="Модель машины"
-          value={carModel}
-          onChange={(e) => setCarModel(e.target.value)}
+          value={regCarModel}
+          onChange={(e) => setRegCarModel(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isRegistering}
         />
       </div>
       <div>
@@ -235,14 +219,14 @@ export const RegistrationForm = () => {
           id="vinCode"
           type="text"
           placeholder="VIN-код автомобиля"
-          value={vinCode}
-          onChange={(e) => setVinCode(e.target.value.toUpperCase())}
+          value={regVinCode}
+          onChange={(e) => setRegVinCode(e.target.value.toUpperCase())}
           required
           minLength={17}
           maxLength={17}
-          pattern="[A-HJ-NPR-Z0-9]{17}" 
+          pattern="[A-HJ-NPR-Z0-9]{17}"
           title="VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
-          disabled={isLoading}
+          disabled={isRegistering}
           className="uppercase tracking-widest font-mono [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
            autoComplete="off"
         />
@@ -252,14 +236,14 @@ export const RegistrationForm = () => {
         <div className="relative">
           <Input
             id="password"
-            type={showPassword ? 'text' : 'password'}
+            type={showRegPassword ? 'text' : 'password'}
             placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={regPassword}
+            onChange={(e) => setRegPassword(e.target.value)}
             required
-            pattern="(?=.*\d)(?=.*[A-Z]).{8,}" 
-            title="Пароль должен содержать минимум 8 символов, одну заглавную букву и одну цифру."
-            disabled={isLoading}
+            minLength={8}
+            title="Пароль должен содержать минимум 8 символов."
+            disabled={isRegistering}
              autoComplete="new-password"
           />
           <Button
@@ -267,11 +251,11 @@ export const RegistrationForm = () => {
             variant="ghost"
             size="icon"
             className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setShowPassword(!showPassword)}
-             disabled={isLoading}
-              aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            onClick={() => setShowRegPassword(!showRegPassword)}
+             disabled={isRegistering}
+              aria-label={showRegPassword ? 'Скрыть пароль' : 'Показать пароль'}
           >
-            {showPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
+            {showRegPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
           </Button>
         </div>
       </div>
@@ -280,12 +264,12 @@ export const RegistrationForm = () => {
         <div className="relative">
           <Input
             id="confirmPassword"
-            type={showConfirmPassword ? 'text' : 'password'}
+            type={showRegConfirmPassword ? 'text' : 'password'}
             placeholder="Подтверждение пароля"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            value={regConfirmPassword}
+            onChange={(e) => setRegConfirmPassword(e.target.value)}
             required
-            disabled={isLoading}
+            disabled={isRegistering}
             autoComplete="new-password"
           />
           <Button
@@ -293,17 +277,17 @@ export const RegistrationForm = () => {
             variant="ghost"
             size="icon"
             className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-             disabled={isLoading}
-             aria-label={showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+             disabled={isRegistering}
+             aria-label={showRegConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'}
           >
-             {showConfirmPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
+             {showRegConfirmPassword ? <Icons.eyeOff className="h-4 w-4"/> : <Icons.eye className="h-4 w-4"/>}
           </Button>
         </div>
       </div>
-      {error && <p className="text-destructive text-xs italic">{error}</p>}
-      <Button type="submit" className="w-full hover:bg-[#8dc572] italic" disabled={isLoading}>
-       {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+      {registrationError && <p className="text-destructive text-xs italic">{registrationError}</p>}
+      <Button type="submit" className="w-full hover:bg-[#8dc572] italic" disabled={isRegistering}>
+       {isRegistering ? 'Регистрация...' : 'Зарегистрироваться'}
       </Button>
     </form>
   );

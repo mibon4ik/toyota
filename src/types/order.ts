@@ -1,29 +1,30 @@
+
 import type { AutoPart } from './autopart';
 
-export interface OrderItem extends AutoPart {
+export interface OrderItemDetail extends AutoPart {
   quantity: number;
 }
 
-export interface CustomerInfo {
+export interface CustomerContactInfo {
   firstName: string;
   lastName: string;
   phone: string;
   email: string;
 }
 
-export interface ShippingAddress {
+export interface DeliveryAddressInfo {
   city: string;
   street: string;
   house: string;
   apartment?: string;
 }
 
-export interface Order {
+export interface OrderRecord {
   id: string;
-  orderDate: string; // ISO date string
-  customerInfo: CustomerInfo;
-  shippingAddress: ShippingAddress;
-  items: OrderItem[];
+  orderDate: string;
+  customerInfo: CustomerContactInfo;
+  shippingAddress: DeliveryAddressInfo;
+  items: OrderItemDetail[];
   totalAmount: number;
   paymentMethod: 'online' | 'cash_on_delivery';
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';

@@ -6,12 +6,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Add formatPrice utility function
-export const formatPrice = (price: number): string => {
+export const formatPrice = (priceValue: number): string => {
   return new Intl.NumberFormat('ru-KZ', {
     style: 'currency',
     currency: 'KZT',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(priceValue);
 };

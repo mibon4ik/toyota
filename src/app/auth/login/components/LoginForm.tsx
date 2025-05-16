@@ -1,4 +1,5 @@
-"use client";
+
+'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -7,110 +8,99 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
-import { setCookie } from 'cookies-next';
-import { verifyPassword } from '@/lib/auth';
+import { setCookie as setClientCookie } from 'cookies-next';
 import type { StoredUser } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie';
+
 
 export const LoginForm = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const router = useRouter();
-  const { toast } = useToast();
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('admin');
+  const [loginPassword, setLoginPassword] = useState('admin123');
+  const [loginError, setLoginError] = useState('');
+  const navRouter = useRouter();
+  const { toast: showToast } = useToast();
+  const [revealPassword, setRevealPassword] = useState(false);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+  const [isClientMounted, setIsClientMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true);
+    setIsClientMounted(true);
   }, []);
 
-  const generateToken = (user: StoredUser) => {
-    const userData = {
-      id: user.id,
-      username: user.username,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      carMake: user.carMake,
-      carModel: user.carModel,
-      vinCode: user.vinCode,
-      isAdmin: user.isAdmin, 
-    };
+  const handleLoginSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoginError('');
+    setIsProcessingLogin(true);
 
     try {
-      return btoa(JSON.stringify(userData)); 
-    } catch (e) {
-      return `error-${Date.now()}`;
-    }
-  };
+      const apiResponse = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: loginUsername.trim(), password: loginPassword }),
+      });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setIsLoading(true);
+      const responseData = await apiResponse.json();
 
-    try {
-        const user = await verifyPassword(username.trim(), password); // user is StoredUser | null
+      if (!apiResponse.ok) {
+        setLoginError(responseData.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.');
+        setIsProcessingLogin(false);
+        return;
+      }
+      
+      const userDataForStorage: StoredUser = responseData.user;
 
-        if (!user) {
-          setError('Неверные учетные данные');
-          setIsLoading(false);
-          return;
-        }
-        
-        const userToStore: StoredUser = user; // user is already StoredUser
+      const cookieConfig = {
+        maxAge: 60 * 60 * 24 * 7, 
+        path: '/',
+        sameSite: 'lax' as const,
+        secure: process.env.NODE_ENV === 'production',
+      };
 
-        const token = generateToken(userToStore); 
-        const cookieOptions: CookieSerializeOptions = {
-          maxAge: 60 * 60 * 24 * 7, 
-          path: '/',
-          sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production',
-        };
+      setClientCookie('isLoggedIn', 'true', cookieConfig);
+      setClientCookie('loggedInUser', JSON.stringify(userDataForStorage), cookieConfig);
 
-        setCookie('authToken', token, cookieOptions);
-        setCookie('isLoggedIn', 'true', cookieOptions);
-        setCookie('loggedInUser', JSON.stringify(userToStore), cookieOptions); 
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(userDataForStorage));
+        window.dispatchEvent(new Event('authStateChanged'));
+      }
 
-         if (typeof window !== 'undefined') {
-             localStorage.setItem('isLoggedIn', 'true');
-             localStorage.setItem('loggedInUser', JSON.stringify(userToStore)); 
-             window.dispatchEvent(new Event('authStateChanged')); 
-         }
+      showToast({
+        title: "Вход выполнен!",
+        description: userDataForStorage.role === 'admin' ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+      });
+      
+      if (userDataForStorage.role === 'admin') {
+        navRouter.replace('/admin');
+      } else {
+        navRouter.replace('/dashboard');
+      }
 
-        toast({
-            title: "Вход выполнен!",
-            description: userToStore.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
-        });
-        
-        router.replace('/'); 
     } catch (err) {
-        setError('Ошибка входа. Пожалуйста, попробуйте позже.');
+      console.error("Login error:", err);
+      setLoginError('Ошибка входа. Пожалуйста, попробуйте позже.');
     } finally {
-        setIsLoading(false);
+      setIsProcessingLogin(false);
     }
   };
 
-
-  if (!isMounted) {
+  if (!isClientMounted) {
     return <div className="text-center text-muted-foreground">Загрузка формы входа...</div>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleLoginSubmit} className="space-y-4">
       <div>
         <Label htmlFor="username">Логин</Label>
         <Input
           id="username"
           type="text"
           placeholder="Логин"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={loginUsername}
+          onChange={(e) => setLoginUsername(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isProcessingLogin}
           autoComplete="username"
         />
       </div>
@@ -119,12 +109,12 @@ export const LoginForm = () => {
         <div className="relative">
           <Input
             id="password"
-            type={showPassword ? "text" : "password"}
+            type={revealPassword ? "text" : "password"}
             placeholder="Пароль"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
             required
-            disabled={isLoading}
+            disabled={isProcessingLogin}
             autoComplete="current-password"
           />
           <Button
@@ -132,17 +122,17 @@ export const LoginForm = () => {
             variant="ghost"
             size="icon"
             className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7"
-            onClick={() => setShowPassword(!showPassword)}
-            disabled={isLoading}
-            aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+            onClick={() => setRevealPassword(!revealPassword)}
+            disabled={isProcessingLogin}
+            aria-label={revealPassword ? 'Скрыть пароль' : 'Показать пароль'}
           >
-            {showPassword ? <Icons.eyeOff className="h-4 w-4" /> : <Icons.eye className="h-4 w-4" />}
+            {revealPassword ? <Icons.eyeOff className="h-4 w-4" /> : <Icons.eye className="h-4 w-4" />}
           </Button>
         </div>
       </div>
-      {error && <p className="text-destructive text-xs italic">{error}</p>}
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Вход...' : 'Войти'}
+      {loginError && <p className="text-destructive text-xs italic">{loginError}</p>}
+      <Button type="submit" className="w-full" disabled={isProcessingLogin}>
+        {isProcessingLogin ? 'Вход...' : 'Войти'}
       </Button>
     </form>
   );

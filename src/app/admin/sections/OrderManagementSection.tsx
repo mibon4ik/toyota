@@ -8,40 +8,40 @@ import { getAllOrders } from '@/services/orders';
 import { useToast } from "@/hooks/use-toast";
 
 export const OrderManagementSection: React.FC = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
-  const [errorOrders, setErrorOrders] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [orderListData, setOrderListData] = useState<Order[]>([]);
+  const [fetchingOrders, setFetchingOrders] = useState(true);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
+  const { toast: showAppToast } = useToast();
 
-  const fetchOrders = useCallback(async () => {
-    setIsLoadingOrders(true);
-    setErrorOrders(null);
+  const loadOrders = useCallback(async () => {
+    setFetchingOrders(true);
+    setOrdersError(null);
     try {
-      const fetchedOrders = await getAllOrders();
-      setOrders(fetchedOrders);
-    } catch (fetchError) {
-      console.error("OrderManagementSection: Failed to fetch orders:", fetchError);
-      setErrorOrders("Не удалось загрузить список заказов.");
-      toast({
+      const data = await getAllOrders();
+      setOrderListData(data);
+    } catch (err) {
+      console.error("OrderManagementSection: Failed to fetch orders:", err);
+      setOrdersError("Не удалось загрузить список заказов.");
+      showAppToast({
         title: "Ошибка загрузки заказов",
         description: "Не удалось загрузить список заказов. Попробуйте позже.",
         variant: "destructive",
       });
     } finally {
-      setIsLoadingOrders(false);
+      setFetchingOrders(false);
     }
-  }, [toast]);
+  }, [showAppToast]);
 
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    loadOrders();
+  }, [loadOrders]);
 
   return (
     <div className="space-y-8 mt-6">
       <OrderList
-        orders={orders}
-        isLoading={isLoadingOrders}
-        error={errorOrders}
+        orderData={orderListData}
+        isLoadingStatus={fetchingOrders}
+        errorMessage={ordersError}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+
 import {
   ArrowRight,
   Check,
@@ -37,10 +38,10 @@ import {
   EyeOff,
   Aperture,
   Zap,
-  Gift, // Added Gift icon
+  Gift,
 } from 'lucide-react';
 
-const Icons = {
+const IconsCollection = {
   arrowRight: ArrowRight,
   check: Check,
   chevronDown: ChevronsUpDown,
@@ -73,12 +74,12 @@ const Icons = {
   filter: Filter,
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
-  car: Car, // Changed 'engine' key to 'car' to match import
-  suspension: Zap, // Reverted to Zap as Suspension is not valid
+  car: Car,
+  suspension: Zap, 
   brakes: Circle,
   electrical: Zap,
   body: Box,
-  accessories: Gift, // Using Gift for accessories
+  accessories: Gift,
   truck: Truck,
   eye: Eye,
   eyeOff: EyeOff,
@@ -86,4 +87,4 @@ const Icons = {
   zap: Zap,
 };
 
-export {Icons};
+export {IconsCollection as Icons};

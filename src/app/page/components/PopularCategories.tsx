@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -5,7 +6,7 @@ import { Card, CardTitle } from "@/components/ui/card";
 import { Icons } from "@/components/icons";
 import Link from "next/link";
 
-const categories = [
+const popularCategoryList = [
   {
     name: 'Двигатель',
     icon: Icons.car,
@@ -14,7 +15,7 @@ const categories = [
   },
   {
     name: 'Подвеска',
-    icon: Icons.suspension, // Use the Zap icon for Suspension
+    icon: Icons.suspension,
     value: 'Подвеска',
     href: '/shop?category=Подвеска',
   },
@@ -50,13 +51,13 @@ export const PopularCategories: React.FC = () => {
       <div className="container mx-auto text-center">
         <h2 className="text-3xl font-bold mb-8">Популярные категории</h2>
          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {categories.map((category) => {
-             const IconComponent = category.icon;
+          {popularCategoryList.map((categoryItem) => {
+             const CategoryIcon = categoryItem.icon;
              return (
-               <Link key={category.value} href={category.href ?? `/shop?category=${category.value}`} passHref legacyBehavior={false} className="block">
+               <Link key={categoryItem.value} href={categoryItem.href ?? `/shop?category=${categoryItem.value}`} passHref legacyBehavior={false} className="block">
                   <Card className="w-full p-4 product-card text-center hover:shadow-md transition-shadow h-full flex flex-col justify-center items-center">
-                     {IconComponent ? React.createElement(IconComponent, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' } }) : null}
-                     <CardTitle className="text-sm font-medium">{category.name}</CardTitle>
+                     {CategoryIcon ? React.createElement(CategoryIcon, {className: "w-8 h-8 mb-2", style: { color: '#535353ff' } }) : null}
+                     <CardTitle className="text-sm font-medium">{categoryItem.name}</CardTitle>
                   </Card>
                </Link>
              );

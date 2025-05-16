@@ -1,3 +1,4 @@
+
 'use client';
 import React from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
@@ -7,92 +8,86 @@ import {useToast} from "@/hooks/use-toast";
 import {useState, useEffect} from "react";
 import Link from "next/link";
 
-interface AutopartProps {
-  product: AutoPart;
+interface PartCardProps {
+  productInfo: AutoPart;
 }
 
-const Autopart: React.FC<AutopartProps> = ({ product }) => {
-  const { toast } = useToast();
-  const [cartItems, setCartItems] = useState<AutoPart[]>(() => {
+const AutopartComponent: React.FC<PartCardProps> = ({ productInfo }) => {
+  const { toast: showToast } = useToast();
+  const [basketItems, setBasketItems] = useState<AutoPart[]>(() => {
 
     if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('cartItems');
-      return storedCart ? JSON.parse(storedCart) : [];
+      const savedBasket = localStorage.getItem('cartItems');
+      return savedBasket ? JSON.parse(savedBasket) : [];
     }
     return [];
   });
 
   useEffect(() => {
-
     if (typeof window !== 'undefined') {
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+      localStorage.setItem('cartItems', JSON.stringify(basketItems));
     }
-  }, [cartItems]);
+  }, [basketItems]);
 
-  const handleAddToCart = () => {
-    const existingItemIndex = cartItems.findIndex((item: AutoPart) => item.id === product.id);
+  const addItemToBasket = () => {
+    const itemInBasketIndex = basketItems.findIndex((item: AutoPart) => item.id === productInfo.id);
 
-    let updatedCart;
+    let newBasketState;
 
-    if (existingItemIndex > -1) {
-
-      updatedCart = cartItems.map((item: AutoPart, index: number) =>
-        index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+    if (itemInBasketIndex > -1) {
+      newBasketState = basketItems.map((item: AutoPart, index: number) =>
+        index === itemInBasketIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
       );
     } else {
-
-      updatedCart = [...cartItems, { ...product, quantity: 1 }];
+      newBasketState = [...basketItems, { ...productInfo, quantity: 1 }];
     }
 
-    setCartItems(updatedCart);
+    setBasketItems(newBasketState);
 
-    toast({
+    showToast({
       title: "Товар добавлен в корзину!",
-      description: `${product.name} был добавлен в вашу корзину.`,
+      description: `${productInfo.name} был добавлен в вашу корзину.`,
     });
   };
 
-  const formatPrice = (price: number): string => {
-
-    const priceInTenge = price;
+  const formatCurrency = (amount: number): string => {
     return new Intl.NumberFormat('ru-KZ', {
       style: 'currency',
       currency: 'KZT',
       minimumFractionDigits: 0,
        maximumFractionDigits: 0,
-    }).format(priceInTenge);
+    }).format(amount);
   };
 
   return (
     <Card className="w-full product-card flex flex-col h-full overflow-hidden group">
         <CardHeader className="p-4">
-
-            <Link href={`/part/${product.id}`} passHref legacyBehavior={false} aria-label={`Посмотреть детали для ${product.name}`}>
+            <Link href={`/part/${productInfo.id}`} passHref legacyBehavior={false} aria-label={`Посмотреть детали для ${productInfo.name}`}>
                   <CardTitle className="hover:text-primary transition-colors cursor-pointer line-clamp-2 text-sm font-medium h-10">
-                    {product.name}
+                    {productInfo.name}
                    </CardTitle>
              </Link>
         </CardHeader>
         <CardContent className="flex flex-col items-center flex-grow p-4 pt-0">
-             <Link href={`/part/${product.id}`} passHref legacyBehavior={false} className="block w-full mb-3" aria-label={`Посмотреть изображение ${product.name}`}>
+             <Link href={`/part/${productInfo.id}`} passHref legacyBehavior={false} className="block w-full mb-3" aria-label={`Посмотреть изображение ${productInfo.name}`}>
                     <img
-                        src={product.imageUrl || 'https://picsum.photos/300/200'}
-                        alt={product.name}
+                        src={productInfo.imageUrl || 'https://placehold.co/300x200.png'}
+                        alt={productInfo.name}
                         className="object-cover rounded-md h-28 w-full group-hover:opacity-90 transition-opacity border"
                         loading="lazy"
-                         onError={(e) => (e.currentTarget.src = 'https://picsum.photos/300/200')}
+                         onError={(e) => (e.currentTarget.src = 'https://placehold.co/300x200.png')}
+                         data-ai-hint={productInfo.dataAiHint || "autopart image"}
                     />
             </Link>
-            <p className="text-xs text-muted-foreground mb-1">{product.brand}</p>
-            <p className="text-base font-semibold mb-3">{formatPrice(product.price)}</p>
+            <p className="text-xs text-muted-foreground mb-1">{productInfo.brand}</p>
+            <p className="text-base font-semibold mb-3">{formatCurrency(productInfo.price)}</p>
         </CardContent>
 
          <div className="p-4 pt-0 mt-auto">
-
-            <Button onClick={handleAddToCart} className="w-full h-9">В корзину</Button>
+            <Button onClick={addItemToBasket} className="w-full h-9">В корзину</Button>
         </div>
     </Card>
   );
 };
 
-export default Autopart;
+export default AutopartComponent;

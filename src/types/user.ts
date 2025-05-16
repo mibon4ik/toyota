@@ -1,15 +1,19 @@
-export interface User {
+
+export type UserAccountRole = 'admin' | 'user';
+
+export interface UserAccount {
   id: string;
   username: string;
   firstName: string;
   lastName: string;
   email?: string;
   phoneNumber: string;
-  password?: string; 
+  password?: string;
   carMake: string;
   carModel: string;
   vinCode: string;
-  isAdmin?: boolean;
+  role: UserAccountRole;
+  isAdmin: boolean;
 }
 
-export type StoredUser = Omit<User, 'password'> & { isAdmin: boolean };
+export type UserSessionData = Omit<UserAccount, 'password'>;

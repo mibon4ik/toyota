@@ -5,8 +5,6 @@ import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
-import { cn } from "@/lib/utils";
-import Autopart from "@/app/components/autopart"; // Autopart is used within dynamic components
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
@@ -14,10 +12,9 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Dynamically import components that might cause hydration issues or are heavy
 const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
-  ssr: false, // Disable SSR for this component if it uses client-side only APIs directly
-  loading: () => <Skeleton className="h-40 w-full" />, // Loading skeleton
+  ssr: false,
+  loading: () => <Skeleton className="h-40 w-full" />,
 });
 const HitsOfSales = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
   ssr: false,
@@ -28,7 +25,7 @@ const NewArrivals = dynamic(() => import('./page/components/NewArrivals').then(m
   loading: () => <Skeleton className="h-96 w-full" />,
 });
 const StoreBenefits = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
-  ssr: false, // Potentially safe for SSR, but keep dynamic for consistency
+  ssr: false,
   loading: () => <Skeleton className="h-48 w-full" />,
 });
 const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
@@ -36,121 +33,111 @@ const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => 
   loading: () => <Skeleton className="h-64 w-full" />,
 });
 const CompatibilityChecker = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
-  ssr: false, // Likely uses client-side state/effects
+  ssr: false,
   loading: () => <Skeleton className="h-80 w-full" />,
 });
 
 
-const banners = [
+const mainBanners = [
   {
     id: 'banner-1',
     title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://picsum.photos/seed/summersale/1200/400', // Use picsum for placeholder
+    imageUrl: 'https://placehold.co/1200x400.png',
     buttonText: 'Купить сейчас',
-    href: '/shop?sale=true',
-    dataAiHint: "car parts summer sale" // Keep hint
+    link: '/shop?sale=true',
+    imageHint: "car parts summer sale"
   },
   {
     id: 'banner-2',
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400', // Use picsum for placeholder
+     imageUrl: 'https://placehold.co/1200x400.png',
     buttonText: 'Посмотреть новинки',
-    href: '/shop?sort=newest',
-    dataAiHint: "new car parts arrivals" // Keep hint
+    link: '/shop?sort=newest',
+    imageHint: "new car parts arrivals"
   },
 ];
 
-interface CartItem extends AutoPart {
+interface CartProduct extends AutoPart {
   quantity: number;
 }
 
 const HomePage = () => {
-  const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { toast: displayToast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [shoppingCart, setShoppingCart] = useState<CartProduct[]>([]);
 
-  // Load cart from localStorage only on the client-side after mount
   useEffect(() => {
-    setIsMounted(true);
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
+    setIsClient(true);
+    const storedCartData = localStorage.getItem('cartItems');
+    if (storedCartData) {
       try {
-        const parsedCart: CartItem[] = JSON.parse(storedCart);
-        // Enhanced validation
-        if (Array.isArray(parsedCart) && parsedCart.every(item =>
-            item && // Check if item is not null/undefined
+        const parsedCartData: CartProduct[] = JSON.parse(storedCartData);
+        if (Array.isArray(parsedCartData) && parsedCartData.every(item =>
+            item &&
             typeof item.id === 'string' &&
             typeof item.name === 'string' &&
             typeof item.price === 'number' &&
             typeof item.quantity === 'number' &&
-            typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+            typeof item.imageUrl === 'string'
         )) {
-          setCartItems(parsedCart);
+          setShoppingCart(parsedCartData);
         } else {
            console.warn("Invalid cart data found in localStorage (HomePage). Clearing cart.");
            localStorage.removeItem('cartItems');
-           setCartItems([]); // Clear state too
+           setShoppingCart([]);
         }
       } catch (e) {
         console.error("Error parsing cart from localStorage (HomePage):", e);
         localStorage.removeItem('cartItems');
-         setCartItems([]); // Clear state too
+         setShoppingCart([]);
       }
     } else {
-        setCartItems([]);
+        setShoppingCart([]);
     }
   }, []);
 
-  // Update localStorage whenever cartItems change, only on client
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify other components like nav
+    if (isClient) {
+      localStorage.setItem('cartItems', JSON.stringify(shoppingCart));
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
-  }, [cartItems, isMounted]);
+  }, [shoppingCart, isClient]);
 
-  // Define handleAddToCart in the parent component
-  const handleAddToCart = useCallback((product: AutoPart) => {
-    if (!isMounted) return; // Prevent execution on server or before mount
-    console.log("Adding to cart (HomePage):", product.name, "with ImageUrl:", product.imageUrl);
-
-    setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
-      let updatedCart;
-      let toastTitle = "";
-      let toastDescription = "";
+  const addItemToCart = useCallback((productToAdd: AutoPart) => {
+    if (!isClient) return;
+    
+    setShoppingCart(currentCart => {
+      const existingItemIndex = currentCart.findIndex(item => item.id === productToAdd.id);
+      let updatedCartItems;
+      let toastTitleText = "";
+      let toastDescriptionText = "";
 
       if (existingItemIndex > -1) {
-        // Increase quantity if item exists
-        updatedCart = currentItems.map((item, index) =>
+        updatedCartItems = currentCart.map((item, index) =>
           index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
         );
-        toastTitle = "Количество обновлено!";
-        toastDescription = `Количество ${product.name} в корзине увеличено.`;
+        toastTitleText = "Количество обновлено!";
+        toastDescriptionText = `Количество ${productToAdd.name} в корзине увеличено.`;
       } else {
-        // Add new item with quantity 1, ensuring imageUrl is included
-        updatedCart = [...currentItems, { ...product, quantity: 1 }];
-        toastTitle = "Товар добавлен в корзину!";
-        toastDescription = `${product.name} был добавлен в вашу корзину.`;
+        updatedCartItems = [...currentCart, { ...productToAdd, quantity: 1 }];
+        toastTitleText = "Товар добавлен в корзину!";
+        toastDescriptionText = `${productToAdd.name} был добавлен в вашу корзину.`;
       }
-
-      // Defer toast to avoid calling it during render
+      
+      // This timeout is a common student trick to ensure toast is called after state update is processed
        setTimeout(() => {
-           toast({ title: toastTitle, description: toastDescription });
-           console.log("Toast displayed for:", product.name);
+           displayToast({ title: toastTitleText, description: toastDescriptionText });
        }, 0);
 
-      return updatedCart; // Return the updated cart state
+      return updatedCartItems;
     });
 
-  }, [toast, isMounted]); // Add isMounted to dependencies
+  }, [displayToast, isClient]);
 
 
-  // Render skeleton or simplified content until mounted
-  if (!isMounted) {
+  if (!isClient) {
      return (
         <div className="space-y-12 container mx-auto">
-             {/* Skeleton for Banners */}
              <div className="space-y-4">
                 {[...Array(2)].map((_, index) => (
                     <Card key={index} className="overflow-hidden">
@@ -172,41 +159,37 @@ const HomePage = () => {
      );
   }
 
-  // Render full content after mounting
   return (
     <div className="fade-in space-y-12">
-        {/* Banner Section */}
         <div className="space-y-4">
-            {banners.map((banner, index) => (
-                <Card key={banner.id} className="overflow-hidden">
+            {mainBanners.map((bannerItem, idx) => (
+                <Card key={bannerItem.id} className="overflow-hidden">
                     <CardHeader className="p-4">
-                      <CardTitle className="text-xl">{banner.title}</CardTitle>
+                      <CardTitle className="text-xl">{bannerItem.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="flex flex-col items-start p-4 pt-0">
                       <div className="relative w-full aspect-[3/1] mb-4">
-                        {/* Use next/image for optimization */}
                         <Image
-                          src={banner.imageUrl}
-                          alt={banner.title}
-                          fill // Use fill to cover the container
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes
-                          className="rounded-md object-cover" // Ensure image covers the area
-                          priority={index === 0} // Prioritize the first banner image
-                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')} // Fallback
-                          data-ai-hint={banner.dataAiHint} // Keep AI hint
+                          src={bannerItem.imageUrl}
+                          alt={bannerItem.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="rounded-md object-cover"
+                          priority={idx === 0}
+                          onError={(e) => (e.currentTarget.src = 'https://placehold.co/1200x400.png')}
+                          data-ai-hint={bannerItem.imageHint}
                         />
                       </div>
                       <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
-                        <Link href={banner.href ?? '#'}>{banner.buttonText}</Link>
+                        <Link href={bannerItem.link ?? '#'}>{bannerItem.buttonText}</Link>
                       </Button>
                     </CardContent>
                   </Card>
             ))}
         </div>
 
-       {/* Wrap dynamic components in Suspense and pass handleAddToCart */}
        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-         <CompatibilityChecker onAddToCart={handleAddToCart} />
+         <CompatibilityChecker onAddToCart={addItemToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
@@ -214,11 +197,11 @@ const HomePage = () => {
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <HitsOfSales onAddToCart={handleAddToCart} />
+          <HitsOfSales onAddToCart={addItemToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-         <NewArrivals onAddToCart={handleAddToCart} />
+         <NewArrivals onAddToCart={addItemToCart} />
        </Suspense>
 
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>

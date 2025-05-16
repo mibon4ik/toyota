@@ -9,63 +9,63 @@ import { getAllUsers } from '@/lib/auth';
 import { useToast } from "@/hooks/use-toast";
 
 export const UserManagementSection: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]); // State now holds full User objects
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
-  const [errorUsers, setErrorUsers] = useState<string | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null); // State now holds full User object or null
-  const { toast } = useToast();
+  const [userAccounts, setUserAccounts] = useState<User[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [usersError, setUsersError] = useState<string | null>(null);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [currentUserToEdit, setCurrentUserToEdit] = useState<User | null>(null);
+  const { toast: showAppToast } = useToast();
 
-  const fetchUsers = useCallback(async () => {
-    setIsLoadingUsers(true);
-    setErrorUsers(null);
+  const fetchUserAccounts = useCallback(async () => {
+    setLoadingUsers(true);
+    setUsersError(null);
     try {
-      const fetchedUsers = await getAllUsers();
-      setUsers(fetchedUsers);
-    } catch (fetchError) {
-      console.error("UserManagementSection: Failed to fetch users:", fetchError);
-      setErrorUsers("Не удалось загрузить список пользователей.");
-      toast({
+      const accounts = await getAllUsers();
+      setUserAccounts(accounts);
+    } catch (error) {
+      console.error("UserManagementSection: Failed to fetch users:", error);
+      setUsersError("Не удалось загрузить список пользователей.");
+      showAppToast({
         title: "Ошибка загрузки пользователей",
         description: "Не удалось загрузить список пользователей. Попробуйте позже.",
         variant: "destructive",
       });
     } finally {
-      setIsLoadingUsers(false);
+      setLoadingUsers(false);
     }
-  }, [toast]);
+  }, [showAppToast]);
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    fetchUserAccounts();
+  }, [fetchUserAccounts]);
 
-  const handleEditUser = (user: User) => { // Accepts full User object
-    setSelectedUser(user);
-    setIsEditModalOpen(true);
+  const startEditUser = (userToEdit: User) => {
+    setCurrentUserToEdit(userToEdit);
+    setIsEditingUser(true);
   };
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedUser(null);
+  const finishEditUser = () => {
+    setIsEditingUser(false);
+    setCurrentUserToEdit(null);
   };
 
-  const handleUserUpdated = useCallback(() => {
-    fetchUsers(); // Refetch users after update
-  }, [fetchUsers]);
+  const refreshUserList = useCallback(() => {
+    fetchUserAccounts();
+  }, [fetchUserAccounts]);
 
   return (
     <div className="space-y-8 mt-6">
       <UserList
-        users={users} // Pass full user objects
-        isLoading={isLoadingUsers}
-        error={errorUsers}
-        onEdit={handleEditUser}
+        usersData={userAccounts}
+        isDataLoading={loadingUsers}
+        loadingError={usersError}
+        onEditUser={startEditUser}
       />
       <EditUserForm
-        user={selectedUser} // Pass full selected user object
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        onUserUpdated={handleUserUpdated}
+        userData={currentUserToEdit}
+        isDialogOpen={isEditingUser}
+        onDialogClose={finishEditUser}
+        onUserSaved={refreshUserList}
       />
     </div>
   );

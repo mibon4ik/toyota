@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
@@ -6,13 +7,13 @@ import { SiteHeader } from "@/app/components/site-header";
 import { SiteFooter } from "@/app/components/site-footer";
 
 
-const inter = Inter({
+const interFont = Inter({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-inter',
   display: 'swap',
 });
 
-const poppins = Poppins({
+const poppinsFont = Poppins({
   subsets: ['latin'],
   variable: '--font-poppins',
   weight: ['400', '500', '600', '700'],
@@ -20,26 +21,26 @@ const poppins = Poppins({
 });
 
 
-export const metadata: Metadata = {
+export const siteMetadata: Metadata = {
   title: 'Toyota - Запчасти и Аксессуары',
   description: 'Ваш надежный магазин автозапчастей и аксессуаров для Toyota.',
 };
 
 
-export default function RootLayout({
+export default function MainLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${inter.variable} ${poppins.variable}`}>
+    <html lang="ru" className={`${interFont.variable} ${poppinsFont.variable}`}>
       <head>
-        {/* Preconnect to image origins */}
         <link rel="preconnect" href="https://picsum.photos" />
         <link rel="preconnect" href="https://fastly.picsum.photos" />
         <link rel="preconnect" href="https://content.onliner.by" />
-        {/* Add other domains if used */}
-        {/* <link rel="preconnect" href="https://example.com" /> */}
+        <link rel="preconnect" href="https://avatars.mds.yandex.net" />
+        <link rel="preconnect" href="https://example.com" />
+
       </head>
       <body className="antialiased bg-background text-foreground">
         <div className="relative flex min-h-screen flex-col">

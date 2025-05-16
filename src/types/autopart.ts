@@ -1,5 +1,5 @@
-export interface AutoPart {
 
+export interface AutoPart {
   id: string;
   name: string;
   brand: string;
@@ -13,7 +13,5 @@ export interface AutoPart {
   rating?: number;
   reviewCount?: number;
   quantity?: number;
-  dataAiHint?: string; // Added optional hint for AI image generation
+  dataAiHint?: string;
 }
-
-    

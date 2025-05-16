@@ -7,16 +7,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import type { User } from '@/types/user';
 
-interface UserListProps {
-  users: User[]; // Now expects full User object including password
-  isLoading: boolean;
-  error: string | null;
-  onEdit: (user: User) => void; // Expects full User object
+interface UserTableProps {
+  usersData: User[];
+  isDataLoading: boolean;
+  loadingError: string | null;
+  onEditUser: (user: User) => void;
 }
 
-export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onEdit }) => {
+export const UserList: React.FC<UserTableProps> = ({ usersData, isDataLoading, loadingError, onEditUser }) => {
 
-  if (isLoading) {
+  if (isDataLoading) {
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
@@ -31,16 +31,16 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
     );
   }
 
-  if (error) {
+  if (loadingError) {
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
-        <p className="text-destructive text-center">{error}</p>
+        <p className="text-destructive text-center">{loadingError}</p>
       </div>
     );
   }
 
-  if (users.length === 0) {
+  if (usersData.length === 0) {
     return (
        <div>
             <h2 className="text-xl font-semibold mb-4">Зарегистрированные пользователи:</h2>
@@ -67,20 +67,19 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user) => (
-              // Ensure no extra whitespace inside the TableRow mapping or between TableCells
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.username}</TableCell>
-                <TableCell>{user.firstName} {user.lastName}</TableCell>
-                <TableCell>{user.phoneNumber}</TableCell>
-                <TableCell>{user.carMake} {user.carModel}</TableCell>
-                <TableCell className="font-mono text-xs tracking-wider">{user.vinCode}</TableCell>
-                <TableCell>{user.isAdmin ? 'Да' : 'Нет'}</TableCell>
-                <TableCell className="text-xs font-mono text-muted-foreground truncate max-w-[100px]" title={user.password}>
-                   {user.password ? `${user.password.substring(0, 10)}...` : 'N/A'}
+            {usersData.map((singleUser) => (
+              <TableRow key={singleUser.id}>
+                <TableCell className="font-medium">{singleUser.username}</TableCell>
+                <TableCell>{singleUser.firstName} {singleUser.lastName}</TableCell>
+                <TableCell>{singleUser.phoneNumber}</TableCell>
+                <TableCell>{singleUser.carMake} {singleUser.carModel}</TableCell>
+                <TableCell className="font-mono text-xs tracking-wider">{singleUser.vinCode}</TableCell>
+                <TableCell>{singleUser.isAdmin ? 'Да' : 'Нет'}</TableCell>
+                <TableCell className="text-xs font-mono text-muted-foreground truncate max-w-[100px]" title={singleUser.password}>
+                   {singleUser.password ? `${singleUser.password.substring(0, 10)}...` : 'N/A'}
                 </TableCell>
                 <TableCell>
-                   <Button variant="outline" size="sm" onClick={() => onEdit(user)}>Изменить</Button>
+                   <Button variant="outline" size="sm" onClick={() => onEditUser(singleUser)}>Изменить</Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -90,4 +89,3 @@ export const UserList: React.FC<UserListProps> = ({ users, isLoading, error, onE
     </div>
   );
 };
-
