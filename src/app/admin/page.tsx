@@ -18,19 +18,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 const AdminPanel = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const [mounted, setMounted] = useState(false);
-  const [isAdminUser, setIsAdminUser] = useState(false);
+  const [isAdminUser, setIsAdminUser] = useState(false); // Default to false
   const [authCheckInProgress, setAuthCheckInProgress] = useState(true);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const performLogout = useCallback(async () => {
+    console.log('AdminPanel Debug: performLogout called');
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      // Error during logout API call, already handled client-side
+      console.error("AdminPanel Debug: Logout API call failed:", error);
     }
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
@@ -38,67 +34,73 @@ const AdminPanel = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
-      window.dispatchEvent(new Event('authStateChanged')); // Notify other parts of UI
+      window.dispatchEvent(new Event('authStateChanged')); 
     }
     router.replace('/auth/login');
   }, [router]);
 
-  const verifyAdminPermissions = useCallback(async () => {
-    if (!mounted) return;
+  useEffect(() => {
+    let isComponentMounted = true;
+    console.log('AdminPanel Debug: useEffect for access verification running.');
     setAuthCheckInProgress(true);
 
-    let userFromCookie = getCookie('loggedInUser');
-    let currentUser: StoredUser | null = null;
+    let userCookieString = getCookie('loggedInUser'); // This is the non-HttpOnly cookie
+    let currentUserState: StoredUser | null = null;
 
-    if (userFromCookie) {
-      try {
-        currentUser = JSON.parse(userFromCookie as string);
-        console.log('AdminPanel Debug: User from cookie:', currentUser);
-      } catch (e) {
-        console.error('AdminPanel Debug: Error parsing user cookie:', e);
-      }
+    if (userCookieString && typeof userCookieString === 'string') {
+        try {
+            currentUserState = JSON.parse(userCookieString);
+            console.log('AdminPanel Debug: User from "loggedInUser" cookie:', currentUserState);
+        } catch (e) {
+            console.error('AdminPanel Debug: Error parsing "loggedInUser" cookie:', e);
+        }
+    } else {
+        console.log('AdminPanel Debug: "loggedInUser" cookie not found or not a string.');
     }
     
-    if (!currentUser && typeof window !== 'undefined') {
-        const userFromLocalStorage = localStorage.getItem('loggedInUser');
-        if (userFromLocalStorage) {
+    // Fallback to localStorage for UI consistency, though middleware relies on HttpOnly cookie
+    if (!currentUserState && typeof window !== 'undefined') {
+        const userLocalStorageString = localStorage.getItem('loggedInUser');
+        if (userLocalStorageString) {
             try {
-                currentUser = JSON.parse(userFromLocalStorage);
-                console.log('AdminPanel Debug: User from localStorage:', currentUser);
+                currentUserState = JSON.parse(userLocalStorageString);
+                console.log('AdminPanel Debug: User from localStorage (fallback):', currentUserState);
             } catch (e) {
-                 console.error('AdminPanel Debug: Error parsing user localStorage:', e);
+                 console.error('AdminPanel Debug: Error parsing user from localStorage:', e);
             }
+        } else {
+             console.log('AdminPanel Debug: "loggedInUser" not found in localStorage.');
         }
     }
     
-    console.log('AdminPanel Debug: Final current user for permission check:', currentUser);
-    const adminRightsConfirmed = currentUser?.isAdmin === true;
-    console.log('AdminPanel Debug: Admin rights confirmed:', adminRightsConfirmed);
+    console.log('AdminPanel Debug: Final user object for client-side check:', currentUserState);
+    const adminRightsConfirmed = currentUserState?.isAdmin === true;
+    console.log('AdminPanel Debug: Client-side admin rights confirmed:', adminRightsConfirmed);
 
-    if (!adminRightsConfirmed) {
-      toast({
-        title: "Доступ запрещен",
-        description: "У вас нет прав администратора или сессия истекла.",
-        variant: "destructive",
-      });
-      setIsAdminUser(false);
-      performLogout(); 
-    } else {
-      setIsAdminUser(true);
+    if (isComponentMounted) {
+        if (adminRightsConfirmed) {
+            setIsAdminUser(true);
+        } else {
+            setIsAdminUser(false);
+            toast({
+                title: "Доступ запрещен",
+                description: "У вас нет прав администратора или сессия истекла. Middleware должен был предотвратить это.",
+                variant: "destructive",
+            });
+            // If middleware allowed access but client-side check fails,
+            // it implies a desync or an issue. Logging out is a safe measure.
+            performLogout(); 
+        }
+        setAuthCheckInProgress(false);
     }
-    setAuthCheckInProgress(false);
-  }, [mounted, toast, performLogout]);
+    
+    return () => {
+        isComponentMounted = false;
+    };
+  }, [toast, performLogout]);
 
 
-  useEffect(() => {
-    if (mounted) {
-      verifyAdminPermissions();
-    }
-    // Removed 'authStateChanged' listener to simplify and rely on middleware + initial check
-  }, [mounted, verifyAdminPermissions]);
-
-
-  if (!mounted || authCheckInProgress) {
+  if (authCheckInProgress) {
     return (
       <div className="container mx-auto py-8">
         <Card className="w-full p-4">
@@ -118,12 +120,11 @@ const AdminPanel = () => {
   }
 
   if (!isAdminUser) {
-      // This part should ideally not be reached if middleware is effective,
-      // but serves as a fallback if client-side check fails after middleware pass.
-      // The verifyAdminPermissions function already handles redirecting to login.
+      // This state should ideally not be reached if middleware is effective and client check is just a confirmation.
+      // The `verifyAdminPermissions` useEffect already handles redirecting via performLogout.
       return (
             <div className="container mx-auto py-8">
-               <p className="text-center text-destructive">Доступ запрещен. Перенаправление...</p>
+               <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
             </div>
       );
   }

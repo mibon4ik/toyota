@@ -52,18 +52,20 @@ export function MainNav({ className, ...props }: NavigationProps) {
   const refreshAuthState = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    const isLoggedInCookie = getCookie('isLoggedIn');
-    const userDataCookie = getCookie('loggedInUser');
+    const isLoggedInCookie = getCookie('isLoggedIn'); // Non-HttpOnly
+    const userDataCookieString = getCookie('loggedInUser'); // Non-HttpOnly
 
-    if (isLoggedInCookie === 'true' && userDataCookie) {
+    if (isLoggedInCookie === 'true' && userDataCookieString) {
       try {
-        const userObj = JSON.parse(userDataCookie as string) as StoredUser;
+        const userObj = JSON.parse(userDataCookieString as string) as StoredUser;
         if (userObj && userObj.id) {
           setUserIsAuthenticated(true);
           setCurrentUser(userObj);
-           localStorage.setItem('isLoggedIn', 'true');
-           localStorage.setItem('loggedInUser', JSON.stringify(userObj));
+          // Ensure localStorage is in sync if cookies are primary
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('loggedInUser', JSON.stringify(userObj));
         } else {
+          // Invalid or missing user data in cookie
           setUserIsAuthenticated(false);
           setCurrentUser(null);
           localStorage.removeItem('isLoggedIn');
@@ -77,6 +79,7 @@ export function MainNav({ className, ...props }: NavigationProps) {
         localStorage.removeItem('loggedInUser');
       }
     } else {
+      // Fallback to localStorage if cookies are missing
       const lsLoggedIn = localStorage.getItem('isLoggedIn');
       const lsUserData = localStorage.getItem('loggedInUser');
       if (lsLoggedIn === 'true' && lsUserData) {
@@ -97,7 +100,29 @@ export function MainNav({ className, ...props }: NavigationProps) {
 
   const logOutUser = useCallback(async () => {
     try {
+      // Call API to clear HttpOnly session cookie
       await fetch('/api/auth/logout', { method: 'POST' });
+      
+      // Clear client-side cookies
+      deleteCookie('isLoggedIn', { path: '/' });
+      deleteCookie('loggedInUser', { path: '/' });
+      
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('loggedInUser');
+        window.dispatchEvent(new Event('authStateChanged')); // Notify other parts of UI
+      }
+      
+      setUserIsAuthenticated(false);
+      setCurrentUser(null);
+      appRouter.push('/auth/login'); // Redirect to login
+      appRouter.refresh(); // Force refresh to ensure state is clean
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Fallback: still clear client-side state even if API call fails
+      deleteCookie('isLoggedIn', { path: '/' });
+      deleteCookie('loggedInUser', { path: '/' });
       if (typeof window !== 'undefined') {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
@@ -107,8 +132,6 @@ export function MainNav({ className, ...props }: NavigationProps) {
       setCurrentUser(null);
       appRouter.push('/auth/login');
       appRouter.refresh();
-    } catch (error) {
-      console.error('Logout failed:', error);
     }
   }, [appRouter]);
 
@@ -228,7 +251,7 @@ export function MainNav({ className, ...props }: NavigationProps) {
                     <AvatarFallback>{currentUser.firstName?.[0]?.toUpperCase()}{currentUser.lastName?.[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
                <span className="text-sm font-medium hidden sm:inline-block">{currentUser.firstName} {currentUser.lastName}</span>
-               {currentUser.role === 'admin' && (
+               {currentUser.isAdmin === true && ( // Explicitly check isAdmin
                  <Link href="/admin" passHref legacyBehavior={false}>
                    <Button size="sm" variant="outline">
                      Админ панель

@@ -14,7 +14,7 @@ import type { StoredUser } from '@/types/user';
 
 export const LoginForm = () => {
   const [loginUsername, setLoginUsername] = useState('admin');
-  const [loginPassword, setLoginPassword] = useState('admin'); // Changed to 'admin'
+  const [loginPassword, setLoginPassword] = useState('admin');
   const [loginError, setLoginError] = useState('');
   const navRouter = useRouter();
   const { toast: showToast } = useToast();
@@ -57,15 +57,15 @@ export const LoginForm = () => {
         secure: process.env.NODE_ENV === 'production',
       };
 
+      // Set non-HttpOnly cookies for client-side access
       setClientCookie('isLoggedIn', 'true', cookieConfig);
       setClientCookie('loggedInUser', JSON.stringify(userDataForStorage), cookieConfig);
-      setClientCookie('user-session', JSON.stringify(userDataForStorage), {...cookieConfig, httpOnly: false });
-
+      // DO NOT set 'user-session' here; it's HttpOnly and managed by the server API route.
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('loggedInUser', JSON.stringify(userDataForStorage));
-        window.dispatchEvent(new Event('authStateChanged'));
+        window.dispatchEvent(new Event('authStateChanged')); // Notify other parts of UI
       }
 
       showToast({
@@ -73,10 +73,11 @@ export const LoginForm = () => {
         description: userDataForStorage.isAdmin === true ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
+      // Perform navigation after state updates
       if (userDataForStorage.isAdmin === true) {
         navRouter.replace('/admin');
       } else {
-        navRouter.replace('/dashboard');
+        navRouter.replace('/dashboard'); // Or '/' for main page
       }
 
     } catch (err) {
@@ -139,4 +140,3 @@ export const LoginForm = () => {
     </form>
   );
 };
-
