@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, {useState, useEffect, useCallback, useMemo} from 'react';
@@ -65,12 +64,10 @@ export const ShopContent = () => {
          )) {
            setCart(parsedItems);
          } else {
-           console.warn("Invalid cart data found in localStorage (ShopContent). Clearing cart.");
            localStorage.removeItem('cartItems');
            setCart([]);
          }
        } catch (e) {
-         console.error("Error parsing cart items from localStorage (ShopContent):", e);
          localStorage.removeItem('cartItems');
           setCart([]);
        }
@@ -109,11 +106,8 @@ export const ShopContent = () => {
 
       setAvailableProducts(productsToDisplay);
     } catch (err: any) {
-      console.error("Failed to fetch products:", err);
       setFetchErrorMessage("Не удалось загрузить товары.");
-       setTimeout(() => {
-           showAppToast({ title: "Ошибка", description: err.message || "Не удалось загрузить товары.", variant: "destructive" });
-       }, 0);
+      showAppToast({ title: "Ошибка", description: err.message || "Не удалось загрузить товары.", variant: "destructive" });
     } finally {
       setIsFetching(false);
     }
@@ -153,12 +147,10 @@ export const ShopContent = () => {
          toastDescription = `${productToAdd.name} был добавлен в вашу корзину.`;
        }
        
-       setTimeout(() => {
-            showAppToast({
-                title: toastTitle,
-                description: toastDescription,
-            });
-       }, 0);
+       showAppToast({
+           title: toastTitle,
+           description: toastDescription,
+       });
 
        return updatedCartItems;
      });

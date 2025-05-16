@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -35,11 +34,9 @@ const OrderCheckoutPage = () => {
         if (Array.isArray(parsedItems) && parsedItems.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
           setCartContents(parsedItems);
         } else {
-          console.warn("Invalid cart data found in localStorage. Clearing cart.");
           localStorage.removeItem('cartItems');
         }
       } catch (e) {
-        console.error("Error parsing cart items from localStorage:", e);
         localStorage.removeItem('cartItems');
       }
     }
@@ -103,7 +100,6 @@ const OrderCheckoutPage = () => {
                 paymentMethod: selectedPaymentMethod,
              });
 
-             console.log("Оформление заказа успешно завершено.");
              displayNotification({
                 title: "Заказ оформлен!",
                 description: "Ваш заказ успешно оформлен. Спасибо за покупку!",
@@ -115,7 +111,6 @@ const OrderCheckoutPage = () => {
              routerInstance.push('/');
 
         } catch (error: any) {
-             console.error("Ошибка при создании заказа:", error);
              displayNotification({
                 title: "Ошибка",
                 description: `Не удалось оформить заказ: ${error.message || 'Попробуйте позже.'}`,
@@ -143,7 +138,7 @@ const OrderCheckoutPage = () => {
     );
   }
 
-   if (cartContents.length === 0) {
+   if (cartContents.length === 0 && isPageLoaded) { // Ensure page is loaded before checking cart
       return (
            <div className="container mx-auto py-8 max-w-3xl">
              <h1 className="text-3xl font-bold text-center mb-8">Оформление заказа</h1>

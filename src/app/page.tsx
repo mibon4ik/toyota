@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
@@ -42,7 +41,7 @@ const mainBanners = [
   {
     id: 'banner-1',
     title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://placehold.co/1200x400.png',
+    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     buttonText: 'Купить сейчас',
     link: '/shop?sale=true',
     imageHint: "car parts summer sale"
@@ -50,7 +49,7 @@ const mainBanners = [
   {
     id: 'banner-2',
     title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://placehold.co/1200x400.png',
+     imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
     buttonText: 'Посмотреть новинки',
     link: '/shop?sort=newest',
     imageHint: "new car parts arrivals"
@@ -82,12 +81,10 @@ const HomePage = () => {
         )) {
           setShoppingCart(parsedCartData);
         } else {
-           console.warn("Invalid cart data found in localStorage (HomePage). Clearing cart.");
            localStorage.removeItem('cartItems');
            setShoppingCart([]);
         }
       } catch (e) {
-        console.error("Error parsing cart from localStorage (HomePage):", e);
         localStorage.removeItem('cartItems');
          setShoppingCart([]);
       }
@@ -124,11 +121,7 @@ const HomePage = () => {
         toastDescriptionText = `${productToAdd.name} был добавлен в вашу корзину.`;
       }
       
-      // This timeout is a common student trick to ensure toast is called after state update is processed
-       setTimeout(() => {
-           displayToast({ title: toastTitleText, description: toastDescriptionText });
-       }, 0);
-
+      displayToast({ title: toastTitleText, description: toastDescriptionText });
       return updatedCartItems;
     });
 

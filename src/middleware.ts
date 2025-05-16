@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { StoredUser } from '@/types/user';
@@ -22,7 +21,6 @@ export function middleware(request: NextRequest) {
         activeUser = null;
       }
     } catch (e) {
-      console.error("Middleware: Error parsing session cookie:", e);
       const responseWithClearedCookies = NextResponse.next(); 
       responseWithClearedCookies.cookies.delete('user-session');
       responseWithClearedCookies.cookies.delete('isLoggedIn');
@@ -35,14 +33,14 @@ export function middleware(request: NextRequest) {
   }
 
   if (isAuthenticatedFlag && AUTH_PAGE_PATHS.includes(currentPath)) {
-    return NextResponse.redirect(new URL(activeUser?.role === 'admin' ? '/admin' : '/dashboard', request.url));
+    return NextResponse.redirect(new URL(activeUser?.isAdmin === true ? '/admin' : '/dashboard', request.url));
   }
 
   if (currentPath.startsWith('/admin')) {
     if (!isAuthenticatedFlag) {
       return NextResponse.redirect(new URL('/auth/login', request.url));
     }
-    if (activeUser?.role !== 'admin') {
+    if (activeUser?.isAdmin !== true) { // Check isAdmin instead of role
       return NextResponse.redirect(new URL('/dashboard', request.url)); 
     }
   }

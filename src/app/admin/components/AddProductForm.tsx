@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -68,7 +67,6 @@ export const AddProductForm: React.FC = () => {
       });
       resetForm();
     } catch (err: any) {
-        console.error("Ошибка добавления товара:", err);
         setSubmissionError(err.message || 'Не удалось добавить товар. Попробуйте позже.');
         showToast({
             title: 'Ошибка',

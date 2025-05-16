@@ -1,10 +1,9 @@
-
 'use client'; 
 
 import React, { Suspense } from 'react';
 import { ShopContent } from './components/ShopContent';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card'; // Added Card imports
 
 const ShopPageLoadingUI = () => (
   <div className="container mx-auto py-8">

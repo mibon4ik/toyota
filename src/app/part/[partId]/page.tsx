@@ -1,10 +1,9 @@
-
 'use client';
 
 import React, {useState, useEffect, useCallback} from 'react';
 import { getAutoPartById} from "@/services/autoparts";
 import type { AutoPart } from '@/types/autopart';
-import {Card, CardContent, CardHeader, CardTitle, CardDescription} from "@/components/ui/card";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {useParams} from "next/navigation";
 import {useToast} from "@/hooks/use-toast";
@@ -41,12 +40,10 @@ const PartDetailsPage = () => {
           )) {
             setCurrentCart(parsedCartData);
           } else {
-            console.warn("Invalid cart data found in localStorage (PartDetail). Clearing cart.");
             localStorage.removeItem('cartItems');
              setCurrentCart([]);
           }
        } catch (e) {
-         console.error("Error parsing cart from localStorage on init (PartDetail):", e);
          localStorage.removeItem('cartItems');
          setCurrentCart([]);
        }
@@ -64,7 +61,6 @@ const PartDetailsPage = () => {
              const fetchedPart = await getAutoPartById(currentPartId);
             setPartDetails(fetchedPart);
          } catch (error) {
-            console.error("Failed to fetch part details:", error);
              showToastMsg({
                  title: "Ошибка",
                  description: "Не удалось загрузить детали товара.",
@@ -75,7 +71,6 @@ const PartDetailsPage = () => {
          }
       } else if (!currentPartId && pageLoaded) {
          setIsLoadingPart(false);
-         console.warn("Part ID not found in URL parameters.");
           showToastMsg({
                title: "Ошибка",
                description: "ID товара не найден.",
@@ -119,11 +114,8 @@ const PartDetailsPage = () => {
          toastDesc = `${partDetails.name} был добавлен в вашу корзину.`;
        }
         
-        setTimeout(() => {
-             showToastMsg({ title: toastTitle, description: toastDesc });
-        }, 0);
-
-        return newCartState;
+       showToastMsg({ title: toastTitle, description: toastDesc });
+       return newCartState;
      });
    }, [partDetails, showToastMsg, pageLoaded]);
 
@@ -159,7 +151,7 @@ const PartDetailsPage = () => {
       <Card className="w-full max-w-lg mx-auto">
         <CardHeader>
           <CardTitle className="text-2xl">{partDetails.name}</CardTitle>
-          <CardDescription>{partDetails.brand} {partDetails.sku ? `(Арт: ${partDetails.sku})` : ''}</CardDescription>
+          <p className="text-sm text-muted-foreground">{partDetails.brand} {partDetails.sku ? `(Арт: ${partDetails.sku})` : ''}</p>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <div className="relative w-full h-64 mb-4">
@@ -172,7 +164,6 @@ const PartDetailsPage = () => {
               className="object-contain rounded-md"
               priority
               onError={(e) => {
-                 console.error(`Error loading image for ${partDetails.name}: ${partDetails.imageUrl}`);
                 const targetImageElement = e.target as HTMLImageElement;
                 targetImageElement.srcset = 'https://placehold.co/600x400.png';
                 targetImageElement.src = 'https://placehold.co/600x400.png';

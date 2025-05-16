@@ -1,93 +1,43 @@
+'use client'; 
 
-'use client';
-import React from 'react';
-import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
-import {Button} from "@/components/ui/button";
-import {AutoPart} from "@/types/autopart";
-import {useToast} from "@/hooks/use-toast";
-import {useState, useEffect} from "react";
-import Link from "next/link";
+import React, { Suspense } from 'react';
+import { ShopContent } from './components/ShopContent';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from '@/components/ui/card'; // Added Card imports
 
-interface PartCardProps {
-  productInfo: AutoPart;
-}
+const ShopPageLoadingUI = () => (
+  <div className="container mx-auto py-8">
+    <h1 className="text-3xl font-bold text-center mb-8">Каталог автозапчастей</h1>
+    <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center">
+      <Skeleton className="h-10 w-full sm:w-auto sm:min-w-[200px] rounded-md" />
+      <div className="flex-grow flex gap-2 w-full sm:w-auto">
+        <Skeleton className="h-10 flex-grow rounded-md" />
+        <Skeleton className="h-10 w-10 rounded-md" />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {[...Array(10)].map((_, index) => (
+        <Card key={index} className="w-full">
+          <CardHeader><Skeleton className="h-6 w-3/4" /></CardHeader>
+          <CardContent className="flex flex-col items-center p-4 pt-0">
+            <Skeleton className="h-28 w-full mb-3 rounded-md" />
+            <Skeleton className="h-4 w-1/4 mb-1" />
+            <Skeleton className="h-6 w-1/2 mb-3" />
+            <Skeleton className="h-9 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+);
 
-const AutopartComponent: React.FC<PartCardProps> = ({ productInfo }) => {
-  const { toast: showToast } = useToast();
-  const [basketItems, setBasketItems] = useState<AutoPart[]>(() => {
 
-    if (typeof window !== 'undefined') {
-      const savedBasket = localStorage.getItem('cartItems');
-      return savedBasket ? JSON.parse(savedBasket) : [];
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('cartItems', JSON.stringify(basketItems));
-    }
-  }, [basketItems]);
-
-  const addItemToBasket = () => {
-    const itemInBasketIndex = basketItems.findIndex((item: AutoPart) => item.id === productInfo.id);
-
-    let newBasketState;
-
-    if (itemInBasketIndex > -1) {
-      newBasketState = basketItems.map((item: AutoPart, index: number) =>
-        index === itemInBasketIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
-      );
-    } else {
-      newBasketState = [...basketItems, { ...productInfo, quantity: 1 }];
-    }
-
-    setBasketItems(newBasketState);
-
-    showToast({
-      title: "Товар добавлен в корзину!",
-      description: `${productInfo.name} был добавлен в вашу корзину.`,
-    });
-  };
-
-  const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('ru-KZ', {
-      style: 'currency',
-      currency: 'KZT',
-      minimumFractionDigits: 0,
-       maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
+const ProductShopPage = () => {
   return (
-    <Card className="w-full product-card flex flex-col h-full overflow-hidden group">
-        <CardHeader className="p-4">
-            <Link href={`/part/${productInfo.id}`} passHref legacyBehavior={false} aria-label={`Посмотреть детали для ${productInfo.name}`}>
-                  <CardTitle className="hover:text-primary transition-colors cursor-pointer line-clamp-2 text-sm font-medium h-10">
-                    {productInfo.name}
-                   </CardTitle>
-             </Link>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center flex-grow p-4 pt-0">
-             <Link href={`/part/${productInfo.id}`} passHref legacyBehavior={false} className="block w-full mb-3" aria-label={`Посмотреть изображение ${productInfo.name}`}>
-                    <img
-                        src={productInfo.imageUrl || 'https://placehold.co/300x200.png'}
-                        alt={productInfo.name}
-                        className="object-cover rounded-md h-28 w-full group-hover:opacity-90 transition-opacity border"
-                        loading="lazy"
-                         onError={(e) => (e.currentTarget.src = 'https://placehold.co/300x200.png')}
-                         data-ai-hint={productInfo.dataAiHint || "autopart image"}
-                    />
-            </Link>
-            <p className="text-xs text-muted-foreground mb-1">{productInfo.brand}</p>
-            <p className="text-base font-semibold mb-3">{formatCurrency(productInfo.price)}</p>
-        </CardContent>
-
-         <div className="p-4 pt-0 mt-auto">
-            <Button onClick={addItemToBasket} className="w-full h-9">В корзину</Button>
-        </div>
-    </Card>
+    <Suspense fallback={<ShopPageLoadingUI />}>
+      <ShopContent />
+    </Suspense>
   );
 };
 
-export default AutopartComponent;
+export default ProductShopPage;

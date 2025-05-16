@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
@@ -35,12 +34,10 @@ export const CompatibilityChecker: React.FC<CompatibilityFormProps> = ({ onAddTo
 
     if (vehicleVin && vehicleVin.length === 17 && /^[A-HJ-NPR-Z0-9]{17}$/i.test(vehicleVin)) {
       try {
-        console.log(`Searching parts by VIN: ${vehicleVin}`);
         searchResults = await getPartsByVin(vehicleVin.toUpperCase());
         didSearch = true;
-        console.log(`Found ${searchResults.length} parts by VIN.`);
       } catch (error) {
-        console.error("Error fetching parts by VIN:", error);
+        // Error fetching parts by VIN
       }
     } else if (vehicleVin) {
        showMsg({
@@ -53,15 +50,10 @@ export const CompatibilityChecker: React.FC<CompatibilityFormProps> = ({ onAddTo
     }
 
     if ((!didSearch || searchResults.length === 0) && vehicleMake && vehicleModel) {
-        if (!didSearch) console.log("VIN not provided or invalid, searching by Make/Model...");
-        else console.log("No parts found by VIN, falling back to Make/Model search...");
       try {
-        console.log(`Searching parts by Make: ${vehicleMake}, Model: ${vehicleModel}`);
         searchResults = await getPartsByMakeModel(vehicleMake, vehicleModel);
         didSearch = true;
-        console.log(`Found ${searchResults.length} parts by Make/Model.`);
       } catch (error) {
-        console.error("Error fetching parts by Make/Model:", error);
         showMsg({
           title: "Ошибка",
           description: "Не удалось получить совместимые детали. Пожалуйста, попробуйте позже.",

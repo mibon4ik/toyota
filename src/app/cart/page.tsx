@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -36,22 +35,18 @@ const ShoppingCartPage = () => {
             typeof item.name === 'string' &&
             typeof item.price === 'number' &&
             typeof item.quantity === 'number' &&
-            typeof item.imageUrl === 'string' &&
-            !item.imageUrl.includes('example.com') 
+            typeof item.imageUrl === 'string' 
           );
 
           if (validItems.length !== parsedItems.length) {
-             console.warn("Invalid cart items found and removed from localStorage.");
              localStorage.setItem('cartItems', JSON.stringify(validItems));
           }
           setItemsInCart(validItems);
         } else {
-          console.warn("Invalid cart data format found in localStorage. Clearing cart.");
           localStorage.removeItem('cartItems');
           setItemsInCart([]);
         }
       } catch (e) {
-        console.error("Error parsing cart items from localStorage:", e);
         localStorage.removeItem('cartItems');
         setItemsInCart([]);
       }
@@ -104,13 +99,11 @@ const ShoppingCartPage = () => {
   const deleteItemFromCart = useCallback((itemId: string) => {
     const itemToBeRemoved = itemsInCart.find(item => item.id === itemId);
     setItemsInCart(current => current.filter(item => item.id !== itemId));
-    setTimeout(() => {
-        showNotification({
-          title: "Товар удален!",
-          description: `${itemToBeRemoved?.name || 'Товар'} удален из корзины`,
-          variant: "destructive"
-        });
-    }, 0);
+    showNotification({
+      title: "Товар удален!",
+      description: `${itemToBeRemoved?.name || 'Товар'} удален из корзины`,
+      variant: "destructive"
+    });
   }, [itemsInCart, showNotification]);
 
 
@@ -143,16 +136,15 @@ const ShoppingCartPage = () => {
                     <div className="relative w-20 h-20 flex-shrink-0">
                        <Image
                          key={cartProduct.imageUrl}
-                         src={cartProduct.imageUrl || 'https://picsum.photos/100/100'}
+                         src={cartProduct.imageUrl || 'https://placehold.co/100x100.png'}
                          alt={cartProduct.name}
                          fill
                          sizes="80px"
                          className="object-cover rounded-md border"
                          onError={(e) => {
-                           console.error(`Error loading image for ${cartProduct.name}: ${cartProduct.imageUrl}`);
                            const targetEl = e.target as HTMLImageElement;
-                           targetEl.srcset = 'https://picsum.photos/100/100';
-                           targetEl.src = 'https://picsum.photos/100/100';
+                           targetEl.srcset = 'https://placehold.co/100x100.png';
+                           targetEl.src = 'https://placehold.co/100x100.png';
                          }}
                          data-ai-hint={cartProduct.dataAiHint || `${cartProduct.category} ${cartProduct.brand} cart item`}
                        />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -104,7 +103,6 @@ export const EditProductForm: React.FC<EditFormProps> = ({ productData, isFormOp
       onProductSave(savedProduct);
       closeForm();
     } catch (err: any) {
-        console.error("Ошибка обновления товара:", err);
         setFormError(err.message || 'Не удалось обновить товар. Попробуйте позже.');
         displayToast({
             title: 'Ошибка',

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -29,7 +28,7 @@ const AdminDashboardPage = () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      console.error("Error during logout API call:", error);
+      // Error during logout API call, can be logged if necessary
     }
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
@@ -53,7 +52,7 @@ const AdminDashboardPage = () => {
       try {
         activeUser = JSON.parse(userCookieData as string);
       } catch (e) {
-        console.error("AdminPage: Error parsing loggedInUser cookie:", e);
+        // Error parsing loggedInUser cookie
       }
     }
     
@@ -63,12 +62,12 @@ const AdminDashboardPage = () => {
             try {
                 activeUser = JSON.parse(localStorageUser);
             } catch (e) {
-                 console.error("AdminPage: Error parsing loggedInUser from localStorage:", e);
+                 // Error parsing loggedInUser from localStorage
             }
         }
     }
     
-    const isAdmin = activeUser?.role === 'admin';
+    const isAdmin = activeUser?.isAdmin === true;
 
     if (!isAdmin) {
       showAppToast({
