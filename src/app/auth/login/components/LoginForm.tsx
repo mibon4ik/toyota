@@ -21,6 +21,9 @@ export const LoginForm = () => {
   const [revealPassword, setRevealPassword] = useState(false);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
+  const [loginSuccessData, setLoginSuccessData] = useState<StoredUser | null>(null);
+
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -30,6 +33,8 @@ export const LoginForm = () => {
     event.preventDefault();
     setLoginError('');
     setIsProcessingLogin(true);
+    setLoginAttempted(true);
+    setLoginSuccessData(null);
 
     try {
       const apiResponse = await fetch('/api/auth/login', {
@@ -57,15 +62,13 @@ export const LoginForm = () => {
         secure: process.env.NODE_ENV === 'production',
       };
 
-      // Set non-HttpOnly cookies for client-side access
       setClientCookie('isLoggedIn', 'true', cookieConfig);
       setClientCookie('loggedInUser', JSON.stringify(userDataForStorage), cookieConfig);
-      // DO NOT set 'user-session' here; it's HttpOnly and managed by the server API route.
-
+      
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('loggedInUser', JSON.stringify(userDataForStorage));
-        window.dispatchEvent(new Event('authStateChanged')); // Notify other parts of UI
+        window.dispatchEvent(new Event('authStateChanged')); 
       }
 
       showToast({
@@ -73,12 +76,7 @@ export const LoginForm = () => {
         description: userDataForStorage.isAdmin === true ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
-      // Perform navigation after state updates
-      if (userDataForStorage.isAdmin === true) {
-        navRouter.replace('/admin');
-      } else {
-        navRouter.replace('/dashboard'); // Or '/' for main page
-      }
+      setLoginSuccessData(userDataForStorage); // Trigger navigation via useEffect
 
     } catch (err) {
       console.error("Login error:", err);
@@ -87,6 +85,15 @@ export const LoginForm = () => {
       setIsProcessingLogin(false);
     }
   };
+
+  useEffect(() => {
+    if (loginSuccessData && isClientMounted) {
+      const targetPath = loginSuccessData.isAdmin === true ? '/admin' : '/dashboard';
+      console.log(`LoginForm: Navigating to ${targetPath} due to successful login.`);
+      navRouter.replace(targetPath);
+    }
+  }, [loginSuccessData, isClientMounted, navRouter]);
+
 
   if (!isClientMounted) {
     return <div className="text-center text-muted-foreground">Загрузка формы входа...</div>;
