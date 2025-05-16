@@ -1,0 +1,23 @@
+
+[
+  {
+    "id": "banner-1",
+    "title": "Летняя распродажа - скидки до 50%",
+    "imageUrl": "https://placehold.co/1200x400.png",
+    "buttonText": "Купить сейчас",
+    "link": "/shop?sale=true",
+    "imageHint": "car parts summer sale",
+    "isActive": true,
+    "dataAiHint": "summer sale car"
+  },
+  {
+    "id": "banner-2",
+    "title": "Новые поступления - ознакомьтесь с последними деталями",
+    "imageUrl": "https://placehold.co/1200x400.png",
+    "buttonText": "Посмотреть новинки",
+    "link": "/shop?sort=newest",
+    "imageHint": "new car parts arrivals",
+    "isActive": true,
+    "dataAiHint": "new arrivals auto"
+  }
+]

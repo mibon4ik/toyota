@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
@@ -11,24 +12,25 @@ import type { StoredUser } from '@/types/user';
 import { ProductManagementSection } from './sections/ProductManagementSection';
 import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
+import { BannerManagementSection } from './sections/BannerManagementSection'; 
 import { Skeleton } from '@/components/ui/skeleton';
 
-const AdminDashboardPage = () => {
-  const pageRouter = useRouter();
-  const { toast: showAppToast } = useToast();
-  const [componentMounted, setComponentMounted] = useState(false);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
+const AdminPanel = () => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [mounted, setMounted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authCheck, setAuthCheck] = useState(true);
 
   useEffect(() => {
-    setComponentMounted(true);
+    setMounted(true);
   }, []);
 
-  const performLogoutAndRedirect = useCallback(async () => {
+  const doLogout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      // Error during logout API call, can be logged if necessary
+      // Error during logout API call
     }
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
@@ -38,77 +40,77 @@ const AdminDashboardPage = () => {
       localStorage.removeItem('loggedInUser');
       window.dispatchEvent(new Event('authStateChanged'));
     }
-    pageRouter.replace('/auth/login');
-  }, [pageRouter]);
+    router.replace('/auth/login');
+  }, [router]);
 
-  const verifyAdminRole = useCallback(async () => {
-    if (!componentMounted) return;
-    setCheckingAuth(true);
+  const checkPermissions = useCallback(async () => {
+    if (!mounted) return;
+    setAuthCheck(true);
 
-    const userCookieData = getCookie('loggedInUser');
+    let userCookie = getCookie('loggedInUser');
     let activeUser: StoredUser | null = null;
 
-    if (userCookieData) {
+    if (userCookie) {
       try {
-        activeUser = JSON.parse(userCookieData as string);
+        activeUser = JSON.parse(userCookie as string);
       } catch (e) {
-        // Error parsing loggedInUser cookie
+        // Error parsing cookie
       }
     }
     
     if (!activeUser && typeof window !== 'undefined') {
-        const localStorageUser = localStorage.getItem('loggedInUser');
-        if (localStorageUser) {
+        const localUser = localStorage.getItem('loggedInUser');
+        if (localUser) {
             try {
-                activeUser = JSON.parse(localStorageUser);
+                activeUser = JSON.parse(localUser);
             } catch (e) {
-                 // Error parsing loggedInUser from localStorage
+                 // Error parsing localStorage
             }
         }
     }
     
-    const isAdmin = activeUser?.isAdmin === true;
+    const hasAdminRights = activeUser?.isAdmin === true;
 
-    if (!isAdmin) {
-      showAppToast({
+    if (!hasAdminRights) {
+      toast({
         title: "Доступ запрещен",
         description: "У вас нет прав администратора или сессия истекла.",
         variant: "destructive",
       });
-      setIsCurrentUserAdmin(false);
-      performLogoutAndRedirect(); 
+      setIsAdmin(false);
+      doLogout(); 
     } else {
-      setIsCurrentUserAdmin(true);
+      setIsAdmin(true);
     }
-    setCheckingAuth(false);
-  }, [componentMounted, showAppToast, performLogoutAndRedirect]);
+    setAuthCheck(false);
+  }, [mounted, toast, doLogout]);
 
 
   useEffect(() => {
-    if (componentMounted) {
-      verifyAdminRole();
+    if (mounted) {
+      checkPermissions();
     }
-    const handleAuthUpdate = () => {
-        if (componentMounted) {
-          verifyAdminRole();
+    const handleAuth = () => {
+        if (mounted) {
+          checkPermissions();
         }
     };
     if (typeof window !== 'undefined') {
-        window.addEventListener('authStateChanged', handleAuthUpdate);
+        window.addEventListener('authStateChanged', handleAuth);
     }
     return () => {
         if (typeof window !== 'undefined') {
-            window.removeEventListener('authStateChanged', handleAuthUpdate);
+            window.removeEventListener('authStateChanged', handleAuth);
         }
     };
-  }, [componentMounted, verifyAdminRole]);
+  }, [mounted, checkPermissions]);
 
-   const logoutUser = useCallback(() => {
-    performLogoutAndRedirect();
-  }, [performLogoutAndRedirect]);
+   const userLogout = useCallback(() => {
+    doLogout();
+  }, [doLogout]);
 
 
-  if (!componentMounted || checkingAuth) {
+  if (!mounted || authCheck) {
     return (
       <div className="container mx-auto py-8">
         <Card className="w-full p-4">
@@ -127,7 +129,7 @@ const AdminDashboardPage = () => {
     );
   }
 
-  if (!isCurrentUserAdmin) {
+  if (!isAdmin) {
       return (
             <div className="container mx-auto py-8">
                <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
@@ -143,10 +145,11 @@ const AdminDashboardPage = () => {
         </CardHeader>
         <CardContent className="space-y-12">
           <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4"> {/* Updated to 4 columns */}
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="orders">Заказы</TabsTrigger>
+              <TabsTrigger value="banners">Баннеры</TabsTrigger> {/* New Tab */}
             </TabsList>
             <TabsContent value="products">
               <ProductManagementSection />
@@ -157,14 +160,17 @@ const AdminDashboardPage = () => {
             <TabsContent value="orders">
                <OrderManagementSection />
             </TabsContent>
+            <TabsContent value="banners"> {/* New Tab Content */}
+               <BannerManagementSection />
+            </TabsContent>
           </Tabs>
         </CardContent>
         <div className="mt-8 flex justify-center">
-          <Button onClick={logoutUser} variant="outline">Выйти</Button>
+          <Button onClick={userLogout} variant="outline">Выйти</Button>
         </div>
       </Card>
     </div>
   );
 };
 
-export default AdminDashboardPage;
+export default AdminPanel;

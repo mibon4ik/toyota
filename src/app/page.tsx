@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
@@ -6,134 +7,132 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import type { AutoPart } from '@/types/autopart';
+import type { AutoPart as ProductInfo } from '@/types/autopart';
+import type { Banner as BannerType } from '@/types/banner'; 
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getActiveBanners } from '@/services/banners'; 
 
-const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
+const PopularCategoriesComponent = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
   ssr: false,
   loading: () => <Skeleton className="h-40 w-full" />,
 });
-const HitsOfSales = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
+const FeaturedProductsComponent = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
   ssr: false,
    loading: () => <Skeleton className="h-96 w-full" />,
 });
-const NewArrivals = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), {
+const LatestArrivalsComponent = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), {
   ssr: false,
   loading: () => <Skeleton className="h-96 w-full" />,
 });
-const StoreBenefits = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
+const StoreAdvantagesComponent = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
   ssr: false,
   loading: () => <Skeleton className="h-48 w-full" />,
 });
-const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
+const BlogPreviewComponent = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
   ssr: false,
   loading: () => <Skeleton className="h-64 w-full" />,
 });
-const CompatibilityChecker = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
+const PartFinderComponent = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
   ssr: false,
   loading: () => <Skeleton className="h-80 w-full" />,
 });
 
-
-const mainBanners = [
-  {
-    id: 'banner-1',
-    title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
-    buttonText: 'Купить сейчас',
-    link: '/shop?sale=true',
-    imageHint: "car parts summer sale"
-  },
-  {
-    id: 'banner-2',
-    title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://content.onliner.by/news/1100x5616/790c5e93741342eab27803b6488cf355.jpg',
-    buttonText: 'Посмотреть новинки',
-    link: '/shop?sort=newest',
-    imageHint: "new car parts arrivals"
-  },
-];
-
-interface CartProduct extends AutoPart {
+interface CartItem extends ProductInfo {
   quantity: number;
 }
 
-const HomePage = () => {
-  const { toast: displayToast } = useToast();
-  const [isClient, setIsClient] = useState(false);
-  const [shoppingCart, setShoppingCart] = useState<CartProduct[]>([]);
+const MainPage = () => {
+  const { toast: showToast } = useToast();
+  const [clientReady, setClientReady] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [currentBanners, setCurrentBanners] = useState<BannerType[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
 
   useEffect(() => {
-    setIsClient(true);
-    const storedCartData = localStorage.getItem('cartItems');
-    if (storedCartData) {
+    setClientReady(true);
+    const cartData = localStorage.getItem('cartItems');
+    if (cartData) {
       try {
-        const parsedCartData: CartProduct[] = JSON.parse(storedCartData);
-        if (Array.isArray(parsedCartData) && parsedCartData.every(item =>
-            item &&
-            typeof item.id === 'string' &&
-            typeof item.name === 'string' &&
-            typeof item.price === 'number' &&
-            typeof item.quantity === 'number' &&
-            typeof item.imageUrl === 'string'
+        const items: CartItem[] = JSON.parse(cartData);
+        if (Array.isArray(items) && items.every(item =>
+            item && typeof item.id === 'string' && typeof item.name === 'string' &&
+            typeof item.price === 'number' && typeof item.quantity === 'number' && typeof item.imageUrl === 'string'
         )) {
-          setShoppingCart(parsedCartData);
+          setCart(items);
         } else {
            localStorage.removeItem('cartItems');
-           setShoppingCart([]);
+           setCart([]);
         }
       } catch (e) {
         localStorage.removeItem('cartItems');
-         setShoppingCart([]);
+         setCart([]);
       }
     } else {
-        setShoppingCart([]);
+        setCart([]);
     }
-  }, []);
+
+    const loadBanners = async () => {
+      setBannersLoading(true);
+      try {
+        const activeBanners = await getActiveBanners();
+        setCurrentBanners(activeBanners);
+      } catch (error) {
+        showToast({
+          title: "Ошибка загрузки баннеров",
+          description: "Не удалось загрузить баннеры. Попробуйте обновить страницу.",
+          variant: "destructive"
+        });
+      } finally {
+        setBannersLoading(false);
+      }
+    };
+    loadBanners();
+
+  }, [showToast]);
 
   useEffect(() => {
-    if (isClient) {
-      localStorage.setItem('cartItems', JSON.stringify(shoppingCart));
+    if (clientReady) {
+      localStorage.setItem('cartItems', JSON.stringify(cart));
       window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
-  }, [shoppingCart, isClient]);
+  }, [cart, clientReady]);
 
-  const addItemToCart = useCallback((productToAdd: AutoPart) => {
-    if (!isClient) return;
+  const addProductToCart = useCallback((product: ProductInfo) => {
+    if (!clientReady) return;
     
-    setShoppingCart(currentCart => {
-      const existingItemIndex = currentCart.findIndex(item => item.id === productToAdd.id);
-      let updatedCartItems;
-      let toastTitleText = "";
-      let toastDescriptionText = "";
+    setCart(currentCart => {
+      const existingItem = currentCart.find(item => item.id === product.id);
+      let newCart;
+      let toastTitle = "";
+      let toastMessage = "";
 
-      if (existingItemIndex > -1) {
-        updatedCartItems = currentCart.map((item, index) =>
-          index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+      if (existingItem) {
+        newCart = currentCart.map(item =>
+          item.id === product.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item
         );
-        toastTitleText = "Количество обновлено!";
-        toastDescriptionText = `Количество ${productToAdd.name} в корзине увеличено.`;
+        toastTitle = "Количество обновлено!";
+        toastMessage = `Количество ${product.name} в корзине увеличено.`;
       } else {
-        updatedCartItems = [...currentCart, { ...productToAdd, quantity: 1 }];
-        toastTitleText = "Товар добавлен в корзину!";
-        toastDescriptionText = `${productToAdd.name} был добавлен в вашу корзину.`;
+        newCart = [...currentCart, { ...product, quantity: 1 }];
+        toastTitle = "Товар добавлен в корзину!";
+        toastMessage = `${product.name} был добавлен в вашу корзину.`;
       }
       
-      displayToast({ title: toastTitleText, description: toastDescriptionText });
-      return updatedCartItems;
+      showToast({ title: toastTitle, description: toastMessage });
+      return newCart;
     });
 
-  }, [displayToast, isClient]);
+  }, [showToast, clientReady]);
 
 
-  if (!isClient) {
+  if (!clientReady) {
      return (
         <div className="space-y-12 container mx-auto">
              <div className="space-y-4">
-                {[...Array(2)].map((_, index) => (
-                    <Card key={index} className="overflow-hidden">
+                {[...Array(2)].map((_, idx) => (
+                    <Card key={idx} className="overflow-hidden">
                         <CardHeader className="p-4"><Skeleton className="h-6 w-3/4" /></CardHeader>
                         <CardContent className="flex flex-col items-start p-4 pt-0">
                            <Skeleton className="w-full aspect-[3/1] mb-4 rounded-md" />
@@ -155,57 +154,79 @@ const HomePage = () => {
   return (
     <div className="fade-in space-y-12">
         <div className="space-y-4">
-            {mainBanners.map((bannerItem, idx) => (
-                <Card key={bannerItem.id} className="overflow-hidden">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-xl">{bannerItem.title}</CardTitle>
-                    </CardHeader>
+            {bannersLoading ? (
+              [...Array(2)].map((_, idx) => (
+                <Card key={`banner-skeleton-${idx}`} className="overflow-hidden">
+                    <CardHeader className="p-4"><Skeleton className="h-6 w-3/4" /></CardHeader>
                     <CardContent className="flex flex-col items-start p-4 pt-0">
-                      <div className="relative w-full aspect-[3/1] mb-4">
-                        <Image
-                          src={bannerItem.imageUrl}
-                          alt={bannerItem.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="rounded-md object-cover"
-                          priority={idx === 0}
-                          onError={(e) => (e.currentTarget.src = 'https://placehold.co/1200x400.png')}
-                          data-ai-hint={bannerItem.imageHint}
-                        />
-                      </div>
-                      <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
-                        <Link href={bannerItem.link ?? '#'}>{bannerItem.buttonText}</Link>
-                      </Button>
+                       <Skeleton className="w-full aspect-[3/1] mb-4 rounded-md" />
+                       <Skeleton className="h-10 w-32 mt-4 rounded-md" />
                     </CardContent>
-                  </Card>
-            ))}
+                </Card>
+              ))
+            ) : currentBanners.length > 0 ? (
+                currentBanners.map((banner, idx) => (
+                    <Card key={banner.id} className="overflow-hidden">
+                        <CardHeader className="p-4">
+                          <CardTitle className="text-xl">{banner.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-start p-4 pt-0">
+                          <div className="relative w-full aspect-[3/1] mb-4">
+                            <Image
+                              src={banner.imageUrl}
+                              alt={banner.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="rounded-md object-cover"
+                              priority={idx === 0} 
+                              onError={(e) => (e.currentTarget.src = 'https://placehold.co/1200x400.png')}
+                              data-ai-hint={banner.dataAiHint || banner.imageHint}
+                            />
+                          </div>
+                          <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
+                            <Link href={banner.link ?? '#'}>{banner.buttonText}</Link>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                ))
+            ) : (
+              <Card className="overflow-hidden">
+                <CardHeader className="p-4"><CardTitle className="text-xl">Добро пожаловать!</CardTitle></CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p>Посмотрите наши предложения в магазине.</p>
+                  <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
+                    <Link href="/shop">В магазин</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
         </div>
 
        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-         <CompatibilityChecker onAddToCart={addItemToCart} />
+         <PartFinderComponent onAddToCart={addProductToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-         <PopularCategories />
+         <PopularCategoriesComponent />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <HitsOfSales onAddToCart={addItemToCart} />
+          <FeaturedProductsComponent onAddToCart={addProductToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-         <NewArrivals onAddToCart={addItemToCart} />
+         <LatestArrivalsComponent onAddToCart={addProductToCart} />
        </Suspense>
 
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-          <StoreBenefits />
+          <StoreAdvantagesComponent />
         </Suspense>
 
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-          <MiniBlog />
+          <BlogPreviewComponent />
         </Suspense>
      </div>
     );
   };
 
-  export default HomePage;
+  export default MainPage;
