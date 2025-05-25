@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
-import { getCookie, deleteCookie } from 'cookies-next';
+import { getCookie } from 'cookies-next';
 import type { StoredUser } from '@/types/user';
 
 interface CartItemType {
@@ -52,7 +52,6 @@ export function MainNav({ className, ...props }: NavigationProps) {
   const refreshAuthState = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    // Prioritize client-readable cookies for initial UI state
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userDataCookieString = getCookie('loggedInUser');
     
@@ -65,17 +64,13 @@ export function MainNav({ className, ...props }: NavigationProps) {
         if (userObj && userObj.id) {
           isAuthenticated = true;
           user = userObj;
-          // Ensure localStorage is in sync
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('loggedInUser', JSON.stringify(userObj));
         }
       } catch (e) {
-        console.warn("MainNav: Error parsing loggedInUser cookie", e);
+         console.warn("MainNav: Error parsing loggedInUser cookie", e);
       }
-    }
-    
-    // Fallback to localStorage if cookies are not set/available yet (e.g. initial render, SSR differences)
-    if (!isAuthenticated) {
+    } else {
         const lsLoggedIn = localStorage.getItem('isLoggedIn');
         const lsUserData = localStorage.getItem('loggedInUser');
         if (lsLoggedIn === 'true' && lsUserData) {
@@ -92,50 +87,44 @@ export function MainNav({ className, ...props }: NavigationProps) {
     }
     
     if (!isAuthenticated) {
-        // If still not authenticated, ensure localStorage is cleared for consistency
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
     }
 
     setUserIsAuthenticated(isAuthenticated);
     setCurrentUser(user);
+    console.log("MainNav: Refreshed Auth State - isLoggedIn:", isAuthenticated, "User:", user);
 
-  }, []); // Empty dependency array: this function doesn't depend on component state
+  }, []); 
 
   const logOutUser = useCallback(async () => {
-    // 1. Clear client-side localStorage immediately for responsiveness
     if (typeof window !== 'undefined') {
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('loggedInUser');
     }
     
-    // 2. Call the API to clear HttpOnly server-side cookies AND client-side cookies
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
       console.error("MainNav: Logout API call failed:", error);
-      // Proceed with client-side cleanup even if API call fails
     }
     
-    // 3. Update client-side state
     setUserIsAuthenticated(false);
     setCurrentUser(null);
     
-    // 4. Dispatch state change for other components that might listen
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('authStateChanged'));
     }
     
-    // 5. Redirect to login
     appRouter.replace('/auth/login');
-    appRouter.refresh(); // Force a refresh to ensure server state is reflected for middleware
+    appRouter.refresh(); 
   }, [appRouter]);
 
    useEffect(() => {
         setHasMounted(true);
-        refreshAuthState(); // Initial auth state check
-        refreshCartCount(); // Initial cart count
-    }, [refreshAuthState, refreshCartCount]); // Add refreshAuthState and refreshCartCount as dependencies
+        refreshAuthState(); 
+        refreshCartCount(); 
+    }, [refreshAuthState, refreshCartCount]); 
 
    useEffect(() => {
         if (!hasMounted) return;

@@ -38,29 +38,34 @@ export const RegistrationForm = () => {
     e.preventDefault();
     if (!clientMounted) return;
     setRegistrationError('');
+    setIsRegistering(true);
 
     if (!regUsername || !regFirstName || !regLastName || !regPhoneNumber || !regPassword || !regConfirmPassword || !regVinCode || !regCarMake || !regCarModel) {
       setRegistrationError('Пожалуйста, заполните все обязательные поля.');
+      setIsRegistering(false);
       return;
     }
     if (regEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regEmail)) {
       setRegistrationError('Неверный формат электронной почты.');
+      setIsRegistering(false);
       return;
     }
     if (regVinCode.length !== 17 || !/^[A-HJ-NPR-Z0-9]{17}$/i.test(regVinCode)) {
       setRegistrationError('VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.');
+      setIsRegistering(false);
       return;
     }
     if (regPassword.length < 8) {
          setRegistrationError('Пароль должен содержать минимум 8 символов.');
+         setIsRegistering(false);
          return;
     }
     if (regPassword !== regConfirmPassword) {
       setRegistrationError('Пароли не совпадают.');
+      setIsRegistering(false);
       return;
     }
 
-    setIsRegistering(true);
 
     try {
       const newUserDetails = {
@@ -69,19 +74,18 @@ export const RegistrationForm = () => {
         lastName: regLastName,
         email: regEmail || undefined,
         phoneNumber: regPhoneNumber,
-        password: regPassword, // Server will handle this; client sends plaintext for creation
+        password: regPassword,
         carMake: regCarMake,
         carModel: regCarModel,
         vinCode: regVinCode.toUpperCase(),
       };
-      // This createUser is a server action from auth.ts
-      const newlyRegisteredUser: Omit<User, 'role' | 'isAdmin'> & { password?: string } = await createUser(newUserDetails);
+      
+      await createUser(newUserDetails);
 
-      // After successful registration, attempt to log the user in
       const loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: newlyRegisteredUser.username, password: regPassword }), // Use the original password for login
+        body: JSON.stringify({ username: regUsername, password: regPassword }),
       });
 
       if (!loginResponse.ok) {
@@ -92,17 +96,19 @@ export const RegistrationForm = () => {
       const loginData = await loginResponse.json();
       const userToStoreInClient: StoredUser = loginData.user;
       
-      // API has set HttpOnly cookie. Client sets localStorage for UI sync.
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('loggedInUser', JSON.stringify(userToStoreInClient));
-      window.dispatchEvent(new Event('authStateChanged'));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(userToStoreInClient));
+        window.dispatchEvent(new Event('authStateChanged'));
+      }
 
       showToastMsg({
         title: 'Регистрация успешна!',
         description: 'Вы автоматически вошли в систему и будете перенаправлены.',
       });
 
-       pageRouter.replace('/dashboard'); // New users go to dashboard
+       pageRouter.replace('/dashboard'); 
+       pageRouter.refresh();
     } catch (err: any) {
       console.error("Registration error:", err);
       setRegistrationError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
@@ -118,9 +124,9 @@ export const RegistrationForm = () => {
   return (
     <form onSubmit={processRegistration} className="space-y-4">
        <div>
-        <Label htmlFor="username">Логин</Label>
+        <Label htmlFor="reg-username">Логин</Label>
         <Input
-          id="username"
+          id="reg-username"
           type="text"
           placeholder="Логин"
           value={regUsername}
@@ -131,9 +137,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="firstName">Имя</Label>
+        <Label htmlFor="reg-firstName">Имя</Label>
         <Input
-          id="firstName"
+          id="reg-firstName"
           type="text"
           placeholder="Имя"
           value={regFirstName}
@@ -144,9 +150,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="lastName">Фамилия</Label>
+        <Label htmlFor="reg-lastName">Фамилия</Label>
         <Input
-          id="lastName"
+          id="reg-lastName"
           type="text"
           placeholder="Фамилия"
           value={regLastName}
@@ -157,9 +163,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="email">Адрес электронной почты (необязательно)</Label>
+        <Label htmlFor="reg-email">Адрес электронной почты (необязательно)</Label>
         <Input
-          id="email"
+          id="reg-email"
           type="email"
           placeholder="Email"
           value={regEmail}
@@ -169,9 +175,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="phoneNumber">Номер телефона</Label>
+        <Label htmlFor="reg-phoneNumber">Номер телефона</Label>
         <Input
-          id="phoneNumber"
+          id="reg-phoneNumber"
           type="tel"
           placeholder="Номер телефона"
           value={regPhoneNumber}
@@ -182,9 +188,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="carMake">Марка машины</Label>
+        <Label htmlFor="reg-carMake">Марка машины</Label>
         <Input
-          id="carMake"
+          id="reg-carMake"
           type="text"
           placeholder="Марка машины"
           value={regCarMake}
@@ -194,9 +200,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="carModel">Модель машины</Label>
+        <Label htmlFor="reg-carModel">Модель машины</Label>
         <Input
-          id="carModel"
+          id="reg-carModel"
           type="text"
           placeholder="Модель машины"
           value={regCarModel}
@@ -206,9 +212,9 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="vinCode">VIN-код автомобиля</Label>
+        <Label htmlFor="reg-vinCode">VIN-код автомобиля</Label>
         <Input
-          id="vinCode"
+          id="reg-vinCode"
           type="text"
           placeholder="VIN-код автомобиля"
           value={regVinCode}
@@ -224,10 +230,10 @@ export const RegistrationForm = () => {
         />
       </div>
       <div>
-        <Label htmlFor="password">Пароль</Label>
+        <Label htmlFor="reg-password">Пароль</Label>
         <div className="relative">
           <Input
-            id="password"
+            id="reg-password"
             type={showRegPassword ? 'text' : 'password'}
             placeholder="Пароль"
             value={regPassword}
@@ -252,10 +258,10 @@ export const RegistrationForm = () => {
         </div>
       </div>
       <div>
-        <Label htmlFor="confirmPassword">Подтверждение пароля</Label>
+        <Label htmlFor="reg-confirmPassword">Подтверждение пароля</Label>
         <div className="relative">
           <Input
-            id="confirmPassword"
+            id="reg-confirmPassword"
             type={showRegConfirmPassword ? 'text' : 'password'}
             placeholder="Подтверждение пароля"
             value={regConfirmPassword}

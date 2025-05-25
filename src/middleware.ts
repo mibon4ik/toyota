@@ -1,8 +1,9 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import type { StoredUser } from '@/types/user';
 
-const PROTECTED_PATHS_USER = ['/dashboard', '/checkout', '/cart']; // Cart and checkout might need auth
+const PROTECTED_PATHS_USER = ['/dashboard', '/checkout']; 
 const PROTECTED_PATHS_ADMIN = ['/admin'];
 const AUTH_PAGE_PATHS = ['/auth/login', '/auth/register'];
 
@@ -14,16 +15,18 @@ export function middleware(request: NextRequest) {
   if (sessionCookie && sessionCookie.value) {
     try {
       currentUser = JSON.parse(sessionCookie.value);
-      if (!currentUser || !currentUser.id) { // Basic validation
+      if (!currentUser || !currentUser.id || typeof currentUser.isAdmin !== 'boolean') { 
         currentUser = null;
       }
     } catch (e) {
       console.error("Middleware: Error parsing user-session cookie", e);
       currentUser = null;
-      // If cookie is malformed, consider it as logged out and clear potentially bad client cookies
+      // If cookie is malformed, treat as logged out and clear potentially bad client cookies
+      // This requires creating a response to modify cookies
       const response = NextResponse.redirect(new URL('/auth/login', request.url));
       response.cookies.delete('isLoggedIn');
       response.cookies.delete('loggedInUser');
+      response.cookies.delete('user-session'); // Also attempt to clear the problematic server cookie
       return response;
     }
   }
@@ -31,26 +34,23 @@ export function middleware(request: NextRequest) {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.isAdmin === true;
 
-  // If logged in, redirect from auth pages
-  if (isLoggedIn && AUTH_PAGE_PATHS.includes(currentPath)) {
+  if (isLoggedIn && AUTH_PAGE_PATHS.some(path => currentPath.startsWith(path))) {
     return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url));
   }
 
-  // Protect admin routes
   if (PROTECTED_PATHS_ADMIN.some(path => currentPath.startsWith(path))) {
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-    if (!isAdmin) {
-      // Non-admin trying to access admin page, redirect to their dashboard
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+    if (!isLoggedIn || !isAdmin) {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirectedFrom', currentPath);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
-  // Protect user routes
   if (PROTECTED_PATHS_USER.some(path => currentPath.startsWith(path))) {
     if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirectedFrom', currentPath);
+      return NextResponse.redirect(loginUrl);
     }
   }
   

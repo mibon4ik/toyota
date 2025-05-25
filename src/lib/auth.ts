@@ -29,7 +29,7 @@ function createDefaultAdminUser(): User {
       isAdmin: true,
       firstName: 'Admin',
       lastName: 'User',
-      email: 'admin@admin.com',
+      email: 'admin@example.com',
       phoneNumber: '00000000000',
       carMake: 'Toyota',
       carModel: 'GR Supra',
@@ -47,27 +47,21 @@ async function loadUsersFromFile(): Promise<User[]> {
         return [defaultAdmin];
     }
     const users = JSON.parse(fileContent);
-    if (!Array.isArray(users)) {
+    if (!Array.isArray(users) || users.length === 0) { // Ensure it's an array and not empty
         const defaultAdmin = createDefaultAdminUser();
         await saveUsersToFile([defaultAdmin]);
         return [defaultAdmin];
     }
     return users;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-       const defaultAdmin = createDefaultAdminUser();
+    const defaultAdmin = createDefaultAdminUser();
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT' || error instanceof SyntaxError) {
+       console.warn(`users.json not found or corrupted. Initializing with default admin.`);
        await saveUsersToFile([defaultAdmin]);
        return [defaultAdmin];
     }
-    if (error instanceof SyntaxError) {
-        console.error("Error parsing users.json:", error);
-        const defaultAdmin = createDefaultAdminUser();
-        await saveUsersToFile([defaultAdmin]);
-        return [defaultAdmin];
-    }
-    console.error("Error reading users file:", error);
-    const defaultAdmin = createDefaultAdminUser(); 
-    await saveUsersToFile([defaultAdmin]);
+    console.error("Error reading users file, initializing with default admin:", error);
+    await saveUsersToFile([defaultAdmin]); // Fallback for other read errors
     return [defaultAdmin];
   }
 }
@@ -85,36 +79,42 @@ async function saveUsersToFile(usersArray: User[]): Promise<void> {
   }
 }
 
-async function ensureDefaultAdminExists(): Promise<void> {
-    let currentUsers = await loadUsersFromFile(); 
+async function ensureDefaultAdminExists(): Promise<User[]> {
+    let currentUsers = await loadUsersFromFile();
     const adminUser = currentUsers.find(u => u.username.toLowerCase() === 'admin');
 
     if (!adminUser) {
-        currentUsers.unshift(createDefaultAdminUser());
+        const defaultAdmin = createDefaultAdminUser();
+        currentUsers = [defaultAdmin, ...currentUsers.filter(u => u.username.toLowerCase() !== 'admin')];
+        await saveUsersToFile(currentUsers);
+    } else if (!adminUser.isAdmin || adminUser.role !== 'admin') {
+        // Ensure existing admin has correct admin flags
+        adminUser.isAdmin = true;
+        adminUser.role = 'admin';
         await saveUsersToFile(currentUsers);
     }
+    return currentUsers;
 }
 
 export async function findUserByUsername(usernameToFind: string): Promise<User | undefined> {
-  await ensureDefaultAdminExists();
-  const allUsers = await loadUsersFromFile();
+  const allUsers = await ensureDefaultAdminExists();
   const lowercasedUsernameToFind = usernameToFind.toLowerCase();
   return allUsers.find(user => user.username.toLowerCase() === lowercasedUsernameToFind);
 }
 
 export async function verifyUserCredentials(usernameProvided: string, passwordProvided: string): Promise<StoredUser | null> {
-  await ensureDefaultAdminExists();
   const foundUser = await findUserByUsername(usernameProvided);
 
   if (!foundUser || !foundUser.password) {
     return null;
   }
 
+  // Direct password comparison for simplicity (not for production)
   if (foundUser.password === passwordProvided) {
     const { password, ...userDetailsToStore } = foundUser;
     const sessionUser: StoredUser = {
       ...userDetailsToStore,
-      isAdmin: userDetailsToStore.role === 'admin',
+      isAdmin: userDetailsToStore.role === 'admin' && userDetailsToStore.isAdmin === true, // Explicitly check both
       role: userDetailsToStore.role as UserAccountRole,
     };
     return sessionUser;
@@ -124,8 +124,7 @@ export async function verifyUserCredentials(usernameProvided: string, passwordPr
 }
 
 export async function createUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'>): Promise<User> {
-  await ensureDefaultAdminExists();
-  let allUsers = await loadUsersFromFile();
+  let allUsers = await ensureDefaultAdminExists();
 
   const usernameLower = userData.username.toLowerCase();
   if (allUsers.some(user => user.username.toLowerCase() === usernameLower)) {
@@ -151,12 +150,12 @@ export async function createUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'>
     lastName: userData.lastName,
     email: userData.email || undefined,
     phoneNumber: userData.phoneNumber,
-    password: userData.password, 
+    password: userData.password,
     carMake: userData.carMake,
     carModel: userData.carModel,
     vinCode: userData.vinCode.toUpperCase(),
-    role: 'user', 
-    isAdmin: false, 
+    role: 'user',
+    isAdmin: false,
   };
 
   allUsers.push(newUserRecord);
@@ -166,14 +165,12 @@ export async function createUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'>
 }
 
 export async function getAllUsers(): Promise<User[]> {
-  await ensureDefaultAdminExists();
-  const usersList = await loadUsersFromFile();
+  const usersList = await ensureDefaultAdminExists();
   return usersList.map(user => ({...user, isAdmin: user.role === 'admin'}));
 }
 
 export async function updateUser(userIdToUpdate: string, dataForUpdate: Partial<Omit<User, 'id' | 'password'>>): Promise<StoredUser> {
-  await ensureDefaultAdminExists();
-  let currentUsers = await loadUsersFromFile();
+  let currentUsers = await ensureDefaultAdminExists();
   const userIdx = currentUsers.findIndex(u => u.id === userIdToUpdate);
 
   if (userIdx === -1) {
@@ -206,7 +203,7 @@ export async function updateUser(userIdToUpdate: string, dataForUpdate: Partial<
     role: dataForUpdate.isAdmin === true ? 'admin' : dataForUpdate.isAdmin === false ? 'user' : currentUsers[userIdx].role,
     isAdmin: dataForUpdate.isAdmin !== undefined ? dataForUpdate.isAdmin : currentUsers[userIdx].isAdmin,
   };
-  
+
   if (dataForUpdate.isAdmin === true) {
     modifiedUser.role = 'admin';
   } else if (dataForUpdate.isAdmin === false) {
@@ -221,8 +218,7 @@ export async function updateUser(userIdToUpdate: string, dataForUpdate: Partial<
 }
 
 export async function updateUserPassword(userIdToChange: string, newPasswordValue: string): Promise<void> {
-  await ensureDefaultAdminExists();
-  let usersArray = await loadUsersFromFile();
+  let usersArray = await ensureDefaultAdminExists();
   const userRecordIndex = usersArray.findIndex(u => u.id === userIdToChange);
 
   if (userRecordIndex === -1) {
@@ -243,5 +239,6 @@ export async function updateUserPassword(userIdToChange: string, newPasswordValu
         await ensureDefaultAdminExists();
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
+        // In a real app, you might want to prevent the app from starting or handle this more gracefully.
     }
 })();

@@ -34,40 +34,44 @@ const AdminPanel = () => {
       console.error("AdminPanel: Logout API call failed:", error);
     }
     
-    // Cookies should be cleared by the API response, but client-side deletion for non-HttpOnly
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
+    deleteCookie('user-session', { path: '/' }); // Ensure server session cookie is also cleared from client perspective if possible
     
     window.dispatchEvent(new Event('authStateChanged')); 
     router.replace('/auth/login');
-    router.refresh(); // Force refresh to ensure middleware re-evaluates
+    router.refresh(); 
   }, [router]);
 
   useEffect(() => {
     let isComponentMounted = true;
     setAuthCheckInProgress(true);
+    console.log("AdminPanel: useEffect for auth check triggered.");
 
-    let userCookieString = getCookie('loggedInUser'); // This is the non-HttpOnly cookie
+    let userCookieString = getCookie('loggedInUser'); 
     let currentUserState: StoredUser | null = null;
 
     if (userCookieString && typeof userCookieString === 'string') {
         try {
             currentUserState = JSON.parse(userCookieString);
         } catch (e) {
-            console.warn('AdminPanel: Error parsing "loggedInUser" cookie:', e);
+            console.warn('AdminPanel Debug: Error parsing "loggedInUser" cookie:', e);
         }
-    } else if (typeof window !== 'undefined') { // Fallback to localStorage
+    } else if (typeof window !== 'undefined') { 
         const userLocalStorageString = localStorage.getItem('loggedInUser');
         if (userLocalStorageString) {
             try {
                 currentUserState = JSON.parse(userLocalStorageString);
             } catch (e) {
-                 console.warn('AdminPanel: Error parsing user from localStorage:', e);
+                 console.warn('AdminPanel Debug: Error parsing user from localStorage:', e);
             }
         }
     }
     
+    console.log("AdminPanel Debug: Current user state from cookie/localStorage:", currentUserState);
     const adminRightsConfirmed = currentUserState?.isAdmin === true;
+    console.log("AdminPanel Debug: Admin rights confirmed:", adminRightsConfirmed);
+
 
     if (isComponentMounted) {
         if (adminRightsConfirmed) {
@@ -76,10 +80,13 @@ const AdminPanel = () => {
             setIsAdminUser(false);
             toast({
                 title: "Доступ запрещен",
-                description: "У вас нет прав администратора или ваша сессия истекла.",
+                description: "У вас нет прав администратора или ваша сессия истекла. Пожалуйста, войдите как администратор.",
                 variant: "destructive",
             });
-            performLogout(); 
+            // Wait for toast to show before logging out to avoid race condition
+            setTimeout(() => {
+                 if (isComponentMounted) performLogout(); 
+            }, 1000);
         }
         setAuthCheckInProgress(false);
     }

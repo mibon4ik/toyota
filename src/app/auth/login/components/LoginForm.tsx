@@ -19,7 +19,7 @@ export const LoginForm = () => {
   const [revealPassword, setRevealPassword] = useState(false);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
-  const [loginSuccessUser, setLoginSuccessUser] = useState<StoredUser | null>(null);
+  const [loginSuccessData, setLoginSuccessData] = useState<StoredUser | null>(null);
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -31,7 +31,9 @@ export const LoginForm = () => {
 
     setLoginError('');
     setIsProcessingLogin(true);
-    setLoginSuccessUser(null);
+    setLoginSuccessData(null);
+
+    console.log("LoginForm: Attempting login with", { username: loginUsername, password: loginPassword });
 
     try {
       const apiResponse = await fetch('/api/auth/login', {
@@ -43,6 +45,8 @@ export const LoginForm = () => {
       });
 
       const responseData = await apiResponse.json();
+      console.log("LoginForm: API Response Status:", apiResponse.status);
+      console.log("LoginForm: API Response Data:", responseData);
 
       if (!apiResponse.ok) {
         setLoginError(responseData.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.');
@@ -52,34 +56,35 @@ export const LoginForm = () => {
       
       const userDataFromApi: StoredUser = responseData.user;
       
-      // API sets HttpOnly and client-readable cookies.
-      // For immediate UI update and cross-tab sync, update localStorage.
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('loggedInUser', JSON.stringify(userDataFromApi));
-      window.dispatchEvent(new Event('authStateChanged')); 
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('loggedInUser', JSON.stringify(userDataFromApi));
+        window.dispatchEvent(new Event('authStateChanged')); 
+      }
 
       showToast({
         title: "Вход выполнен!",
         description: userDataFromApi.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
-      setLoginSuccessUser(userDataFromApi); // Trigger useEffect for navigation
+      setLoginSuccessData(userDataFromApi); 
 
     } catch (err) {
+      console.error("LoginForm: Catch block error:", err);
       setLoginError('Ошибка входа. Пожалуйста, попробуйте позже.');
-      setIsProcessingLogin(false); // Ensure processing is reset on error
+      setIsProcessingLogin(false);
     }
-    // Removed finally block for setIsProcessingLogin to avoid issues with state update sequence
   };
 
   useEffect(() => {
-    if (loginSuccessUser && isClientMounted) {
-      // setProcessingLogin is false AFTER API call finishes
-      const targetPath = loginSuccessUser.isAdmin ? '/admin' : '/dashboard';
+    if (loginSuccessData && isClientMounted) {
+      const targetPath = loginSuccessData.isAdmin ? '/admin' : '/dashboard';
+      console.log("LoginForm: Navigating to:", targetPath, "for user:", loginSuccessData.username, "isAdmin:", loginSuccessData.isAdmin);
       navRouter.replace(targetPath);
-      setIsProcessingLogin(false); // Ensure processing is false before navigation
+      navRouter.refresh(); // Force refresh to ensure middleware re-evaluates
+      setIsProcessingLogin(false); 
     }
-  }, [loginSuccessUser, isClientMounted, navRouter]);
+  }, [loginSuccessData, isClientMounted, navRouter]);
 
 
   if (!isClientMounted) {

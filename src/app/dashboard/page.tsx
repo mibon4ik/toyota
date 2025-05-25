@@ -24,13 +24,13 @@ const UserDashboard = () => {
   useEffect(() => {
     if (pageIsMounted) {
       let userFromStorage: StoredUser | null = null;
-      const userCookieData = getCookie('loggedInUser');
+      const userCookieData = getCookie('loggedInUser'); 
 
       if (userCookieData && typeof userCookieData === 'string') {
         try {
           userFromStorage = JSON.parse(userCookieData) as StoredUser;
         } catch (e) {
-          // console.warn("Dashboard: Error parsing user cookie", e);
+           console.warn("Dashboard: Error parsing user cookie", e);
         }
       } else {
         const lsUserData = localStorage.getItem('loggedInUser');
@@ -38,7 +38,7 @@ const UserDashboard = () => {
             try {
                 userFromStorage = JSON.parse(lsUserData) as StoredUser;
             } catch (e) {
-                // console.warn("Dashboard: Error parsing user from localStorage", e);
+                 console.warn("Dashboard: Error parsing user from localStorage", e);
             }
         }
       }
@@ -149,4 +149,3 @@ const UserDashboard = () => {
 };
 
 export default UserDashboard;
-

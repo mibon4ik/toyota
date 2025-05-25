@@ -19,7 +19,7 @@ export interface User {
 export interface StoredUser {
   id: string;
   username: string;
-  role: UserAccountRole; // Made role mandatory
+  role: UserAccountRole; 
   isAdmin: boolean;
   firstName: string;
   lastName: string;
