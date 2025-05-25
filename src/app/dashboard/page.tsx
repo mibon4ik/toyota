@@ -5,76 +5,120 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCookie } from 'cookies-next';
 import type { StoredUser } from '@/types/user';
+import type { Order } from '@/types/order';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Icons } from '@/components/icons';
+import { OrderList } from '@/app/admin/components/OrderList'; // Reusing admin's OrderList
+import { getOrdersByCustomerEmail } from '@/services/orders';
+import { EditProfileForm } from './components/EditProfileForm'; // Will create this next
+import { useToast } from '@/hooks/use-toast';
 
 const UserDashboard = () => {
   const routerInstance = useRouter();
+  const { toast } = useToast();
   const [activeUser, setActiveUser] = useState<StoredUser | null>(null);
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
   const [pageIsMounted, setPageIsMounted] = useState(false);
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   useEffect(() => {
     setPageIsMounted(true);
   }, []);
 
+  const fetchUserDataAndOrders = useCallback(async () => {
+    setIsLoadingData(true);
+    let userFromStorage: StoredUser | null = null;
+    const userCookieData = getCookie('loggedInUser');
+
+    if (userCookieData && typeof userCookieData === 'string') {
+      try {
+        userFromStorage = JSON.parse(userCookieData) as StoredUser;
+      } catch (e) {
+        console.warn("Dashboard: Error parsing user cookie", e);
+      }
+    } else {
+      const lsUserData = localStorage.getItem('loggedInUser');
+      if (lsUserData) {
+        try {
+          userFromStorage = JSON.parse(lsUserData) as StoredUser;
+        } catch (e) {
+          console.warn("Dashboard: Error parsing user from localStorage", e);
+        }
+      }
+    }
+
+    if (userFromStorage && userFromStorage.id) {
+      setActiveUser(userFromStorage);
+      if (userFromStorage.email) {
+        setIsLoadingOrders(true);
+        setOrdersError(null);
+        try {
+          const orders = await getOrdersByCustomerEmail(userFromStorage.email);
+          setUserOrders(orders);
+        } catch (err) {
+          setOrdersError("Не удалось загрузить историю заказов.");
+          toast({ title: "Ошибка", description: "Не удалось загрузить историю заказов.", variant: "destructive" });
+        } finally {
+          setIsLoadingOrders(false);
+        }
+      }
+    } else {
+      routerInstance.replace('/auth/login');
+    }
+    setIsLoadingData(false);
+  }, [routerInstance, toast]);
+
   useEffect(() => {
     if (pageIsMounted) {
-      let userFromStorage: StoredUser | null = null;
-      const userCookieData = getCookie('loggedInUser'); 
-
-      if (userCookieData && typeof userCookieData === 'string') {
-        try {
-          userFromStorage = JSON.parse(userCookieData) as StoredUser;
-        } catch (e) {
-           console.warn("Dashboard: Error parsing user cookie", e);
-        }
-      } else {
-        const lsUserData = localStorage.getItem('loggedInUser');
-        if (lsUserData) {
-            try {
-                userFromStorage = JSON.parse(lsUserData) as StoredUser;
-            } catch (e) {
-                 console.warn("Dashboard: Error parsing user from localStorage", e);
-            }
-        }
-      }
-
-      if (userFromStorage && userFromStorage.id) {
-        setActiveUser(userFromStorage);
-      } else {
-        routerInstance.replace('/auth/login');
-      }
-      setIsLoadingData(false);
+      fetchUserDataAndOrders();
     }
-  }, [pageIsMounted, routerInstance]);
+  }, [pageIsMounted, fetchUserDataAndOrders]);
+  
+  const handleProfileUpdate = (updatedUser: StoredUser) => {
+    setActiveUser(updatedUser); // Update displayed user info
+    // Also update MainNav if needed by dispatching authStateChanged or directly updating localStorage/cookies
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('loggedInUser', JSON.stringify(updatedUser));
+      // Potentially update 'loggedInUser' cookie if it's client-writable and used by MainNav
+      window.dispatchEvent(new Event('authStateChanged'));
+    }
+  };
+
 
   if (!pageIsMounted || isLoadingData) {
     return (
       <div className="container mx-auto py-8">
         <Skeleton className="h-10 w-1/3 mb-8 rounded-md" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <Card className="lg:col-span-2">
             <CardHeader>
               <Skeleton className="h-7 w-1/2 mb-2 rounded-md" />
+              <Skeleton className="h-5 w-3/4 rounded-md" />
             </CardHeader>
             <CardContent className="space-y-3">
               {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-5 w-full rounded-md" />)}
             </CardContent>
           </Card>
-          <div className="space-y-6">
+          <div className="space-y-6 lg:col-span-1">
             <Card>
               <CardHeader><Skeleton className="h-7 w-3/4 rounded-md" /></CardHeader>
               <CardContent><Skeleton className="h-10 w-1/2 rounded-md" /></CardContent>
             </Card>
-            <Card>
+             <Card>
               <CardHeader><Skeleton className="h-7 w-3/4 rounded-md" /></CardHeader>
               <CardContent><Skeleton className="h-10 w-1/2 rounded-md" /></CardContent>
             </Card>
           </div>
+        </div>
+        <div className="mt-8">
+            <Skeleton className="h-8 w-1/4 mb-4 rounded-md" />
+            <Skeleton className="h-40 w-full rounded-md" />
         </div>
         <p className="text-center text-muted-foreground mt-6 flex items-center justify-center">
             <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
@@ -110,23 +154,14 @@ const UserDashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                  <CardTitle className="text-lg">История заказов</CardTitle>
-              </CardHeader>
-              <CardContent>
-                  <p className="text-muted-foreground text-sm mb-3">Здесь будет отображаться история ваших заказов.</p>
-                  <Button variant="outline" disabled>Посмотреть заказы (Скоро)</Button>
-              </CardContent>
-          </Card>
+        <div className="space-y-6 lg:col-span-1">
           <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
                   <CardTitle className="text-lg">Редактировать профиль</CardTitle>
               </CardHeader>
               <CardContent>
                   <p className="text-muted-foreground text-sm mb-3">Измените вашу личную информацию.</p>
-                  <Button variant="outline" disabled>Изменить данные (Скоро)</Button>
+                  <Button variant="outline" onClick={() => setIsEditProfileOpen(true)}>Изменить данные</Button>
               </CardContent>
           </Card>
           {activeUser.isAdmin && (
@@ -144,6 +179,30 @@ const UserDashboard = () => {
           )}
         </div>
       </div>
+
+      <div className="mt-12">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">История заказов</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <OrderList
+              orderData={userOrders}
+              isLoadingStatus={isLoadingOrders}
+              errorMessage={ordersError}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      
+      {activeUser && (
+        <EditProfileForm
+            userData={activeUser}
+            isDialogOpen={isEditProfileOpen}
+            onDialogClose={() => setIsEditProfileOpen(false)}
+            onUserSaved={handleProfileUpdate}
+        />
+      )}
     </div>
   );
 };

@@ -3,7 +3,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import type { Order, OrderItem, CustomerInfo, ShippingAddress } from '@/types/order';
+import type { Order } from '@/types/order';
 
 const ordersDataPath = path.join(process.cwd(), 'src', 'data', 'orders.json');
 const dataStorageDir = path.dirname(ordersDataPath);
@@ -15,7 +15,6 @@ const ensureStorageDirectoryExists = async (): Promise<void> => {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       await fs.mkdir(dataStorageDir, { recursive: true });
     } else {
-      console.error("Error accessing data directory:", error);
       throw new Error("Could not access data directory.");
     }
   }
@@ -25,7 +24,16 @@ async function loadOrdersFromFile(): Promise<Order[]> {
   await ensureStorageDirectoryExists();
   try {
     const fileContents = await fs.readFile(ordersDataPath, 'utf-8');
-    return JSON.parse(fileContents || '[]');
+    if (!fileContents.trim()) {
+        await saveOrdersToFile([]);
+        return [];
+    }
+    const orders = JSON.parse(fileContents);
+     if (!Array.isArray(orders)) {
+        await saveOrdersToFile([]);
+        return [];
+    }
+    return orders;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       await saveOrdersToFile([]);
@@ -33,6 +41,7 @@ async function loadOrdersFromFile(): Promise<Order[]> {
     }
      if (error instanceof SyntaxError) {
         console.error("Error parsing orders.json:", error);
+        await saveOrdersToFile([]);
         return [];
     }
     console.error("Error reading orders file:", error);
@@ -44,7 +53,6 @@ async function saveOrdersToFile(ordersList: Order[]): Promise<void> {
   await ensureStorageDirectoryExists();
   try {
      if (!Array.isArray(ordersList)) {
-        console.error("Invalid orders data provided to saveOrdersToFile:", ordersList);
         throw new Error("Attempted to write invalid orders data.");
       }
     await fs.writeFile(ordersDataPath, JSON.stringify(ordersList, null, 2), 'utf-8');
@@ -62,6 +70,18 @@ export async function getAllOrders(): Promise<Order[]> {
     const allOrderRecords = await loadOrdersFromFile();
     allOrderRecords.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
     return mockApiLatency(allOrderRecords);
+}
+
+export async function getOrdersByCustomerEmail(email: string): Promise<Order[]> {
+  if (!email) {
+    return mockApiLatency([]);
+  }
+  const allOrderRecords = await loadOrdersFromFile();
+  const userOrders = allOrderRecords.filter(
+    (order) => order.customerInfo.email.toLowerCase() === email.toLowerCase()
+  );
+  userOrders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+  return mockApiLatency(userOrders);
 }
 
 export async function createOrder(newOrderData: Omit<Order, 'id' | 'orderDate' | 'status'>): Promise<Order> {
@@ -90,6 +110,7 @@ export async function createOrder(newOrderData: Omit<Order, 'id' | 'orderDate' |
         await ensureStorageDirectoryExists();
         await loadOrdersFromFile();
     } catch (error) {
-        console.error("FATAL: Failed to initialize orders data file:", error);
+        // This might log too verbosely on startup if file is simply missing
+        // console.error("FATAL: Failed to initialize orders data file:", error);
     }
 })();
