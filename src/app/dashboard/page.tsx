@@ -8,6 +8,7 @@ import type { StoredUser } from '@/types/user';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const UserDashboard = () => {
   const routerInstance = useRouter();
@@ -22,15 +23,31 @@ const UserDashboard = () => {
   useEffect(() => {
     if (pageIsMounted) {
       const userCookieData = getCookie('loggedInUser');
-      if (userCookieData) {
+      let userFromStorage: StoredUser | null = null;
+
+      if (userCookieData && typeof userCookieData === 'string') {
         try {
-          const parsedUserData = JSON.parse(userCookieData as string) as StoredUser;
-          setActiveUser(parsedUserData);
+          userFromStorage = JSON.parse(userCookieData) as StoredUser;
         } catch (e) {
           console.error("Dashboard: Error parsing user cookie", e);
-          routerInstance.push('/auth/login');
         }
       } else {
+        // Fallback to localStorage if cookie isn't found (e.g., after SSR or if client hasn't fully synced)
+        const lsUserData = localStorage.getItem('loggedInUser');
+        if (lsUserData) {
+            try {
+                userFromStorage = JSON.parse(lsUserData) as StoredUser;
+            } catch (e) {
+                console.error("Dashboard: Error parsing user from localStorage", e);
+            }
+        }
+      }
+
+      if (userFromStorage && userFromStorage.id) {
+        setActiveUser(userFromStorage);
+      } else {
+        // If no user data found in cookies or localStorage, redirect to login
+        routerInstance.replace('/auth/login');
       }
       setIsLoadingData(false);
     }
@@ -39,15 +56,15 @@ const UserDashboard = () => {
   if (!pageIsMounted || isLoadingData) {
     return (
       <div className="container mx-auto py-8">
-        <Skeleton className="h-12 w-1/2 mb-6" />
+        <Skeleton className="h-12 w-1/2 mb-6 rounded-md" />
         <Card>
           <CardHeader>
-            <Skeleton className="h-8 w-1/3 mb-2" />
+            <Skeleton className="h-8 w-1/3 mb-2 rounded-md" />
           </CardHeader>
           <CardContent className="space-y-4">
-            <Skeleton className="h-6 w-full" />
-            <Skeleton className="h-6 w-2/3" />
-            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-full rounded-md" />
+            <Skeleton className="h-6 w-2/3 rounded-md" />
+            <Skeleton className="h-6 w-full rounded-md" />
           </CardContent>
         </Card>
       </div>
@@ -55,29 +72,64 @@ const UserDashboard = () => {
   }
 
   if (!activeUser) {
-    return <div className="container mx-auto py-8 text-center">Пожалуйста, войдите для доступа к личному кабинету.</div>;
+     // This state should ideally be caught by the effect above, but as a fallback:
+    return <div className="container mx-auto py-8 text-center">Пожалуйста, войдите для доступа к личному кабинету. Перенаправление...</div>;
   }
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold mb-8">Личный кабинет</h1>
-      <Card>
+      <Card className="shadow-lg rounded-lg">
         <CardHeader>
-          <CardTitle>Добро пожаловать, {activeUser.firstName || activeUser.username}!</CardTitle>
+          <CardTitle className="text-2xl">Добро пожаловать, {activeUser.firstName || activeUser.username}!</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p>Это ваш личный кабинет. Здесь вы можете управлять своими данными и заказами.</p>
-          <div>
-            <h3 className="text-lg font-semibold">Ваши данные:</h3>
-            <p><strong>Имя:</strong> {activeUser.firstName} {activeUser.lastName}</p>
-            <p><strong>Логин:</strong> {activeUser.username}</p>
-            <p><strong>Email:</strong> {activeUser.email || 'Не указан'}</p>
-            <p><strong>Телефон:</strong> {activeUser.phoneNumber}</p>
-            <p><strong>Автомобиль:</strong> {activeUser.carMake} {activeUser.carModel}</p>
-            <p><strong>VIN:</strong> {activeUser.vinCode}</p>
-            <p><strong>Роль:</strong> {activeUser.role === 'admin' ? 'Администратор' : 'Пользователь'}</p>
+        <CardContent className="space-y-6">
+          <p className="text-muted-foreground">Это ваш личный кабинет. Здесь вы можете управлять своими данными и просматривать информацию.</p>
+          
+          <Card>
+            <CardHeader>
+                <CardTitle className="text-xl">Ваши данные:</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+                <p><strong>Имя:</strong> {activeUser.firstName} {activeUser.lastName}</p>
+                <p><strong>Логин:</strong> {activeUser.username}</p>
+                <p><strong>Email:</strong> {activeUser.email || 'Не указан'}</p>
+                <p><strong>Телефон:</strong> {activeUser.phoneNumber}</p>
+                <p><strong>Автомобиль:</strong> {activeUser.carMake} {activeUser.carModel}</p>
+                <p><strong>VIN:</strong> <span className="font-mono tracking-wider">{activeUser.vinCode}</span></p>
+                <p><strong>Роль:</strong> {activeUser.isAdmin ? 'Администратор' : 'Пользователь'}</p>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                    <CardTitle className="text-lg">История заказов</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-sm mb-3">Здесь будет отображаться история ваших заказов.</p>
+                    <Button variant="outline" disabled>Посмотреть заказы (Скоро)</Button>
+                </CardContent>
+            </Card>
+            <Card className="hover:shadow-md transition-shadow">
+                <CardHeader>
+                    <CardTitle className="text-lg">Редактировать профиль</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-sm mb-3">Измените вашу личную информацию.</p>
+                    <Button variant="outline" disabled>Изменить данные (Скоро)</Button>
+                </CardContent>
+            </Card>
           </div>
           
+          {activeUser.isAdmin && (
+            <div className="mt-8 border-t pt-6">
+                <h3 className="text-xl font-semibold mb-3">Быстрый доступ для администратора</h3>
+                <Link href="/admin" passHref legacyBehavior={false}>
+                    <Button className="w-full sm:w-auto">Перейти в Админ панель</Button>
+                </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

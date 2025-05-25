@@ -54,76 +54,83 @@ export function MainNav({ className, ...props }: NavigationProps) {
 
     const isLoggedInCookie = getCookie('isLoggedIn');
     const userDataCookieString = getCookie('loggedInUser');
+    
+    let isAuthenticated = false;
+    let user: StoredUser | null = null;
 
     if (isLoggedInCookie === 'true' && userDataCookieString) {
       try {
         const userObj = JSON.parse(userDataCookieString as string) as StoredUser;
         if (userObj && userObj.id) {
-          setUserIsAuthenticated(true);
-          setCurrentUser(userObj);
+          isAuthenticated = true;
+          user = userObj;
+          // Ensure localStorage is in sync if cookies are present
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('loggedInUser', JSON.stringify(userObj));
-        } else {
-          setUserIsAuthenticated(false);
-          setCurrentUser(null);
-          localStorage.removeItem('isLoggedIn');
-          localStorage.removeItem('loggedInUser');
         }
       } catch (e) {
-        setUserIsAuthenticated(false);
-        setCurrentUser(null);
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-      }
-    } else {
-      const lsLoggedIn = localStorage.getItem('isLoggedIn');
-      const lsUserData = localStorage.getItem('loggedInUser');
-      if (lsLoggedIn === 'true' && lsUserData) {
-          try {
-              const userObj = JSON.parse(lsUserData) as StoredUser;
-              setUserIsAuthenticated(true);
-              setCurrentUser(userObj);
-          } catch (e) {
-                setUserIsAuthenticated(false);
-                setCurrentUser(null);
-          }
-      } else {
-        setUserIsAuthenticated(false);
-        setCurrentUser(null);
+        // Cookie parsing error, treat as not logged in
       }
     }
+    
+    // If cookies were not conclusive, check localStorage as a fallback
+    // (e.g., for initial render or if cookies somehow got cleared by another process)
+    if (!isAuthenticated) {
+        const lsLoggedIn = localStorage.getItem('isLoggedIn');
+        const lsUserData = localStorage.getItem('loggedInUser');
+        if (lsLoggedIn === 'true' && lsUserData) {
+            try {
+                const userObj = JSON.parse(lsUserData) as StoredUser;
+                if (userObj && userObj.id) {
+                    isAuthenticated = true;
+                    user = userObj;
+                }
+            } catch (e) {
+                // localStorage parsing error
+            }
+        }
+    }
+    
+    // If still not authenticated after checking both, ensure localStorage is clear
+    if (!isAuthenticated) {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('loggedInUser');
+    }
+
+    setUserIsAuthenticated(isAuthenticated);
+    setCurrentUser(user);
+
   }, []);
 
   const logOutUser = useCallback(async () => {
+    // 1. Clear client-side state immediately for responsiveness
+    setUserIsAuthenticated(false);
+    setCurrentUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('loggedInUser');
+    }
+    // 2. Delete client-side (non-HttpOnly) cookies
+    deleteCookie('isLoggedIn', { path: '/' });
+    deleteCookie('loggedInUser', { path: '/' });
+    deleteCookie('authToken', { path: '/'}); // if this was ever used
+
+    // 3. Call the API to clear HttpOnly server-side cookies
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      
-      deleteCookie('isLoggedIn', { path: '/' });
-      deleteCookie('loggedInUser', { path: '/' });
-      
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-        window.dispatchEvent(new Event('authStateChanged'));
-      }
-      
-      setUserIsAuthenticated(false);
-      setCurrentUser(null);
-      appRouter.push('/auth/login');
-      appRouter.refresh(); 
     } catch (error) {
-      deleteCookie('isLoggedIn', { path: '/' });
-      deleteCookie('loggedInUser', { path: '/' });
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-        window.dispatchEvent(new Event('authStateChanged'));
-      }
-      setUserIsAuthenticated(false);
-      setCurrentUser(null);
-      appRouter.push('/auth/login');
-      appRouter.refresh();
+      console.error("Logout API call failed:", error);
+      // Proceed with client-side cleanup even if API call fails
     }
+    
+    // 4. Dispatch state change for other components
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('authStateChanged'));
+    }
+    
+    // 5. Redirect to login
+    appRouter.replace('/auth/login');
+    appRouter.refresh(); // Force a refresh to ensure server state is reflected
   }, [appRouter]);
 
    useEffect(() => {
@@ -264,5 +271,3 @@ export function MainNav({ className, ...props }: NavigationProps) {
      </div>
    )
 }
-
-    
