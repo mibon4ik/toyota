@@ -1,17 +1,16 @@
-
 [
   {
-    "id": "admin-user-default-id",
+    "id": "admin-user-autogen-001",
     "username": "admin",
     "password": "admin",
     "role": "admin",
+    "isAdmin": true,
     "firstName": "Admin",
     "lastName": "User",
-    "email": "admin@admin.com",
-    "phoneNumber": "0000000000",
+    "email": "admin@example.com",
+    "phoneNumber": "00000000000",
     "carMake": "Toyota",
-    "carModel": "Land Cruiser",
-    "vinCode": "ADMINVIN000000000",
-    "isAdmin": true
+    "carModel": "GR Supra",
+    "vinCode": "ADMINVIN000000000"
   }
 ]

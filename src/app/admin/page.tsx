@@ -14,34 +14,37 @@ import { UserManagementSection } from './sections/UserManagementSection';
 import { OrderManagementSection } from './sections/OrderManagementSection';
 import { BannerManagementSection } from './sections/BannerManagementSection';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Icons } from '@/components/icons';
 
 const AdminPanel = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const [isAdminUser, setIsAdminUser] = useState(false); // Default to false
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [authCheckInProgress, setAuthCheckInProgress] = useState(true);
 
   const performLogout = useCallback(async () => {
-    console.log('AdminPanel Debug: performLogout called');
+    if (typeof window === 'undefined') return;
+    
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loggedInUser');
+    
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } catch (error) {
-      console.error("AdminPanel Debug: Logout API call failed:", error);
+      console.error("AdminPanel: Logout API call failed:", error);
     }
+    
+    // Cookies should be cleared by the API response, but client-side deletion for non-HttpOnly
     deleteCookie('isLoggedIn', { path: '/' });
     deleteCookie('loggedInUser', { path: '/' });
-    // user-session is httpOnly, cleared by API
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('loggedInUser');
-      window.dispatchEvent(new Event('authStateChanged')); 
-    }
+    
+    window.dispatchEvent(new Event('authStateChanged')); 
     router.replace('/auth/login');
+    router.refresh(); // Force refresh to ensure middleware re-evaluates
   }, [router]);
 
   useEffect(() => {
     let isComponentMounted = true;
-    console.log('AdminPanel Debug: useEffect for access verification running.');
     setAuthCheckInProgress(true);
 
     let userCookieString = getCookie('loggedInUser'); // This is the non-HttpOnly cookie
@@ -50,32 +53,21 @@ const AdminPanel = () => {
     if (userCookieString && typeof userCookieString === 'string') {
         try {
             currentUserState = JSON.parse(userCookieString);
-            console.log('AdminPanel Debug: User from "loggedInUser" cookie:', currentUserState);
         } catch (e) {
-            console.error('AdminPanel Debug: Error parsing "loggedInUser" cookie:', e);
+            console.warn('AdminPanel: Error parsing "loggedInUser" cookie:', e);
         }
-    } else {
-        console.log('AdminPanel Debug: "loggedInUser" cookie not found or not a string.');
-    }
-    
-    // Fallback to localStorage for UI consistency, though middleware relies on HttpOnly cookie
-    if (!currentUserState && typeof window !== 'undefined') {
+    } else if (typeof window !== 'undefined') { // Fallback to localStorage
         const userLocalStorageString = localStorage.getItem('loggedInUser');
         if (userLocalStorageString) {
             try {
                 currentUserState = JSON.parse(userLocalStorageString);
-                console.log('AdminPanel Debug: User from localStorage (fallback):', currentUserState);
             } catch (e) {
-                 console.error('AdminPanel Debug: Error parsing user from localStorage:', e);
+                 console.warn('AdminPanel: Error parsing user from localStorage:', e);
             }
-        } else {
-             console.log('AdminPanel Debug: "loggedInUser" not found in localStorage.');
         }
     }
     
-    console.log('AdminPanel Debug: Final user object for client-side check:', currentUserState);
     const adminRightsConfirmed = currentUserState?.isAdmin === true;
-    console.log('AdminPanel Debug: Client-side admin rights confirmed:', adminRightsConfirmed);
 
     if (isComponentMounted) {
         if (adminRightsConfirmed) {
@@ -84,11 +76,9 @@ const AdminPanel = () => {
             setIsAdminUser(false);
             toast({
                 title: "Доступ запрещен",
-                description: "У вас нет прав администратора или сессия истекла. Middleware должен был предотвратить это.",
+                description: "У вас нет прав администратора или ваша сессия истекла.",
                 variant: "destructive",
             });
-            // If middleware allowed access but client-side check fails,
-            // it implies a desync or an issue. Logging out is a safe measure.
             performLogout(); 
         }
         setAuthCheckInProgress(false);
@@ -112,7 +102,10 @@ const AdminPanel = () => {
                 <Skeleton className="h-10 w-1/3 mx-auto" />
                 <Skeleton className="h-64 w-full" />
              </div>
-            <p className="text-center text-muted-foreground mt-4">Проверка доступа...</p>
+            <p className="text-center text-muted-foreground mt-4 flex items-center justify-center">
+                <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
+                Проверка доступа...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -120,8 +113,6 @@ const AdminPanel = () => {
   }
 
   if (!isAdminUser) {
-      // This state should ideally not be reached if middleware is effective and client check is just a confirmation.
-      // The `verifyAdminPermissions` useEffect already handles redirecting via performLogout.
       return (
             <div className="container mx-auto py-8">
                <p className="text-center text-destructive">Доступ запрещен. Перенаправление на страницу входа...</p>
@@ -137,7 +128,7 @@ const AdminPanel = () => {
         </CardHeader>
         <CardContent className="space-y-12">
           <Tabs defaultValue="products" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
               <TabsTrigger value="products">Товары</TabsTrigger>
               <TabsTrigger value="users">Пользователи</TabsTrigger>
               <TabsTrigger value="orders">Заказы</TabsTrigger>

@@ -7,5 +7,5 @@ export interface Banner {
   link: string;
   imageHint: string;
   isActive: boolean;
-  dataAiHint?: string; 
+  dataAiHint?: string;
 }

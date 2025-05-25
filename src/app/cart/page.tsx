@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -7,10 +8,12 @@ import type { AutoPart } from '@/types/autopart';
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import { Trash2 } from 'lucide-react';
+import { Trash2, Minus, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
+import { Skeleton } from "@/components/ui/skeleton";
+import { Icons } from '@/components/icons';
 
 interface ShoppingCartItem extends AutoPart {
   quantity: number;
@@ -34,7 +37,7 @@ const ShoppingCartPage = () => {
             typeof item.id === 'string' &&
             typeof item.name === 'string' &&
             typeof item.price === 'number' &&
-            typeof item.quantity === 'number' &&
+            typeof item.quantity === 'number' && item.quantity > 0 && 
             typeof item.imageUrl === 'string' 
           );
 
@@ -57,8 +60,12 @@ const ShoppingCartPage = () => {
 
   useEffect(() => {
     if (pageMounted) {
-      localStorage.setItem('cartItems', JSON.stringify(itemsInCart));
+      const validCartItems = itemsInCart.filter(item => item.quantity > 0);
+      localStorage.setItem('cartItems', JSON.stringify(validCartItems));
       window.dispatchEvent(new CustomEvent('cartUpdated'));
+      if(itemsInCart.length !== validCartItems.length){
+        setItemsInCart(validCartItems); 
+      }
     }
   }, [itemsInCart, pageMounted]);
 
@@ -68,7 +75,6 @@ const ShoppingCartPage = () => {
 
   const changeItemQuantity = useCallback((itemId: string, quantity: number) => {
     const newQuantity = Math.max(1, quantity); 
-
     setItemsInCart(current =>
       current.map(item =>
         item.id === itemId ? { ...item, quantity: newQuantity } : item
@@ -86,24 +92,22 @@ const ShoppingCartPage = () => {
 
   const decreaseQuantity = useCallback((itemId: string) => {
     setItemsInCart(current => {
-      const itemIdx = current.findIndex(item => item.id === itemId);
-      if (itemIdx > -1 && current[itemIdx].quantity > 1) {
-        return current.map((item, index) =>
-          index === itemIdx ? { ...item, quantity: item.quantity - 1 } : item
-        );
-      }
-      return current;
+      return current.map(item =>
+        item.id === itemId ? { ...item, quantity: Math.max(1, item.quantity - 1) } : item
+      )
     });
   }, []);
 
   const deleteItemFromCart = useCallback((itemId: string) => {
     const itemToBeRemoved = itemsInCart.find(item => item.id === itemId);
     setItemsInCart(current => current.filter(item => item.id !== itemId));
-    showNotification({
-      title: "Товар удален!",
-      description: `${itemToBeRemoved?.name || 'Товар'} удален из корзины`,
-      variant: "destructive"
-    });
+    if (itemToBeRemoved) {
+        showNotification({
+            title: "Товар удален!",
+            description: `${itemToBeRemoved.name} удален из корзины`,
+            variant: "destructive"
+        });
+    }
   }, [itemsInCart, showNotification]);
 
 
@@ -111,7 +115,31 @@ const ShoppingCartPage = () => {
     return (
         <div className="container mx-auto py-8">
             <h1 className="text-3xl font-bold text-center mb-8">Корзина</h1>
-            <p className="text-center text-muted-foreground">Загрузка корзины...</p>
+            <div className="text-center text-muted-foreground flex items-center justify-center">
+                <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
+                 Загрузка корзины...
+            </div>
+            <div className="space-y-4 mt-6">
+                {[...Array(2)].map((_, i) => (
+                    <Card key={i} className="overflow-hidden">
+                        <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
+                                <Skeleton className="w-20 h-20 rounded-md"/>
+                                <div className="flex-grow space-y-2">
+                                    <Skeleton className="h-6 w-3/4"/>
+                                    <Skeleton className="h-4 w-1/2"/>
+                                    <Skeleton className="h-4 w-1/4"/>
+                                </div>
+                            </div>
+                            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0">
+                                <Skeleton className="h-8 w-24"/>
+                                <Skeleton className="h-8 w-20"/>
+                                <Skeleton className="h-8 w-8"/>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
         </div>
     );
   }
@@ -135,7 +163,7 @@ const ShoppingCartPage = () => {
                   <div className="flex items-center gap-4 w-full sm:w-auto flex-grow">
                     <div className="relative w-20 h-20 flex-shrink-0">
                        <Image
-                         key={cartProduct.imageUrl}
+                         key={cartProduct.imageUrl} 
                          src={cartProduct.imageUrl || 'https://placehold.co/100x100.png'}
                          alt={cartProduct.name}
                          fill
@@ -166,7 +194,7 @@ const ShoppingCartPage = () => {
                          disabled={cartProduct.quantity <= 1}
                          aria-label={`Уменьшить количество ${cartProduct.name}`}
                        >
-                         -
+                         <Minus className="h-4 w-4" />
                        </Button>
                        <Input
                          type="number"
@@ -183,7 +211,7 @@ const ShoppingCartPage = () => {
                          onClick={() => increaseQuantity(cartProduct.id)}
                          aria-label={`Увеличить количество ${cartProduct.name}`}
                        >
-                         +
+                         <Plus className="h-4 w-4" />
                        </Button>
                      </div>
 

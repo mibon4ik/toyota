@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState, useEffect, useCallback, useMemo} from 'react';
@@ -9,9 +10,10 @@ import {useSearchParams} from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, XCircle } from 'lucide-react'; // Added XCircle
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Icons } from '@/components/icons'; // Added Icons
 
 
 interface ItemInCart extends AutoPart {
@@ -43,7 +45,7 @@ export const ShopContent = () => {
   const queryParams = useSearchParams();
   const initialCategoryFilter = queryParams.get('category') || 'all';
   const [currentCategory, setCurrentCategory] = useState(initialCategoryFilter);
-   const [searchText, setSearchText] = useState('');
+   const [searchText, setSearchText] = useState(queryParams.get('search') || '');
    const [componentHasMounted, setComponentHasMounted] = useState(false);
 
   const [cart, setCart] = useState<ItemInCart[]>([]);
@@ -116,15 +118,25 @@ export const ShopContent = () => {
    useEffect(() => {
      if(componentHasMounted) {
         loadProducts();
+        // Update URL to reflect current filters
+        const params = new URLSearchParams();
+        if (currentCategory !== 'all') params.set('category', currentCategory);
+        if (searchText) params.set('search', searchText);
+        const newUrl = `${window.location.pathname}?${params.toString()}`;
+        window.history.replaceState({ ...window.history.state, as: newUrl, url: newUrl }, '', newUrl);
      }
-   }, [loadProducts, componentHasMounted]);
+   }, [loadProducts, componentHasMounted, currentCategory, searchText]);
 
    useEffect(() => {
        const urlCategory = queryParams.get('category') || 'all';
        if (urlCategory !== currentCategory) {
            setCurrentCategory(urlCategory);
        }
-   }, [queryParams, currentCategory]);
+       const urlSearch = queryParams.get('search') || '';
+       if (urlSearch !== searchText) {
+           setSearchText(urlSearch);
+       }
+   }, [queryParams, currentCategory, searchText]);
 
    const addItemToCart = useCallback((productToAdd: AutoPart) => {
      if (!componentHasMounted) return;
@@ -170,26 +182,12 @@ export const ShopContent = () => {
      setCurrentCategory(newCategory);
    };
 
-    const productDisplayGrid = useMemo(() => {
-        if (!componentHasMounted) {
-            return (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                    {[...Array(10)].map((_, index) => (
-                        <Card key={index} className="w-full overflow-hidden">
-                             <CardHeader className="p-4"><Skeleton className="h-5 w-3/4" /></CardHeader>
-                             <CardContent className="flex flex-col items-center p-4 pt-0">
-                                <Skeleton className="h-28 w-full mb-3 rounded-md" />
-                                <Skeleton className="h-4 w-1/3 mb-1" />
-                                <Skeleton className="h-5 w-1/2 mb-3" />
-                                <Skeleton className="h-9 w-full" />
-                             </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            );
-        }
+   const clearSearch = () => {
+       setSearchText('');
+   }
 
-        if (isFetching) {
+    const productDisplayGrid = useMemo(() => {
+        if (!componentHasMounted || isFetching) { // Combine loading states
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {[...Array(10)].map((_, index) => (
@@ -213,9 +211,15 @@ export const ShopContent = () => {
 
         if (availableProducts.length === 0) {
             return (
-                <p className="text-center text-muted-foreground col-span-full">
-                    Товары не найдены{searchText ? ` по запросу "${searchText}"` : ''}{currentCategory !== 'all' ? ` в категории "${productCategories.find(c => c.value === currentCategory)?.label}"` : ''}.
-                </p>
+                <div className="text-center text-muted-foreground col-span-full py-10">
+                    <Icons.search className="mx-auto h-12 w-12 mb-4 text-gray-400" />
+                    <p className="text-lg">
+                        Товары не найдены
+                        {searchText ? <> по запросу "<strong>{searchText}</strong>"</> : ''}
+                        {currentCategory !== 'all' ? <> в категории "<strong>{productCategories.find(c => c.value === currentCategory)?.label}</strong>"</> : ''}.
+                    </p>
+                    <p className="text-sm mt-2">Попробуйте изменить фильтры или поисковый запрос.</p>
+                </div>
             );
         }
 
@@ -233,7 +237,7 @@ export const ShopContent = () => {
     <div className="container mx-auto py-8">
       <h1 className="text-3xl font-bold text-center mb-8">Каталог автозапчастей</h1>
 
-      <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center">
+      <div className="mb-8 flex flex-col sm:flex-row gap-4 items-center sticky top-16 bg-background py-4 z-30 border-b">
         <div className="w-full sm:w-auto sm:min-w-[200px]">
           <Select value={currentCategory} onValueChange={handleCategoryFilterChange}>
             <SelectTrigger>
@@ -249,17 +253,28 @@ export const ShopContent = () => {
           </Select>
         </div>
 
-        <form onSubmit={handleSearchFormSubmit} className="flex-grow flex gap-2 w-full sm:w-auto">
+        <form onSubmit={handleSearchFormSubmit} className="flex-grow flex gap-2 w-full sm:w-auto relative">
           <Input
             type="search"
             placeholder="Поиск по названию, бренду, артикулу..."
             value={searchText}
             onChange={handleSearchInputChange}
-            className="flex-grow"
+            className="flex-grow pr-10" 
           />
-          <Button type="submit" variant="outline" size="icon">
+          {searchText && (
+            <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="absolute right-10 top-1/2 -translate-y-1/2 h-7 w-7 text-muted-foreground hover:text-destructive" 
+                onClick={clearSearch}
+                aria-label="Очистить поиск"
+            >
+                <XCircle className="h-4 w-4"/>
+            </Button>
+          )}
+          <Button type="submit" variant="outline" size="icon" aria-label="Поиск">
             <Search className="h-4 w-4" />
-            <span className="sr-only">Поиск</span>
           </Button>
         </form>
       </div>

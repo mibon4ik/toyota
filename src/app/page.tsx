@@ -1,18 +1,16 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/icons";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { AutoPart as ProductInfo } from '@/types/autopart';
-import type { Banner as BannerType } from '@/types/banner'; 
+import type { Banner as BannerType } from '@/types/banner';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getActiveBanners } from '@/services/banners'; 
+import { getActiveBanners } from '@/services/banners';
 
 const PopularCategoriesComponent = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
   ssr: false,
@@ -43,7 +41,7 @@ interface CartItem extends ProductInfo {
   quantity: number;
 }
 
-const MainPage = () => {
+const HomePage = () => {
   const { toast: showToast } = useToast();
   const [clientReady, setClientReady] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -155,7 +153,7 @@ const MainPage = () => {
     <div className="fade-in space-y-12">
         <div className="space-y-4">
             {bannersLoading ? (
-              [...Array(2)].map((_, idx) => (
+              [...Array(currentBanners.length > 0 ? currentBanners.length : 1)].map((_, idx) => (
                 <Card key={`banner-skeleton-${idx}`} className="overflow-hidden">
                     <CardHeader className="p-4"><Skeleton className="h-6 w-3/4" /></CardHeader>
                     <CardContent className="flex flex-col items-start p-4 pt-0">
@@ -165,37 +163,37 @@ const MainPage = () => {
                 </Card>
               ))
             ) : currentBanners.length > 0 ? (
-                currentBanners.map((banner, idx) => (
-                    <Card key={banner.id} className="overflow-hidden">
+                currentBanners.map((bannerItem, idx) => (
+                    <Card key={bannerItem.id} className="overflow-hidden">
                         <CardHeader className="p-4">
-                          <CardTitle className="text-xl">{banner.title}</CardTitle>
+                          <CardTitle className="text-xl">{bannerItem.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col items-start p-4 pt-0">
                           <div className="relative w-full aspect-[3/1] mb-4">
                             <Image
-                              src={banner.imageUrl}
-                              alt={banner.title}
+                              src={bannerItem.imageUrl}
+                              alt={bannerItem.title}
                               fill
                               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="rounded-md object-cover"
-                              priority={idx === 0} 
+                              priority={idx === 0}
                               onError={(e) => (e.currentTarget.src = 'https://placehold.co/1200x400.png')}
-                              data-ai-hint={banner.dataAiHint || banner.imageHint}
+                              data-ai-hint={bannerItem.dataAiHint || bannerItem.imageHint}
                             />
                           </div>
                           <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
-                            <Link href={banner.link ?? '#'}>{banner.buttonText}</Link>
+                            <Link href={bannerItem.link ?? '#'}>{bannerItem.buttonText}</Link>
                           </Button>
                         </CardContent>
                       </Card>
                 ))
             ) : (
               <Card className="overflow-hidden">
-                <CardHeader className="p-4"><CardTitle className="text-xl">Добро пожаловать!</CardTitle></CardHeader>
+                <CardHeader className="p-4"><CardTitle className="text-xl">Добро пожаловать в Toyota!</CardTitle></CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <p>Посмотрите наши предложения в магазине.</p>
+                  <p>Ознакомьтесь с нашими специальными предложениями и широким ассортиментом запчастей в магазине.</p>
                   <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
-                    <Link href="/shop">В магазин</Link>
+                    <Link href="/shop">Перейти в магазин</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -229,4 +227,4 @@ const MainPage = () => {
     );
   };
 
-  export default MainPage;
+  export default HomePage;

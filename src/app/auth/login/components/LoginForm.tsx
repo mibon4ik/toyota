@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
 import type { StoredUser } from '@/types/user';
 
-
 export const LoginForm = () => {
   const [loginUsername, setLoginUsername] = useState('admin');
   const [loginPassword, setLoginPassword] = useState('admin');
@@ -20,8 +19,7 @@ export const LoginForm = () => {
   const [revealPassword, setRevealPassword] = useState(false);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
-  const [loginSuccessData, setLoginSuccessData] = useState<StoredUser | null>(null);
-
+  const [loginSuccessUser, setLoginSuccessUser] = useState<StoredUser | null>(null);
 
   useEffect(() => {
     setIsClientMounted(true);
@@ -29,9 +27,11 @@ export const LoginForm = () => {
 
   const handleLoginSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (!isClientMounted) return;
+
     setLoginError('');
     setIsProcessingLogin(true);
-    setLoginSuccessData(null);
+    setLoginSuccessUser(null);
 
     try {
       const apiResponse = await fetch('/api/auth/login', {
@@ -50,34 +50,36 @@ export const LoginForm = () => {
         return;
       }
       
-      const userDataForStorage: StoredUser = responseData.user;
+      const userDataFromApi: StoredUser = responseData.user;
       
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', JSON.stringify(userDataForStorage));
-        window.dispatchEvent(new Event('authStateChanged')); 
-      }
+      // API sets HttpOnly and client-readable cookies.
+      // For immediate UI update and cross-tab sync, update localStorage.
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('loggedInUser', JSON.stringify(userDataFromApi));
+      window.dispatchEvent(new Event('authStateChanged')); 
 
       showToast({
         title: "Вход выполнен!",
-        description: userDataForStorage.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+        description: userDataFromApi.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
-      setLoginSuccessData(userDataForStorage);
+      setLoginSuccessUser(userDataFromApi); // Trigger useEffect for navigation
 
     } catch (err) {
       setLoginError('Ошибка входа. Пожалуйста, попробуйте позже.');
-    } finally {
-      setIsProcessingLogin(false);
+      setIsProcessingLogin(false); // Ensure processing is reset on error
     }
+    // Removed finally block for setIsProcessingLogin to avoid issues with state update sequence
   };
 
   useEffect(() => {
-    if (loginSuccessData && isClientMounted) {
-      const targetPath = loginSuccessData.isAdmin ? '/admin' : '/dashboard';
+    if (loginSuccessUser && isClientMounted) {
+      // setProcessingLogin is false AFTER API call finishes
+      const targetPath = loginSuccessUser.isAdmin ? '/admin' : '/dashboard';
       navRouter.replace(targetPath);
+      setIsProcessingLogin(false); // Ensure processing is false before navigation
     }
-  }, [loginSuccessData, isClientMounted, navRouter]);
+  }, [loginSuccessUser, isClientMounted, navRouter]);
 
 
   if (!isClientMounted) {
@@ -127,10 +129,8 @@ export const LoginForm = () => {
       </div>
       {loginError && <p className="text-destructive text-xs italic">{loginError}</p>}
       <Button type="submit" className="w-full" disabled={isProcessingLogin}>
-        {isProcessingLogin ? 'Вход...' : 'Войти'}
+        {isProcessingLogin ? (<><Icons.loader className="mr-2 h-4 w-4 animate-spin" /> Вход...</>) : 'Войти'}
       </Button>
     </form>
   );
 };
-
-    

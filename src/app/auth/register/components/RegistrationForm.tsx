@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
 import type { User, StoredUser } from '@/types/user';
-import { setCookie as setClientCookie } from 'cookies-next';
 
 export const RegistrationForm = () => {
   const [regUsername, setRegUsername] = useState('');
@@ -37,6 +36,7 @@ export const RegistrationForm = () => {
 
   const processRegistration: React.FormEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault();
+    if (!clientMounted) return;
     setRegistrationError('');
 
     if (!regUsername || !regFirstName || !regLastName || !regPhoneNumber || !regPassword || !regConfirmPassword || !regVinCode || !regCarMake || !regCarModel) {
@@ -69,17 +69,19 @@ export const RegistrationForm = () => {
         lastName: regLastName,
         email: regEmail || undefined,
         phoneNumber: regPhoneNumber,
-        password: regPassword,
+        password: regPassword, // Server will handle this; client sends plaintext for creation
         carMake: regCarMake,
         carModel: regCarModel,
         vinCode: regVinCode.toUpperCase(),
       };
-      const newlyRegisteredUser: User = await createUser(newUserDetails);
+      // This createUser is a server action from auth.ts
+      const newlyRegisteredUser: Omit<User, 'role' | 'isAdmin'> & { password?: string } = await createUser(newUserDetails);
 
+      // After successful registration, attempt to log the user in
       const loginResponse = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: newlyRegisteredUser.username, password: newlyRegisteredUser.password }),
+        body: JSON.stringify({ username: newlyRegisteredUser.username, password: regPassword }), // Use the original password for login
       });
 
       if (!loginResponse.ok) {
@@ -89,28 +91,18 @@ export const RegistrationForm = () => {
       
       const loginData = await loginResponse.json();
       const userToStoreInClient: StoredUser = loginData.user;
-
-      const cookieOptions = {
-        maxAge: 60 * 60 * 24 * 7, 
-        path: '/',
-        sameSite: 'lax' as const,
-        secure: process.env.NODE_ENV === 'production',
-      };
-      setClientCookie('isLoggedIn', 'true', cookieOptions);
-      setClientCookie('loggedInUser', JSON.stringify(userToStoreInClient), cookieOptions);
       
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('loggedInUser', JSON.stringify(userToStoreInClient));
-        window.dispatchEvent(new Event('authStateChanged'));
-      }
+      // API has set HttpOnly cookie. Client sets localStorage for UI sync.
+      localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('loggedInUser', JSON.stringify(userToStoreInClient));
+      window.dispatchEvent(new Event('authStateChanged'));
 
       showToastMsg({
         title: 'Регистрация успешна!',
         description: 'Вы автоматически вошли в систему и будете перенаправлены.',
       });
 
-       pageRouter.replace('/dashboard');
+       pageRouter.replace('/dashboard'); // New users go to dashboard
     } catch (err: any) {
       console.error("Registration error:", err);
       setRegistrationError(err.message || 'Ошибка при регистрации. Пожалуйста, попробуйте позже.');
@@ -287,7 +279,7 @@ export const RegistrationForm = () => {
       </div>
       {registrationError && <p className="text-destructive text-xs italic">{registrationError}</p>}
       <Button type="submit" className="w-full hover:bg-[#8dc572] italic" disabled={isRegistering}>
-       {isRegistering ? 'Регистрация...' : 'Зарегистрироваться'}
+       {isRegistering ? (<><Icons.loader className="mr-2 h-4 w-4 animate-spin" /> Регистрация...</>) : 'Зарегистрироваться'}
       </Button>
     </form>
   );

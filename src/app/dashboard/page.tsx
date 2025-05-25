@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -9,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Icons } from '@/components/icons';
 
 const UserDashboard = () => {
   const routerInstance = useRouter();
@@ -22,23 +22,22 @@ const UserDashboard = () => {
 
   useEffect(() => {
     if (pageIsMounted) {
-      const userCookieData = getCookie('loggedInUser');
       let userFromStorage: StoredUser | null = null;
+      const userCookieData = getCookie('loggedInUser');
 
       if (userCookieData && typeof userCookieData === 'string') {
         try {
           userFromStorage = JSON.parse(userCookieData) as StoredUser;
         } catch (e) {
-          console.error("Dashboard: Error parsing user cookie", e);
+          console.warn("Dashboard: Error parsing user cookie", e);
         }
       } else {
-        // Fallback to localStorage if cookie isn't found (e.g., after SSR or if client hasn't fully synced)
         const lsUserData = localStorage.getItem('loggedInUser');
         if (lsUserData) {
             try {
                 userFromStorage = JSON.parse(lsUserData) as StoredUser;
             } catch (e) {
-                console.error("Dashboard: Error parsing user from localStorage", e);
+                console.warn("Dashboard: Error parsing user from localStorage", e);
             }
         }
       }
@@ -46,7 +45,6 @@ const UserDashboard = () => {
       if (userFromStorage && userFromStorage.id) {
         setActiveUser(userFromStorage);
       } else {
-        // If no user data found in cookies or localStorage, redirect to login
         routerInstance.replace('/auth/login');
       }
       setIsLoadingData(false);
@@ -65,6 +63,10 @@ const UserDashboard = () => {
             <Skeleton className="h-6 w-full rounded-md" />
             <Skeleton className="h-6 w-2/3 rounded-md" />
             <Skeleton className="h-6 w-full rounded-md" />
+             <p className="text-center text-muted-foreground mt-4 flex items-center justify-center">
+                <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
+                Загрузка данных пользователя...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -72,7 +74,6 @@ const UserDashboard = () => {
   }
 
   if (!activeUser) {
-     // This state should ideally be caught by the effect above, but as a fallback:
     return <div className="container mx-auto py-8 text-center">Пожалуйста, войдите для доступа к личному кабинету. Перенаправление...</div>;
   }
 

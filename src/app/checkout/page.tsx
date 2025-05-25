@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from '@/lib/utils';
 import { createOrder } from '@/services/orders';
 import type { OrderItem, CustomerInfo, ShippingAddress } from '@/types/order';
+import { Icons } from '@/components/icons';
 
 interface ItemInCart extends AutoPart {
   quantity: number;
@@ -31,27 +33,31 @@ const OrderCheckoutPage = () => {
     if (storedItems) {
       try {
         const parsedItems: ItemInCart[] = JSON.parse(storedItems);
-        if (Array.isArray(parsedItems) && parsedItems.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number')) {
+        if (Array.isArray(parsedItems) && parsedItems.every(item => item.id && item.name && typeof item.price === 'number' && typeof item.quantity === 'number' && item.quantity > 0)) {
           setCartContents(parsedItems);
         } else {
           localStorage.removeItem('cartItems');
+           setCartContents([]); 
         }
       } catch (e) {
         localStorage.removeItem('cartItems');
+        setCartContents([]); 
       }
+    } else {
+      setCartContents([]); 
     }
   }, []);
 
   useEffect(() => {
-    if (isPageLoaded && cartContents.length === 0) {
+    if (isPageLoaded && cartContents.length === 0 && !isSubmittingOrder) { // Only redirect if not submitting
       displayNotification({
         title: "Корзина пуста",
         description: "Вы будете перенаправлены в магазин.",
-        variant: "destructive",
+        variant: "default", 
       });
       routerInstance.push('/shop');
     }
-  }, [isPageLoaded, cartContents, routerInstance, displayNotification]);
+  }, [isPageLoaded, cartContents, routerInstance, displayNotification, isSubmittingOrder]);
 
   const getCartTotal = useCallback(() => {
     return cartContents.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -59,6 +65,14 @@ const OrderCheckoutPage = () => {
 
     const submitOrderForm = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
+        if (cartContents.length === 0) {
+            displayNotification({
+                title: "Корзина пуста",
+                description: "Невозможно оформить заказ с пустой корзиной.",
+                variant: "destructive",
+            });
+            return;
+        }
         setIsSubmittingOrder(true);
 
         const formElements = new FormData(event.currentTarget);
@@ -126,7 +140,10 @@ const OrderCheckoutPage = () => {
     return (
          <div className="container mx-auto py-8 max-w-3xl">
              <h1 className="text-3xl font-bold text-center mb-8">Оформление заказа</h1>
-              <p className="text-center text-muted-foreground">Загрузка корзины...</p>
+              <div className="text-center text-muted-foreground flex items-center justify-center">
+                <Icons.loader className="mr-2 h-5 w-5 animate-spin" />
+                 Загрузка данных...
+              </div>
               <div className="space-y-8 mt-8">
                  <Skeleton className="h-40 w-full rounded-md" />
                  <Skeleton className="h-48 w-full rounded-md" />
@@ -138,7 +155,7 @@ const OrderCheckoutPage = () => {
     );
   }
 
-   if (cartContents.length === 0 && isPageLoaded) { // Ensure page is loaded before checking cart
+   if (cartContents.length === 0 && isPageLoaded && !isSubmittingOrder) { 
       return (
            <div className="container mx-auto py-8 max-w-3xl">
              <h1 className="text-3xl font-bold text-center mb-8">Оформление заказа</h1>
@@ -249,7 +266,7 @@ const OrderCheckoutPage = () => {
 
         <div className="text-center mt-8">
           <Button type="submit" size="lg" disabled={cartContents.length === 0 || isSubmittingOrder}>
-             {isSubmittingOrder ? 'Оформление...' : `Оформить заказ (${formatPrice(getCartTotal())})`}
+             {isSubmittingOrder ? (<><Icons.loader className="mr-2 h-4 w-4 animate-spin" /> Оформление...</>) : `Оформить заказ (${formatPrice(getCartTotal())})`}
              </Button>
         </div>
       </form>
