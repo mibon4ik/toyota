@@ -3,7 +3,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import type { AutoPart } from '@/types/autopart';
+import type { AutoPart, Review } from '@/types/autopart';
 
 const partsStoragePath = path.join(process.cwd(), 'src', 'data', 'autoparts.json');
 const storageDirectory = path.dirname(partsStoragePath);
@@ -16,7 +16,7 @@ const verifyDataDirectory = async (): Promise<void> => {
       await fs.mkdir(storageDirectory, { recursive: true });
     } else {
       console.error("Error accessing data directory:", error);
-      throw new Error("Could not access data directory.");
+      throw new Error("Не удалось получить доступ к каталогу данных.");
     }
   }
 };
@@ -32,11 +32,11 @@ async function readPartsFromStorage(): Promise<AutoPart[]> {
       return [];
     }
      if (error instanceof SyntaxError) {
-        console.error("Error parsing autoparts.json:", error);
+        console.error("Ошибка синтаксического разбора autoparts.json:", error);
         return [];
     }
-    console.error("Error reading autoparts file:", error);
-    throw new Error("Could not read autoparts data.");
+    console.error("Ошибка чтения файла автозапчастей:", error);
+    throw new Error("Не удалось прочитать данные автозапчастей.");
   }
 }
 
@@ -44,16 +44,15 @@ async function writePartsToStorage(partsArray: AutoPart[]): Promise<void> {
   await verifyDataDirectory();
   try {
      if (!Array.isArray(partsArray)) {
-        console.error("Invalid parts data provided to writePartsToStorage:", partsArray);
-        throw new Error("Attempted to write invalid parts data.");
+        console.error("Неверные данные запчастей предоставлены в writePartsToStorage:", partsArray);
+        throw new Error("Попытка записи неверных данных запчастей.");
       }
     await fs.writeFile(partsStoragePath, JSON.stringify(partsArray, null, 2), 'utf-8');
   } catch (error) {
-    console.error("Error writing autoparts file:", error);
-    throw new Error("Could not save autoparts data.");
+    console.error("Ошибка записи файла автозапчастей:", error);
+    throw new Error("Не удалось сохранить данные автозапчастей.");
   }
 }
-
 
 function simulateNetworkDelay<T>(data: T, delayMs = 100): Promise<T> {
   return new Promise(resolve => setTimeout(() => resolve(data), delayMs));
@@ -100,7 +99,6 @@ export async function getAutoPartById(idValue: string): Promise<AutoPart | null>
   return simulateNetworkDelay(foundPart || null);
 }
 
-
 export async function addAutoPart(partDetails: Omit<AutoPart, 'id'>): Promise<AutoPart> {
   if (!partDetails || typeof partDetails !== 'object' || !partDetails.name) {
     throw new Error("Некорректные данные для добавления товара.");
@@ -120,6 +118,7 @@ export async function addAutoPart(partDetails: Omit<AutoPart, 'id'>): Promise<Au
     rating: partDetails.rating ?? undefined,
     reviewCount: partDetails.reviewCount ?? undefined,
     stock: partDetails.stock ?? 0,
+    reviews: [], // Initialize with empty reviews
     compatibleVehicles: Array.isArray(partDetails.compatibleVehicles) ? partDetails.compatibleVehicles : [],
   };
 
@@ -128,7 +127,6 @@ export async function addAutoPart(partDetails: Omit<AutoPart, 'id'>): Promise<Au
   
   return newPartRecord;
 }
-
 
 export async function updateAutoPart(partIdToUpdate: string, dataToUpdate: Partial<Omit<AutoPart, 'id'>>): Promise<AutoPart> {
   if (!partIdToUpdate || !dataToUpdate || typeof dataToUpdate !== 'object') {
@@ -158,12 +156,46 @@ export async function updateAutoPart(partIdToUpdate: string, dataToUpdate: Parti
   return simulateNetworkDelay(modifiedPart);
 }
 
+export async function addReviewToAutoPart(partId: string, reviewData: Omit<Review, 'id' | 'date'>): Promise<AutoPart | null> {
+  const allParts = await readPartsFromStorage();
+  const partIndex = allParts.findIndex(p => p.id === partId);
+
+  if (partIndex === -1) {
+    throw new Error(`Товар с ID "${partId}" не найден.`);
+  }
+
+  const product = allParts[partIndex];
+  const newReview: Review = {
+    ...reviewData,
+    id: `review-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    date: new Date().toISOString(),
+  };
+
+  if (!product.reviews) {
+    product.reviews = [];
+  }
+  product.reviews.push(newReview);
+
+  // Recalculate average rating and review count
+  product.reviewCount = product.reviews.length;
+  if (product.reviews.length > 0) {
+    const totalRating = product.reviews.reduce((sum, rev) => sum + rev.rating, 0);
+    product.rating = parseFloat((totalRating / product.reviews.length).toFixed(1));
+  } else {
+    product.rating = undefined;
+  }
+
+  allParts[partIndex] = product;
+  await writePartsToStorage(allParts);
+  return simulateNetworkDelay(product);
+}
 
 (async () => {
     try {
         await verifyDataDirectory();
+        // Ensure file exists and is readable on startup
         await readPartsFromStorage();
     } catch (error) {
-        console.error("FATAL: Failed to initialize parts data file:", error);
+        console.error("Критическая ошибка: Не удалось инициализировать файл данных автозапчастей:", error);
     }
 })();
