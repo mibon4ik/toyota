@@ -36,7 +36,9 @@ export async function POST(req: Request) {
     const sessionCookieValue = JSON.stringify(userSessionData);
     const sevenDaysInSeconds = 7 * 24 * 60 * 60;
 
-    cookies().set('user-session', sessionCookieValue, {
+    const response = NextResponse.json({ message: 'Вход выполнен успешно', user: userSessionData }, { status: 200 });
+
+    response.cookies.set('user-session', sessionCookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sevenDaysInSeconds,
@@ -44,23 +46,24 @@ export async function POST(req: Request) {
       sameSite: 'lax',
     });
 
-    cookies().set('isLoggedIn', 'true', {
+    response.cookies.set('isLoggedIn', 'true', {
       maxAge: sevenDaysInSeconds,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     });
-    cookies().set('loggedInUser', JSON.stringify(userSessionData), {
+    response.cookies.set('loggedInUser', JSON.stringify(userSessionData), {
       maxAge: sevenDaysInSeconds,
       path: '/',
       sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
     });
 
-
-    return NextResponse.json({ message: 'Вход выполнен успешно', user: userSessionData }, { status: 200 });
+    return response;
   } catch (e) {
     console.error('Login API error:', e);
     return NextResponse.json({ message: 'Внутренняя ошибка сервера' }, { status: 500 });
   }
 }
+
+    

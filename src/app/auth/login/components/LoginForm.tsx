@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Icons } from "@/components/icons";
-import { setCookie as setClientCookie } from 'cookies-next';
 import type { StoredUser } from '@/types/user';
 
 
@@ -21,7 +20,6 @@ export const LoginForm = () => {
   const [revealPassword, setRevealPassword] = useState(false);
   const [isProcessingLogin, setIsProcessingLogin] = useState(false);
   const [isClientMounted, setIsClientMounted] = useState(false);
-  const [loginAttempted, setLoginAttempted] = useState(false);
   const [loginSuccessData, setLoginSuccessData] = useState<StoredUser | null>(null);
 
 
@@ -33,7 +31,6 @@ export const LoginForm = () => {
     event.preventDefault();
     setLoginError('');
     setIsProcessingLogin(true);
-    setLoginAttempted(true);
     setLoginSuccessData(null);
 
     try {
@@ -54,16 +51,6 @@ export const LoginForm = () => {
       }
       
       const userDataForStorage: StoredUser = responseData.user;
-
-      const cookieConfig = {
-        maxAge: 60 * 60 * 24 * 7, 
-        path: '/',
-        sameSite: 'lax' as const,
-        secure: process.env.NODE_ENV === 'production',
-      };
-
-      setClientCookie('isLoggedIn', 'true', cookieConfig);
-      setClientCookie('loggedInUser', JSON.stringify(userDataForStorage), cookieConfig);
       
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
@@ -73,13 +60,12 @@ export const LoginForm = () => {
 
       showToast({
         title: "Вход выполнен!",
-        description: userDataForStorage.isAdmin === true ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+        description: userDataForStorage.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
       });
       
-      setLoginSuccessData(userDataForStorage); // Trigger navigation via useEffect
+      setLoginSuccessData(userDataForStorage);
 
     } catch (err) {
-      console.error("Login error:", err);
       setLoginError('Ошибка входа. Пожалуйста, попробуйте позже.');
     } finally {
       setIsProcessingLogin(false);
@@ -88,8 +74,7 @@ export const LoginForm = () => {
 
   useEffect(() => {
     if (loginSuccessData && isClientMounted) {
-      const targetPath = loginSuccessData.isAdmin === true ? '/admin' : '/dashboard';
-      console.log(`LoginForm: Navigating to ${targetPath} due to successful login.`);
+      const targetPath = loginSuccessData.isAdmin ? '/admin' : '/dashboard';
       navRouter.replace(targetPath);
     }
   }, [loginSuccessData, isClientMounted, navRouter]);
@@ -147,3 +132,5 @@ export const LoginForm = () => {
     </form>
   );
 };
+
+    
