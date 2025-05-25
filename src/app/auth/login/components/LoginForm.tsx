@@ -59,6 +59,7 @@ export const LoginForm = () => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('loggedInUser', JSON.stringify(userDataFromApi));
+        console.log("LoginForm: Debug - localStorage updated, dispatching authStateChanged.");
         window.dispatchEvent(new Event('authStateChanged')); 
       }
 
@@ -78,7 +79,7 @@ export const LoginForm = () => {
 
   useEffect(() => {
     if (loginSuccessData && isClientMounted) {
-      const targetPath = '/'; // Redirect to homepage
+      const targetPath = '/'; 
       console.log("LoginForm: Debug - Navigating to:", targetPath, "for user:", loginSuccessData.username);
       navRouter.replace(targetPath);
       navRouter.refresh(); 

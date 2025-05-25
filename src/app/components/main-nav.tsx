@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
-import { getCookie } from 'cookies-next';
+import { getCookie, deleteCookie } from 'cookies-next';
 import type { StoredUser } from '@/types/user';
 
 interface CartItemType {
@@ -52,11 +52,13 @@ export function MainNav({ className, ...props }: NavigationProps) {
   const refreshAuthState = useCallback(() => {
     if (typeof window === 'undefined') return;
 
-    const isLoggedInCookie = getCookie('isLoggedIn');
-    const userDataCookieString = getCookie('loggedInUser');
-    
     let isAuthenticated = false;
     let user: StoredUser | null = null;
+
+    const isLoggedInCookie = getCookie('isLoggedIn'); 
+    const userDataCookieString = getCookie('loggedInUser');
+    
+    console.log("MainNav Debug: Cookies - isLoggedInCookie:", isLoggedInCookie, "userDataCookieString:", !!userDataCookieString);
 
     if (isLoggedInCookie === 'true' && userDataCookieString) {
       try {
@@ -66,22 +68,27 @@ export function MainNav({ className, ...props }: NavigationProps) {
           user = userObj;
           localStorage.setItem('isLoggedIn', 'true');
           localStorage.setItem('loggedInUser', JSON.stringify(userObj));
+        } else {
+           console.warn("MainNav Debug: Parsed userObj from cookie is invalid or missing id.");
         }
       } catch (e) {
-         console.warn("MainNav: Error parsing loggedInUser cookie", e);
+         console.warn("MainNav Debug: Error parsing loggedInUser cookie", e);
       }
     } else {
         const lsLoggedIn = localStorage.getItem('isLoggedIn');
         const lsUserData = localStorage.getItem('loggedInUser');
+        console.log("MainNav Debug: LocalStorage - lsLoggedIn:", lsLoggedIn, "lsUserData:", !!lsUserData);
         if (lsLoggedIn === 'true' && lsUserData) {
             try {
                 const userObj = JSON.parse(lsUserData) as StoredUser;
                 if (userObj && userObj.id) {
                     isAuthenticated = true;
                     user = userObj;
+                } else {
+                    console.warn("MainNav Debug: Parsed userObj from localStorage is invalid or missing id.");
                 }
             } catch (e) {
-                 console.warn("MainNav: Error parsing loggedInUser from localStorage", e);
+                 console.warn("MainNav Debug: Error parsing loggedInUser from localStorage:", e);
             }
         }
     }
@@ -93,15 +100,15 @@ export function MainNav({ className, ...props }: NavigationProps) {
 
     setUserIsAuthenticated(isAuthenticated);
     setCurrentUser(user);
-    console.log("MainNav: Refreshed Auth State - isLoggedIn:", isAuthenticated, "User:", user);
+    console.log("MainNav: Refreshed Auth State - isLoggedIn:", isAuthenticated, "User:", user?.username, "IsAdmin:", user?.isAdmin);
 
   }, []); 
 
   const logOutUser = useCallback(async () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('loggedInUser');
-    }
+    if (typeof window === 'undefined') return;
+    
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loggedInUser');
     
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -113,6 +120,7 @@ export function MainNav({ className, ...props }: NavigationProps) {
     setCurrentUser(null);
     
     if (typeof window !== 'undefined') {
+      console.log("MainNav: Dispatching authStateChanged after logout.");
       window.dispatchEvent(new Event('authStateChanged'));
     }
     
@@ -120,34 +128,41 @@ export function MainNav({ className, ...props }: NavigationProps) {
     appRouter.refresh(); 
   }, [appRouter]);
 
-   useEffect(() => {
-        setHasMounted(true);
-        refreshAuthState(); 
-        refreshCartCount(); 
-    }, [refreshAuthState, refreshCartCount]); 
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
-   useEffect(() => {
-        if (!hasMounted) return;
+  useEffect(() => {
+    if (!hasMounted) return;
 
-        const handleStorageEvents = (event: StorageEvent) => {
-            if (event.key === 'cartItems') refreshCartCount();
-            if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
-                refreshAuthState();
-            }
-        };
-        const handleAuthChangeEvent = () => refreshAuthState();
-        const handleCartChangeEvent = () => refreshCartCount();
+    const handleStorageEvents = (event: StorageEvent) => {
+      if (event.key === 'cartItems') refreshCartCount();
+      if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
+        console.log("MainNav: Storage event triggered for auth keys, calling refreshAuthState.");
+        refreshAuthState();
+      }
+    };
+    const handleAuthChangeEvent = () => {
+      console.log("MainNav: authStateChanged event received, calling refreshAuthState and appRouter.refresh().");
+      refreshAuthState();
+      appRouter.refresh(); // Force re-evaluation of server components and middleware
+    };
+    const handleCartChangeEvent = () => refreshCartCount();
 
-        window.addEventListener('storage', handleStorageEvents);
-        window.addEventListener('authStateChanged', handleAuthChangeEvent);
-        window.addEventListener('cartUpdated', handleCartChangeEvent);
+    window.addEventListener('storage', handleStorageEvents);
+    window.addEventListener('authStateChanged', handleAuthChangeEvent);
+    window.addEventListener('cartUpdated', handleCartChangeEvent);
 
-        return () => {
-            window.removeEventListener('storage', handleStorageEvents);
-            window.removeEventListener('authStateChanged', handleAuthChangeEvent);
-            window.removeEventListener('cartUpdated', handleCartChangeEvent);
-        };
-    }, [hasMounted, refreshAuthState, refreshCartCount]);
+    console.log("MainNav: useEffect for listeners - calling initial refreshAuthState and refreshCartCount.");
+    refreshAuthState(); 
+    refreshCartCount(); 
+
+    return () => {
+      window.removeEventListener('storage', handleStorageEvents);
+      window.removeEventListener('authStateChanged', handleAuthChangeEvent);
+      window.removeEventListener('cartUpdated', handleCartChangeEvent);
+    };
+  }, [hasMounted, refreshAuthState, refreshCartCount, appRouter]);
 
 
    const goToCartPage = () => {
