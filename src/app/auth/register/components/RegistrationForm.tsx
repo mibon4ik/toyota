@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Icons } from '@/components/icons';
 import { createUser } from '@/lib/auth';
-import type { User, StoredUser } from '@/types/user';
+import type { StoredUser } from '@/types/user';
 
 export const RegistrationForm = () => {
   const [regUsername, setRegUsername] = useState('');
@@ -107,7 +107,7 @@ export const RegistrationForm = () => {
         description: 'Вы автоматически вошли в систему и будете перенаправлены.',
       });
 
-       pageRouter.replace('/dashboard'); 
+       pageRouter.replace('/'); // Redirect to homepage
        pageRouter.refresh();
     } catch (err: any) {
       console.error("Registration error:", err);

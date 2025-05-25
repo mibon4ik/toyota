@@ -6,6 +6,7 @@ import type { StoredUser } from '@/types/user';
 const PROTECTED_PATHS_USER = ['/dashboard', '/checkout']; 
 const PROTECTED_PATHS_ADMIN = ['/admin'];
 const AUTH_PAGE_PATHS = ['/auth/login', '/auth/register'];
+const PUBLIC_PATHS = ['/', '/shop', '/cart', '/contacts', '/blog/brake-pads', '/blog/oil-changes']; // Added /part to public paths
 
 export function middleware(request: NextRequest) {
   const currentPath = request.nextUrl.pathname;
@@ -16,17 +17,21 @@ export function middleware(request: NextRequest) {
     try {
       currentUser = JSON.parse(sessionCookie.value);
       if (!currentUser || !currentUser.id || typeof currentUser.isAdmin !== 'boolean') { 
-        currentUser = null;
+        currentUser = null; 
+        // If cookie is malformed, clear potentially bad client cookies
+        const response = NextResponse.redirect(new URL('/auth/login', request.url));
+        response.cookies.delete('isLoggedIn');
+        response.cookies.delete('loggedInUser');
+        response.cookies.delete('user-session');
+        return response;
       }
     } catch (e) {
       console.error("Middleware: Error parsing user-session cookie", e);
       currentUser = null;
-      // If cookie is malformed, treat as logged out and clear potentially bad client cookies
-      // This requires creating a response to modify cookies
       const response = NextResponse.redirect(new URL('/auth/login', request.url));
       response.cookies.delete('isLoggedIn');
       response.cookies.delete('loggedInUser');
-      response.cookies.delete('user-session'); // Also attempt to clear the problematic server cookie
+      response.cookies.delete('user-session');
       return response;
     }
   }
@@ -34,10 +39,12 @@ export function middleware(request: NextRequest) {
   const isLoggedIn = !!currentUser;
   const isAdmin = currentUser?.isAdmin === true;
 
+  // If user is logged in and tries to access login/register, redirect to homepage
   if (isLoggedIn && AUTH_PAGE_PATHS.some(path => currentPath.startsWith(path))) {
-    return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
+  // Protect admin routes
   if (PROTECTED_PATHS_ADMIN.some(path => currentPath.startsWith(path))) {
     if (!isLoggedIn || !isAdmin) {
       const loginUrl = new URL('/auth/login', request.url);
@@ -46,6 +53,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Protect user-specific routes
   if (PROTECTED_PATHS_USER.some(path => currentPath.startsWith(path))) {
     if (!isLoggedIn) {
       const loginUrl = new URL('/auth/login', request.url);
@@ -54,6 +62,11 @@ export function middleware(request: NextRequest) {
     }
   }
   
+  // Allow access to product detail pages for everyone
+  if (currentPath.startsWith('/part/')) {
+    return NextResponse.next();
+  }
+
   return NextResponse.next();
 }
 

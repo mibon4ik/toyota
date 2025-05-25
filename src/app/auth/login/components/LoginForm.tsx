@@ -33,7 +33,7 @@ export const LoginForm = () => {
     setIsProcessingLogin(true);
     setLoginSuccessData(null);
 
-    console.log("LoginForm: Attempting login with", { username: loginUsername, password: loginPassword });
+    console.log("LoginForm: Debug - Attempting login with", { username: loginUsername, password: loginPassword });
 
     try {
       const apiResponse = await fetch('/api/auth/login', {
@@ -45,8 +45,8 @@ export const LoginForm = () => {
       });
 
       const responseData = await apiResponse.json();
-      console.log("LoginForm: API Response Status:", apiResponse.status);
-      console.log("LoginForm: API Response Data:", responseData);
+      console.log("LoginForm: Debug - API Response Status:", apiResponse.status);
+      console.log("LoginForm: Debug - API Response Data:", responseData);
 
       if (!apiResponse.ok) {
         setLoginError(responseData.message || 'Ошибка входа. Пожалуйста, проверьте свои данные.');
@@ -64,7 +64,7 @@ export const LoginForm = () => {
 
       showToast({
         title: "Вход выполнен!",
-        description: userDataFromApi.isAdmin ? "Вы вошли как администратор." : "Вы успешно вошли в систему.",
+        description: "Вы успешно вошли в систему.",
       });
       
       setLoginSuccessData(userDataFromApi); 
@@ -78,10 +78,10 @@ export const LoginForm = () => {
 
   useEffect(() => {
     if (loginSuccessData && isClientMounted) {
-      const targetPath = loginSuccessData.isAdmin ? '/admin' : '/dashboard';
-      console.log("LoginForm: Navigating to:", targetPath, "for user:", loginSuccessData.username, "isAdmin:", loginSuccessData.isAdmin);
+      const targetPath = '/'; // Redirect to homepage
+      console.log("LoginForm: Debug - Navigating to:", targetPath, "for user:", loginSuccessData.username);
       navRouter.replace(targetPath);
-      navRouter.refresh(); // Force refresh to ensure middleware re-evaluates
+      navRouter.refresh(); 
       setIsProcessingLogin(false); 
     }
   }, [loginSuccessData, isClientMounted, navRouter]);
