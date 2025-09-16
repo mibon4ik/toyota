@@ -4,50 +4,49 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Autopart from "@/app/components/autopart";
 import type { AutoPart } from '@/types/autopart';
-import { getAllAutoParts } from '@/services/autoparts'; // Assuming a service to get all parts
+import { getAllAutoParts } from '@/services/autoparts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-interface HitsOfSalesProps {
-  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
+interface BestSellersProps {
+  onAddToCart: (product: AutoPart) => void;
 }
 
-export const HitsOfSales: React.FC<HitsOfSalesProps> = ({ onAddToCart }) => {
-  const [popularProducts, setPopularProducts] = useState<AutoPart[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const HitsOfSales: React.FC<BestSellersProps> = ({ onAddToCart }) => {
+  const [topProducts, setTopProducts] = useState<AutoPart[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const fetchPopularProducts = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const loadPopularItems = useCallback(async () => {
+    setIsLoadingData(true);
+    setFetchError(null);
     try {
-      const allProducts = await getAllAutoParts();
-      // Example: Define "popular" based on rating or reviewCount, or just slice
-      const popular = allProducts
-        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)) // Example sorting
-        .slice(0, 10) // Take top 10
+      const allItems = await getAllAutoParts();
+      const popularItems = allItems
+        .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0))
+        .slice(0, 10)
         .map(p => ({
           ...p,
           dataAiHint: p.dataAiHint || `${p.category} ${p.brand}`
         }));
-      setPopularProducts(popular);
-    } catch (fetchError: any) {
-      console.error("Error fetching popular products:", fetchError);
-      setError("Не удалось загрузить хиты продаж.");
+      setTopProducts(popularItems);
+    } catch (error: any) {
+      console.error("Error fetching popular products:", error);
+      setFetchError("Не удалось загрузить хиты продаж.");
     } finally {
-      setIsLoading(false);
+      setIsLoadingData(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchPopularProducts();
-  }, [fetchPopularProducts]);
+    loadPopularItems();
+  }, [loadPopularItems]);
 
   return (
     <section className="py-12 bg-secondary rounded-lg">
       <div className="container mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center">Хиты продаж</h2>
-        {isLoading ? (
+        {isLoadingData ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {[...Array(5)].map((_, index) => (
                <Card key={index} className="w-full overflow-hidden">
@@ -61,15 +60,14 @@ export const HitsOfSales: React.FC<HitsOfSalesProps> = ({ onAddToCart }) => {
                 </Card>
             ))}
           </div>
-        ) : error ? (
-          <p className="text-center text-destructive">{error}</p>
-        ) : popularProducts.length === 0 ? (
+        ) : fetchError ? (
+          <p className="text-center text-destructive">{fetchError}</p>
+        ) : topProducts.length === 0 ? (
            <p className="text-center text-muted-foreground">Хиты продаж не найдены.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {popularProducts.map((product) => (
-              // Pass the onAddToCart function down to each Autopart
-              <Autopart key={product.id} product={product} onAddToCart={onAddToCart} />
+            {topProducts.map((item) => (
+              <Autopart key={item.id} productInfo={item} onAddToCart={onAddToCart} />
             ))}
           </div>
         )}

@@ -10,64 +10,64 @@ import { getAllAutoParts } from '@/services/autoparts';
 import { useToast } from "@/hooks/use-toast";
 
 export const ProductManagementSection: React.FC = () => {
-  const [products, setProducts] = useState<AutoPart[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [errorProducts, setErrorProducts] = useState<string | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<AutoPart | null>(null);
-  const { toast } = useToast();
+  const [allProducts, setAllProducts] = useState<AutoPart[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productsFetchError, setProductsFetchError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [productToEdit, setProductToEdit] = useState<AutoPart | null>(null);
+  const { toast: displayToast } = useToast();
 
-  const fetchProducts = useCallback(async () => {
-    setIsLoadingProducts(true);
-    setErrorProducts(null);
+  const fetchProductList = useCallback(async () => {
+    setLoadingProducts(true);
+    setProductsFetchError(null);
     try {
-      const fetchedProducts = await getAllAutoParts();
-      setProducts(fetchedProducts);
-    } catch (fetchError) {
-      console.error("ProductManagementSection: Failed to fetch products:", fetchError);
-      setErrorProducts("Не удалось загрузить список товаров.");
-      toast({
+      const data = await getAllAutoParts();
+      setAllProducts(data);
+    } catch (error) {
+      console.error("ProductManagementSection: Failed to fetch products:", error);
+      setProductsFetchError("Не удалось загрузить список товаров.");
+      displayToast({
         title: "Ошибка загрузки товаров",
         description: "Не удалось загрузить список товаров. Попробуйте позже.",
         variant: "destructive",
       });
     } finally {
-      setIsLoadingProducts(false);
+      setLoadingProducts(false);
     }
-  }, [toast]);
+  }, [displayToast]);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchProductList();
+  }, [fetchProductList]);
 
-  const handleEditProduct = (product: AutoPart) => {
-    setSelectedProduct(product);
-    setIsEditModalOpen(true);
+  const openEditForm = (productItem: AutoPart) => {
+    setProductToEdit(productItem);
+    setShowEditModal(true);
   };
 
-  const handleCloseEditModal = () => {
-    setIsEditModalOpen(false);
-    setSelectedProduct(null);
+  const closeEditForm = () => {
+    setShowEditModal(false);
+    setProductToEdit(null);
   };
 
-  const handleProductUpdated = useCallback(() => {
-    fetchProducts(); // Refetch products after update or addition
-  }, [fetchProducts]);
+  const onProductListChanged = useCallback(() => {
+    fetchProductList();
+  }, [fetchProductList]);
 
   return (
     <div className="space-y-8 mt-6">
       <ProductList
-        products={products}
-        isLoading={isLoadingProducts}
-        error={errorProducts}
-        onEdit={handleEditProduct}
+        productsData={allProducts}
+        isLoadingData={loadingProducts}
+        fetchError={productsFetchError}
+        onEditClick={openEditForm}
       />
       <AddProductForm />
       <EditProductForm
-        product={selectedProduct}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseEditModal}
-        onProductUpdated={handleProductUpdated}
+        productData={productToEdit}
+        isFormOpen={showEditModal}
+        closeForm={closeEditForm}
+        onProductSave={onProductListChanged}
       />
     </div>
   );

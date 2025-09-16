@@ -6,18 +6,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AutoPart } from '@/types/autopart';
-import { formatPrice } from '@/lib/utils'; // Assuming formatPrice is moved to utils
+import { formatPrice } from '@/lib/utils';
 
-interface ProductListProps {
-  products: AutoPart[];
-  isLoading: boolean;
-  error: string | null;
-  onEdit: (product: AutoPart) => void; // Callback to handle edit action
+interface ProductTableProps {
+  productsData: AutoPart[];
+  isLoadingData: boolean;
+  fetchError: string | null;
+  onEditClick: (product: AutoPart) => void;
 }
 
-export const ProductList: React.FC<ProductListProps> = ({ products, isLoading, error, onEdit }) => {
+export const ProductList: React.FC<ProductTableProps> = ({ productsData, isLoadingData, fetchError, onEditClick }) => {
 
-  if (isLoading) {
+  if (isLoadingData) {
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Товары:</h2>
@@ -32,16 +32,16 @@ export const ProductList: React.FC<ProductListProps> = ({ products, isLoading, e
     );
   }
 
-  if (error) {
+  if (fetchError) {
     return (
       <div>
         <h2 className="text-xl font-semibold mb-4">Товары:</h2>
-        <p className="text-destructive text-center">{error}</p>
+        <p className="text-destructive text-center">{fetchError}</p>
       </div>
     );
   }
 
-  if (products.length === 0) {
+  if (productsData.length === 0) {
     return (
        <div>
             <h2 className="text-xl font-semibold mb-4">Товары:</h2>
@@ -67,16 +67,16 @@ export const ProductList: React.FC<ProductListProps> = ({ products, isLoading, e
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.brand}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>{formatPrice(product.price)}</TableCell>
-                <TableCell className="font-mono text-xs">{product.sku || '-'}</TableCell>
-                <TableCell>{product.stock ?? 0}</TableCell>
+            {productsData.map((productItem) => (
+              <TableRow key={productItem.id}>
+                <TableCell className="font-medium">{productItem.name}</TableCell>
+                <TableCell>{productItem.brand}</TableCell>
+                <TableCell>{productItem.category}</TableCell>
+                <TableCell>{formatPrice(productItem.price)}</TableCell>
+                <TableCell className="font-mono text-xs">{productItem.sku || '-'}</TableCell>
+                <TableCell>{productItem.stock ?? 0}</TableCell>
                 <TableCell>
-                  <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+                  <Button variant="outline" size="sm" onClick={() => onEditClick(productItem)}>
                     Изменить
                   </Button>
                 </TableCell>

@@ -1,3 +1,4 @@
+
 [
   {
     "id": "bps-001",
@@ -12,10 +13,28 @@
       "Toyota RAV4 2019+"
     ],
     "sku": "TG-8901-F",
-    "stock": 50000000,
+    "stock": 50,
     "rating": 4.8,
     "reviewCount": 120,
-    "dataAiHint": "brake pads"
+    "dataAiHint": "brake pads",
+    "reviews": [
+      {
+        "id": "review-bps-001-1",
+        "userId": "user-123",
+        "username": "Иван П.",
+        "rating": 5,
+        "comment": "Отличные колодки, тормозят как вкопанные! Рекомендую.",
+        "date": "2024-05-01T10:00:00Z"
+      },
+      {
+        "id": "review-bps-001-2",
+        "userId": "user-456",
+        "username": "Елена С.",
+        "rating": 4,
+        "comment": "Хорошие колодки, но немного пылят. В целом довольна.",
+        "date": "2024-05-05T14:30:00Z"
+      }
+    ]
   },
   {
     "id": "afl-002",
@@ -33,7 +52,8 @@
     "stock": 150,
     "rating": 4.5,
     "reviewCount": 85,
-    "dataAiHint": "air filter"
+    "dataAiHint": "air filter",
+    "reviews": []
   },
   {
     "id": "oil-003",
@@ -50,7 +70,17 @@
     "stock": 80,
     "rating": 4.9,
     "reviewCount": 210,
-    "dataAiHint": "engine oil"
+    "dataAiHint": "engine oil",
+    "reviews": [
+      {
+        "id": "review-oil-003-1",
+        "userId": "user-789",
+        "username": "Сергей В.",
+        "rating": 5,
+        "comment": "Лучшее масло для моей Тойоты! Двигатель работает тише.",
+        "date": "2024-04-20T12:00:00Z"
+      }
+    ]
   },
   {
     "id": "shk-004",
@@ -68,7 +98,8 @@
     "stock": 30,
     "rating": 4.6,
     "reviewCount": 55,
-    "dataAiHint": "shock absorbers"
+    "dataAiHint": "shock absorbers",
+    "reviews": []
   },
   {
     "id": "lhd-005",
@@ -85,7 +116,8 @@
     "stock": 75,
     "rating": 4.7,
     "reviewCount": 92,
-    "dataAiHint": "headlight bulb"
+    "dataAiHint": "headlight bulb",
+    "reviews": []
   },
   {
     "id": "acc-006",
@@ -103,7 +135,8 @@
     "stock": 40,
     "rating": 4.9,
     "reviewCount": 150,
-    "dataAiHint": "floor mats"
+    "dataAiHint": "floor mats",
+    "reviews": []
   },
   {
     "id": "bdy-007",
@@ -120,7 +153,8 @@
     "stock": 25,
     "rating": 4.5,
     "reviewCount": 15,
-    "dataAiHint": "side mirror cover"
+    "dataAiHint": "side mirror cover",
+    "reviews": []
   },
   {
     "id": "flt-008",
@@ -138,7 +172,8 @@
     "stock": 120,
     "rating": 4.6,
     "reviewCount": 70,
-    "dataAiHint": "cabin air filter"
+    "dataAiHint": "cabin air filter",
+    "reviews": []
   },
   {
     "id": "bps-009",
@@ -156,7 +191,8 @@
     "stock": 20,
     "rating": 4.7,
     "reviewCount": 45,
-    "dataAiHint": "brake rotors"
+    "dataAiHint": "brake rotors",
+    "reviews": []
   },
   {
     "id": "oil-010",
@@ -173,7 +209,8 @@
     "stock": 250,
     "rating": 4.9,
     "reviewCount": 300,
-    "dataAiHint": "oil filter"
+    "dataAiHint": "oil filter",
+    "reviews": []
   },
   {
     "id": "spk-011",
@@ -191,7 +228,8 @@
     "stock": 90,
     "rating": 4.8,
     "reviewCount": 115,
-    "dataAiHint": "spark plugs"
+    "dataAiHint": "spark plugs",
+    "reviews": []
   },
   {
     "id": "ele-012",
@@ -209,7 +247,8 @@
     "stock": 35,
     "rating": 4.4,
     "reviewCount": 60,
-    "dataAiHint": "car battery"
+    "dataAiHint": "car battery",
+    "reviews": []
   },
   {
     "id": "sus-013",
@@ -227,7 +266,8 @@
     "stock": 60,
     "rating": 4.5,
     "reviewCount": 40,
-    "dataAiHint": "stabilizer links"
+    "dataAiHint": "stabilizer links",
+    "reviews": []
   },
   {
     "id": "blb-014",
@@ -244,7 +284,8 @@
     "stock": 180,
     "rating": 4.6,
     "reviewCount": 95,
-    "dataAiHint": "brake light bulb"
+    "dataAiHint": "brake light bulb",
+    "reviews": []
   },
   {
     "id": "acc-015",
@@ -262,7 +303,8 @@
     "stock": 15,
     "rating": 4.7,
     "reviewCount": 35,
-    "dataAiHint": "roof rack crossbars"
+    "dataAiHint": "roof rack crossbars",
+    "reviews": []
   },
   {
     "id": "wpr-016",
@@ -281,7 +323,8 @@
     "stock": 200,
     "rating": 4.7,
     "reviewCount": 180,
-    "dataAiHint": "wiper blades"
+    "dataAiHint": "wiper blades",
+    "reviews": []
   },
   {
     "id": "flt-017",
@@ -299,7 +342,8 @@
     "stock": 55,
     "rating": 4.6,
     "reviewCount": 50,
-    "dataAiHint": "fuel filter"
+    "dataAiHint": "fuel filter",
+    "reviews": []
   },
   {
     "id": "eng-018",
@@ -317,7 +361,8 @@
     "stock": 25,
     "rating": 4.8,
     "reviewCount": 70,
-    "dataAiHint": "timing belt kit"
+    "dataAiHint": "timing belt kit",
+    "reviews": []
   },
   {
     "id": "rad-019",
@@ -334,7 +379,8 @@
     "stock": 18,
     "rating": 4.3,
     "reviewCount": 30,
-    "dataAiHint": "radiator"
+    "dataAiHint": "radiator",
+    "reviews": []
   },
   {
     "id": "tir-020",
@@ -351,7 +397,8 @@
     "stock": 100,
     "rating": 4.7,
     "reviewCount": 65,
-    "dataAiHint": "tpms sensor"
+    "dataAiHint": "tpms sensor",
+    "reviews": []
   },
   {
     "id": "ext-021",
@@ -368,7 +415,8 @@
     "stock": 42,
     "rating": 4.4,
     "reviewCount": 38,
-    "dataAiHint": "exhaust pipe"
+    "dataAiHint": "exhaust pipe",
+    "reviews": []
   },
   {
     "id": "clh-022",
@@ -385,7 +433,8 @@
     "stock": 15,
     "rating": 4.8,
     "reviewCount": 25,
-    "dataAiHint": "clutch kit"
+    "dataAiHint": "clutch kit",
+    "reviews": []
   },
   {
     "id": "mir-023",
@@ -402,6 +451,7 @@
     "stock": 33,
     "rating": 4.2,
     "reviewCount": 41,
-    "dataAiHint": "side mirror"
+    "dataAiHint": "side mirror",
+    "reviews": []
   }
 ]

@@ -1,118 +1,110 @@
-
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/icons";
 import Autopart from "@/app/components/autopart";
-import { getPartsByVin, getPartsByMakeModel } from '@/services/autoparts'; // Corrected import path
+import { getPartsByVin, getPartsByMakeModel } from '@/services/autopartCompatibility';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { AutoPart } from '@/types/autopart';
 
-interface CompatibilityCheckerProps {
-  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
+interface CompatibilityFormProps {
+  onAddToCart: (product: AutoPart) => void;
 }
 
-type CompatiblePartsResult = AutoPart[] | null;
+type CompatiblePartsList = AutoPart[] | null;
 
-export const CompatibilityChecker: React.FC<CompatibilityCheckerProps> = ({ onAddToCart }) => {
-  const [make, setMake] = useState('');
-  const [model, setModel] = useState('');
-  const [vinCode, setVinCode] = useState('');
-  const [compatibleParts, setCompatibleParts] = useState<CompatiblePartsResult>(null);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const { toast } = useToast();
+export const CompatibilityChecker: React.FC<CompatibilityFormProps> = ({ onAddToCart }) => {
+  const [vehicleMake, setVehicleMake] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [vehicleVin, setVehicleVin] = useState('');
+  const [foundParts, setFoundParts] = useState<CompatiblePartsList>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const { toast: showMsg } = useToast();
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const findCompatibleParts = async (event: React.FormEvent) => {
     event.preventDefault();
-    setIsLoadingSuggestions(true);
-    setCompatibleParts(null);
+    setIsSearching(true);
+    setFoundParts(null);
 
-    let partsResult: AutoPart[] = [];
-    let searchPerformed = false;
+    let searchResults: AutoPart[] = [];
+    let didSearch = false;
 
-    if (vinCode && vinCode.length === 17 && /^[A-HJ-NPR-Z0-9]{17}$/i.test(vinCode)) {
+    if (vehicleVin && vehicleVin.length === 17 && /^[A-HJ-NPR-Z0-9]{17}$/i.test(vehicleVin)) {
       try {
-        console.log(`Searching parts by VIN: ${vinCode}`);
-        partsResult = await getPartsByVin(vinCode.toUpperCase());
-        searchPerformed = true;
-        console.log(`Found ${partsResult.length} parts by VIN.`);
+        searchResults = await getPartsByVin(vehicleVin.toUpperCase());
+        didSearch = true;
       } catch (error) {
-        console.error("Error fetching parts by VIN:", error);
+        // Error fetching parts by VIN
       }
-    } else if (vinCode) {
-       toast({
+    } else if (vehicleVin) {
+       showMsg({
          title: "Ошибка",
          description: "VIN-код должен состоять из 17 латинских букв (кроме I, O, Q) и цифр.",
          variant: "destructive",
        });
-       setIsLoadingSuggestions(false);
+       setIsSearching(false);
        return;
     }
 
-    if ((!searchPerformed || partsResult.length === 0) && make && model) {
-        if (!searchPerformed) console.log("VIN not provided or invalid, searching by Make/Model...");
-        else console.log("No parts found by VIN, falling back to Make/Model search...");
+    if ((!didSearch || searchResults.length === 0) && vehicleMake && vehicleModel) {
       try {
-        console.log(`Searching parts by Make: ${make}, Model: ${model}`);
-        partsResult = await getPartsByMakeModel(make, model);
-        searchPerformed = true;
-        console.log(`Found ${partsResult.length} parts by Make/Model.`);
+        searchResults = await getPartsByMakeModel(vehicleMake, vehicleModel);
+        didSearch = true;
       } catch (error) {
-        console.error("Error fetching parts by Make/Model:", error);
-        toast({
+        showMsg({
           title: "Ошибка",
           description: "Не удалось получить совместимые детали. Пожалуйста, попробуйте позже.",
           variant: "destructive",
         });
-        setCompatibleParts(null);
-        setIsLoadingSuggestions(false);
+        setFoundParts(null);
+        setIsSearching(false);
         return;
       }
     }
 
-    if (!searchPerformed && (!make || !model)) {
-      toast({
+    if (!didSearch && (!vehicleMake || !vehicleModel)) {
+      showMsg({
         title: "Ошибка",
         description: "Пожалуйста, введите Марку и Модель или корректный VIN-код.",
         variant: "destructive",
       });
-    } else if (partsResult.length === 0) {
-        toast({
+    } else if (searchResults.length === 0) {
+        showMsg({
             title: "Детали не найдены",
             description: "Не удалось найти совместимые детали для вашего запроса.",
         });
-        setCompatibleParts([]);
+        setFoundParts([]);
     } else {
-        setCompatibleParts(partsResult);
+        setFoundParts(searchResults);
     }
 
-    setIsLoadingSuggestions(false);
+    setIsSearching(false);
   };
 
   return (
     <section className="py-12 bg-card border rounded-lg p-6">
       <div className="container mx-auto text-center">
         <h2 className="text-2xl font-bold mb-6">Найти детали для вашего автомобиля</h2>
-         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-4">
+         <form onSubmit={findCompatibleParts} className="max-w-2xl mx-auto space-y-4">
            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Input
                   type="text"
                   placeholder="Марка"
-                  value={make}
-                  onChange={(e) => setMake(e.target.value)}
+                  value={vehicleMake}
+                  onChange={(e) => setVehicleMake(e.target.value)}
                   className="w-full sm:w-auto flex-1"
-                  disabled={isLoadingSuggestions}
+                  disabled={isSearching}
               />
               <Input
                   type="text"
                   placeholder="Модель"
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  value={vehicleModel}
+                  onChange={(e) => setVehicleModel(e.target.value)}
                   className="w-full sm:w-auto flex-1"
-                   disabled={isLoadingSuggestions}
+                   disabled={isSearching}
               />
            </div>
             <div className="flex items-center justify-center gap-2">
@@ -124,35 +116,34 @@ export const CompatibilityChecker: React.FC<CompatibilityCheckerProps> = ({ onAd
               <Input
                   type="text"
                   placeholder="VIN-код (17 символов)"
-                  value={vinCode}
-                  onChange={(e) => setVinCode(e.target.value.toUpperCase())}
+                  value={vehicleVin}
+                  onChange={(e) => setVehicleVin(e.target.value.toUpperCase())}
                   className="w-full font-mono tracking-widest uppercase"
                   maxLength={17}
                   pattern="[A-HJ-NPR-Z0-9]{17}"
                   title="VIN должен состоять из 17 латинских букв (кроме I, O, Q) и цифр."
-                  disabled={isLoadingSuggestions}
+                  disabled={isSearching}
               />
             </div>
-             <Button type="submit" className="w-full sm:w-auto bg-[#535353ff] hover:bg-[#535353ff]/90" disabled={isLoadingSuggestions}>
-               {isLoadingSuggestions ? <Icons.loader className="mr-2 h-4 w-4 animate-spin" /> : null}
-               {isLoadingSuggestions ? 'Поиск...' : 'Найти детали'}
+             <Button type="submit" className="w-full sm:w-auto bg-[#535353ff] hover:bg-[#535353ff]/90" disabled={isSearching}>
+               {isSearching ? <Icons.loader className="mr-2 h-4 w-4 animate-spin" /> : null}
+               {isSearching ? 'Поиск...' : 'Найти детали'}
              </Button>
         </form>
 
-         {isLoadingSuggestions && (
+         {isSearching && (
               <div className="mt-8 text-center text-muted-foreground">
                  <Icons.loader className="mx-auto h-6 w-6 animate-spin mb-2" />
                  Ищем подходящие детали...
               </div>
           )}
-         {!isLoadingSuggestions && compatibleParts && (
+         {!isSearching && foundParts && (
           <div className="mt-8">
             <h3 className="text-xl font-semibold mb-4">Предложенные детали:</h3>
-            {compatibleParts.length > 0 ? (
+            {foundParts.length > 0 ? (
                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                  {compatibleParts.map((product) => (
-                  // Pass the onAddToCart function down to each Autopart
-                  <Autopart key={product.id} product={product} onAddToCart={onAddToCart} />
+                  {foundParts.map((part) => (
+                  <Autopart key={part.id} productInfo={part} onAddToCart={onAddToCart} />
                   ))}
                </div>
              ) : (

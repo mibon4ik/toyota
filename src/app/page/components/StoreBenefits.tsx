@@ -1,10 +1,11 @@
+
 'use client';
 
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Icons } from "@/components/icons";
 
-const benefits = [
+const companyAdvantages = [
   {
     title: 'Бесплатная доставка',
     description: 'Наслаждайтесь бесплатной доставкой заказов на сумму свыше 50.000 тенге.',
@@ -28,13 +29,13 @@ export const StoreBenefits: React.FC = () => {
       <div className="container mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center">Почему выбирают нас?</h2>
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {benefits.map((benefit) => {
-            const IconComponent = benefit.icon;
+          {companyAdvantages.map((advantage) => {
+            const AdvantageIcon = advantage.icon;
             return (
-              <Card key={benefit.title} className="p-6 text-center">
-                {IconComponent && React.createElement(IconComponent, { className: "w-10 h-10 mb-4 mx-auto text-[#535353ff]" })}
-                <CardTitle className="text-lg font-semibold mb-2">{benefit.title}</CardTitle>
-                <CardDescription>{benefit.description}</CardDescription>
+              <Card key={advantage.title} className="p-6 text-center">
+                {AdvantageIcon && React.createElement(AdvantageIcon, { className: "w-10 h-10 mb-4 mx-auto text-[#535353ff]" })}
+                <CardTitle className="text-lg font-semibold mb-2">{advantage.title}</CardTitle>
+                <CardDescription>{advantage.description}</CardDescription>
               </Card>
             );
           })}

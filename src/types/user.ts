@@ -1,13 +1,31 @@
+
+export type UserAccountRole = 'admin' | 'user';
+
 export interface User {
   id: string;
-  username: string; // Added username field
+  username: string;
   firstName: string;
   lastName: string;
-  email?: string; // Make email optional
+  email?: string;
   phoneNumber: string;
-  password?: string; // Password should ideally be handled server-side and hashed
+  password?: string; 
   carMake: string;
   carModel: string;
   vinCode: string;
-  isAdmin?: boolean; // Optional field for admin status
+  role: UserAccountRole; 
+  isAdmin: boolean;     
+}
+
+export interface StoredUser {
+  id: string;
+  username: string;
+  role: UserAccountRole; 
+  isAdmin: boolean;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phoneNumber: string;
+  carMake: string;
+  carModel: string;
+  vinCode: string;
 }

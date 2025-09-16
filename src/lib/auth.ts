@@ -1,302 +1,244 @@
+
 'use server';
 
 import fs from 'fs/promises';
 import path from 'path';
-import bcrypt from 'bcryptjs';
-import type { User } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie'; // Import CookieSerializeOptions type
+import type { User, StoredUser, UserAccountRole } from '@/types/user';
 
-const usersFilePath = path.join(process.cwd(), 'src', 'data', 'users.json');
-const dataDir = path.dirname(usersFilePath);
+const usersDataPath = path.join(process.cwd(), 'src', 'data', 'users.json');
+const dataDirectory = path.dirname(usersDataPath);
 
-
-const ensureDataDirExists = async (): Promise<void> => {
+const checkDataDirectory = async (): Promise<void> => {
   try {
-    await fs.access(dataDir);
+    await fs.access(dataDirectory);
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      await fs.mkdir(dataDir, { recursive: true });
+      await fs.mkdir(dataDirectory, { recursive: true });
     } else {
-      console.error("Error accessing data directory:", error);
       throw new Error("Could not access data directory.");
     }
   }
 };
 
+function createDefaultAdminUser(): User {
+    return {
+      id: `admin-user-autogen-${Date.now()}`,
+      username: 'admin',
+      password: 'admin',
+      role: 'admin',
+      isAdmin: true,
+      firstName: 'Admin',
+      lastName: 'User',
+      email: 'admin@example.com',
+      phoneNumber: '00000000000',
+      carMake: 'Toyota',
+      carModel: 'GR Supra',
+      vinCode: 'ADMINVIN000000000',
+    };
+}
 
-async function readUsersFile(): Promise<User[]> {
-  await ensureDataDirExists();
+async function loadUsersFromFile(): Promise<User[]> {
+  await checkDataDirectory();
   try {
-    const data = await fs.readFile(usersFilePath, 'utf-8');
-    return JSON.parse(data || '[]');
+    const fileContent = await fs.readFile(usersDataPath, 'utf-8');
+    if (!fileContent.trim()) {
+        const defaultAdmin = createDefaultAdminUser();
+        await saveUsersToFile([defaultAdmin]);
+        return [defaultAdmin];
+    }
+    const users = JSON.parse(fileContent);
+    if (!Array.isArray(users) || users.length === 0) { // Ensure it's an array and not empty
+        const defaultAdmin = createDefaultAdminUser();
+        await saveUsersToFile([defaultAdmin]);
+        return [defaultAdmin];
+    }
+    return users;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-       // If file doesn't exist, initialize with admin user
-       const adminUser = await createAdminUserObject();
-       await writeUsersFile([adminUser]);
-       return [adminUser];
+    const defaultAdmin = createDefaultAdminUser();
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT' || error instanceof SyntaxError) {
+       console.warn(`users.json not found or corrupted. Initializing with default admin.`);
+       await saveUsersToFile([defaultAdmin]);
+       return [defaultAdmin];
     }
-    if (error instanceof SyntaxError) {
-        console.error("Error parsing users.json:", error);
-        throw new Error("User data file is corrupted.");
-    }
-    console.error("Error reading users file:", error);
-    throw new Error("Could not read user data.");
+    console.error("Error reading users file, initializing with default admin:", error);
+    await saveUsersToFile([defaultAdmin]); // Fallback for other read errors
+    return [defaultAdmin];
   }
 }
 
-
-async function writeUsersFile(users: User[]): Promise<void> {
-  await ensureDataDirExists();
+async function saveUsersToFile(usersArray: User[]): Promise<void> {
+  await checkDataDirectory();
   try {
-      if (!Array.isArray(users)) {
-        console.error("Invalid users data provided to writeUsersFile:", users);
-        throw new Error("Attempted to write invalid user data.");
-      }
-    await fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), 'utf-8');
+    if (!Array.isArray(usersArray)) {
+      throw new Error("Attempted to write invalid user data.");
+    }
+    await fs.writeFile(usersDataPath, JSON.stringify(usersArray, null, 2), 'utf-8');
   } catch (error) {
     console.error("Error writing users file:", error);
     throw new Error("Could not save user data.");
   }
 }
 
+async function ensureDefaultAdminExists(): Promise<User[]> {
+    let currentUsers = await loadUsersFromFile();
+    const adminUser = currentUsers.find(u => u.username.toLowerCase() === 'admin');
 
+    if (!adminUser) {
+        const defaultAdmin = createDefaultAdminUser();
+        currentUsers = [defaultAdmin, ...currentUsers.filter(u => u.username.toLowerCase() !== 'admin')];
+        await saveUsersToFile(currentUsers);
+    } else if (!adminUser.isAdmin || adminUser.role !== 'admin') {
+        // Ensure existing admin has correct admin flags
+        adminUser.isAdmin = true;
+        adminUser.role = 'admin';
+        await saveUsersToFile(currentUsers);
+    }
+    return currentUsers;
+}
 
-async function createAdminUserObject(): Promise<User> {
-    const hashedPassword = await bcrypt.hash('admin', 10);
-    return {
-      id: 'admin-user',
-      username: 'admin',
-      firstName: 'Admin',
-      lastName: 'User',
-      email: 'admin@admin.com',
-      phoneNumber: '0000000000',
-      password: hashedPassword,
-      carMake: 'N/A',
-      carModel: 'N/A',
-      vinCode: 'ADMINVIN000000000',
-      isAdmin: true,
+export async function findUserByUsername(usernameToFind: string): Promise<User | undefined> {
+  const allUsers = await ensureDefaultAdminExists();
+  const lowercasedUsernameToFind = usernameToFind.toLowerCase();
+  return allUsers.find(user => user.username.toLowerCase() === lowercasedUsernameToFind);
+}
+
+export async function verifyUserCredentials(usernameProvided: string, passwordProvided: string): Promise<StoredUser | null> {
+  const foundUser = await findUserByUsername(usernameProvided);
+
+  if (!foundUser || !foundUser.password) {
+    return null;
+  }
+
+  // Direct password comparison for simplicity (not for production)
+  if (foundUser.password === passwordProvided) {
+    const { password, ...userDetailsToStore } = foundUser;
+    const sessionUser: StoredUser = {
+      ...userDetailsToStore,
+      isAdmin: userDetailsToStore.role === 'admin' && userDetailsToStore.isAdmin === true, // Explicitly check both
+      role: userDetailsToStore.role as UserAccountRole,
     };
+    return sessionUser;
+  } else {
+    return null;
+  }
 }
 
+export async function createUser(userData: Omit<User, 'id' | 'role' | 'isAdmin'>): Promise<User> {
+  let allUsers = await ensureDefaultAdminExists();
 
-async function ensureAdminUser(): Promise<void> {
-    let users = await readUsersFile();
-    const adminIndex = users.findIndex(u => u.username === 'admin');
-    const correctHashedPassword = await bcrypt.hash('admin', 10);
-
-    let needsUpdate = false;
-
-    if (adminIndex > -1) {
-        const adminUser = users[adminIndex];
-        let passwordMatches = false;
-        try {
-           // Check if current stored password is correct
-           passwordMatches = await bcrypt.compare('admin', adminUser.password || '');
-        } catch {
-             passwordMatches = false; // Assume password needs update if hash is invalid
-        }
-
-        if (!passwordMatches || !adminUser.isAdmin || adminUser.email !== 'admin@admin.com' || !adminUser.password) {
-             // Update password hash, ensure isAdmin is true, and email is correct
-             adminUser.password = correctHashedPassword;
-             adminUser.isAdmin = true;
-             adminUser.email = 'admin@admin.com';
-             needsUpdate = true;
-        }
-    } else {
-        // Add admin user if not found
-        const adminUser = await createAdminUserObject();
-        users.unshift(adminUser);
-        needsUpdate = true;
-    }
-
-    if (needsUpdate) {
-        await writeUsersFile(users);
-    }
-}
-
-
-export async function getUserByUsername(username: string): Promise<User | undefined> {
-  await ensureAdminUser();
-  const users = await readUsersFile();
-  return users.find(user => user.username === username);
-}
-
-
-export async function getUserByVin(vin: string): Promise<User | undefined> {
-    await ensureAdminUser();
-    const users = await readUsersFile();
-
-    return users.find(user => user.vinCode?.toUpperCase() === vin?.toUpperCase());
-}
-
-
-export async function createUser(newUser: Omit<User, 'id' | 'isAdmin' | 'password'> & { password?: string }): Promise<User> {
-  await ensureAdminUser();
-  let users = await readUsersFile();
-
-
-  const usernameExists = users.some(user => user.username === newUser.username);
-  if (usernameExists) {
+  const usernameLower = userData.username.toLowerCase();
+  if (allUsers.some(user => user.username.toLowerCase() === usernameLower)) {
     throw new Error('Этот логин уже зарегистрирован.');
   }
-  if (newUser.email) {
-    const emailExists = users.some(user => user.email && user.email === newUser.email);
-    if (emailExists) {
+  if (userData.email) {
+    const emailLower = userData.email.toLowerCase();
+    if (allUsers.some(user => user.email && user.email.toLowerCase() === emailLower)) {
         throw new Error('Этот адрес электронной почты уже зарегистрирован.');
     }
   }
-  const vinExists = users.some(user => user.vinCode?.toUpperCase() === newUser.vinCode?.toUpperCase());
-  if (vinExists) {
+  if (userData.vinCode && allUsers.some(user => user.vinCode?.toUpperCase() === userData.vinCode?.toUpperCase())) {
     throw new Error('Этот VIN-код уже зарегистрирован.');
   }
-  if (!newUser.password) {
-    throw new Error('Password is required.');
+  if (!userData.password) {
+    throw new Error('Password is required for new user.');
   }
 
-
-
-  const hashedPassword = await bcrypt.hash(newUser.password, 10);
-
-  const userWithId: User = {
-    id: Date.now().toString(),
-    username: newUser.username,
-    firstName: newUser.firstName,
-    lastName: newUser.lastName,
-    email: newUser.email || undefined,
-    phoneNumber: newUser.phoneNumber,
-    password: hashedPassword,
-    carMake: newUser.carMake,
-    carModel: newUser.carModel,
-    vinCode: newUser.vinCode.toUpperCase(),
+  const newUserRecord: User = {
+    id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    username: userData.username,
+    firstName: userData.firstName,
+    lastName: userData.lastName,
+    email: userData.email || undefined,
+    phoneNumber: userData.phoneNumber,
+    password: userData.password,
+    carMake: userData.carMake,
+    carModel: userData.carModel,
+    vinCode: userData.vinCode.toUpperCase(),
+    role: 'user',
     isAdmin: false,
   };
 
-  users.push(userWithId);
-  await writeUsersFile(users);
+  allUsers.push(newUserRecord);
+  await saveUsersToFile(allUsers);
 
-
-  // Return the user object *including* the password hash for admin view
-  return userWithId;
+  return newUserRecord;
 }
 
-
-export async function verifyPassword(username: string, passwordInput: string): Promise<User | null> {
-  await ensureAdminUser();
-
-  const user = await getUserByUsername(username);
-
-  if (!user) {
-      console.log(`verifyPassword: User not found for username: ${username}`);
-    return null;
-  }
-  if (!user.password) {
-       console.log(`verifyPassword: User ${username} has no password hash set.`);
-      return null;
-  }
-
-  try {
-      console.log(`verifyPassword: Comparing password for ${username}`);
-    const passwordsMatch = await bcrypt.compare(passwordInput, user.password);
-
-    if (passwordsMatch) {
-        console.log(`verifyPassword: Password match for ${username}.`);
-      // Return user data WITHOUT password hash for session/client-side use
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword as User; // Ensure correct type casting
-    } else {
-       console.log(`verifyPassword: Password mismatch for ${username}.`);
-      return null;
-    }
-  } catch (error) {
-    console.error(`Error during password comparison for ${username}:`, error);
-    return null;
-  }
+export async function getAllUsers(): Promise<User[]> {
+  const usersList = await ensureDefaultAdminExists();
+  return usersList.map(user => ({...user, isAdmin: user.role === 'admin'}));
 }
 
+export async function updateUser(userIdToUpdate: string, dataForUpdate: Partial<Omit<User, 'id' | 'password'>>): Promise<StoredUser> {
+  let currentUsers = await ensureDefaultAdminExists();
+  const userIdx = currentUsers.findIndex(u => u.id === userIdToUpdate);
 
-export async function getAllUsers(): Promise<User[]> { // Return full User objects
-  await ensureAdminUser();
-  const users = await readUsersFile();
-  return users; // Return the full user objects including password hash
-}
-
-// Function to update user details (excluding password)
-export async function updateUser(userId: string, updatedData: Partial<Omit<User, 'id' | 'password'>>): Promise<Omit<User, 'password'>> {
-  await ensureAdminUser();
-  let users = await readUsersFile();
-  const userIndex = users.findIndex(u => u.id === userId);
-
-  if (userIndex === -1) {
-    throw new Error(`Пользователь с ID "${userId}" не найден.`);
+  if (userIdx === -1) {
+    throw new Error(`Пользователь с ID "${userIdToUpdate}" не найден.`);
   }
 
-  // Prevent updating ID or password with this function
-  const { id, password, ...dataToUpdate } = updatedData;
+  const { id, password, role, isAdmin, ...updateFields } = dataForUpdate;
 
-  // Ensure username uniqueness if changed
-  if (dataToUpdate.username && dataToUpdate.username !== users[userIndex].username) {
-      const usernameExists = users.some(u => u.username === dataToUpdate.username && u.id !== userId);
-      if (usernameExists) {
+  if (updateFields.username && updateFields.username.toLowerCase() !== currentUsers[userIdx].username.toLowerCase()) {
+      if (currentUsers.some(u => u.username.toLowerCase() === updateFields.username!.toLowerCase() && u.id !== userIdToUpdate)) {
           throw new Error('Этот логин уже используется другим пользователем.');
       }
   }
-   // Ensure email uniqueness if changed and provided
-   if (dataToUpdate.email && dataToUpdate.email !== users[userIndex].email) {
-     const emailExists = users.some(u => u.email && u.email === dataToUpdate.email && u.id !== userId);
-     if (emailExists) {
+   if (updateFields.email && currentUsers[userIdx].email && updateFields.email.toLowerCase() !== (currentUsers[userIdx].email || '').toLowerCase()) {
+     if (currentUsers.some(u => u.email && u.email.toLowerCase() === updateFields.email!.toLowerCase() && u.id !== userIdToUpdate)) {
          throw new Error('Этот email уже используется другим пользователем.');
      }
    }
-   // Ensure VIN uniqueness if changed
-   if (dataToUpdate.vinCode && dataToUpdate.vinCode.toUpperCase() !== users[userIndex].vinCode.toUpperCase()) {
-     const vinExists = users.some(u => u.vinCode?.toUpperCase() === dataToUpdate.vinCode?.toUpperCase() && u.id !== userId);
-     if (vinExists) {
+   if (updateFields.vinCode && updateFields.vinCode.toUpperCase() !== currentUsers[userIdx].vinCode.toUpperCase()) {
+     if (currentUsers.some(u => u.vinCode?.toUpperCase() === updateFields.vinCode?.toUpperCase() && u.id !== userIdToUpdate)) {
        throw new Error('Этот VIN-код уже зарегистрирован для другого пользователя.');
      }
    }
 
-
-  const updatedUser = {
-    ...users[userIndex],
-    ...dataToUpdate,
-    vinCode: dataToUpdate.vinCode ? dataToUpdate.vinCode.toUpperCase() : users[userIndex].vinCode,
-    isAdmin: dataToUpdate.isAdmin ?? users[userIndex].isAdmin,
+  const modifiedUser: User = {
+    ...currentUsers[userIdx],
+    ...updateFields,
+    username: updateFields.username || currentUsers[userIdx].username,
+    vinCode: updateFields.vinCode ? updateFields.vinCode.toUpperCase() : currentUsers[userIdx].vinCode,
+    role: dataForUpdate.isAdmin === true ? 'admin' : dataForUpdate.isAdmin === false ? 'user' : currentUsers[userIdx].role,
+    isAdmin: dataForUpdate.isAdmin !== undefined ? dataForUpdate.isAdmin : currentUsers[userIdx].isAdmin,
   };
 
-  users[userIndex] = updatedUser;
-  await writeUsersFile(users);
-
-  const { password: _, ...userWithoutPassword } = updatedUser;
-  return userWithoutPassword;
-}
-
-// Function to update only the user's password
-export async function updateUserPassword(userId: string, newPasswordInput: string): Promise<void> {
-  await ensureAdminUser();
-  let users = await readUsersFile();
-  const userIndex = users.findIndex(u => u.id === userId);
-
-  if (userIndex === -1) {
-    throw new Error(`Пользователь с ID "${userId}" не найден.`);
+  if (dataForUpdate.isAdmin === true) {
+    modifiedUser.role = 'admin';
+  } else if (dataForUpdate.isAdmin === false) {
+    modifiedUser.role = 'user';
   }
 
-  if (!newPasswordInput || newPasswordInput.length < 8) {
+  currentUsers[userIdx] = modifiedUser;
+  await saveUsersToFile(currentUsers);
+
+  const { password: _p, ...userToReturn } = modifiedUser;
+  return userToReturn as StoredUser;
+}
+
+export async function updateUserPassword(userIdToChange: string, newPasswordValue: string): Promise<void> {
+  let usersArray = await ensureDefaultAdminExists();
+  const userRecordIndex = usersArray.findIndex(u => u.id === userIdToChange);
+
+  if (userRecordIndex === -1) {
+    throw new Error(`Пользователь с ID "${userIdToChange}" не найден.`);
+  }
+
+  if (!newPasswordValue || newPasswordValue.length < 8) {
      throw new Error('Новый пароль должен содержать не менее 8 символов.');
   }
 
-  const hashedPassword = await bcrypt.hash(newPasswordInput, 10);
-  users[userIndex].password = hashedPassword;
+  usersArray[userRecordIndex].password = newPasswordValue;
 
-  await writeUsersFile(users);
+  await saveUsersToFile(usersArray);
 }
-
 
 (async () => {
     try {
-        await ensureAdminUser();
+        await ensureDefaultAdminExists();
     } catch (error) {
         console.error("FATAL: Failed to ensure admin user on startup:", error);
+        // In a real app, you might want to prevent the app from starting or handle this more gracefully.
     }
 })();

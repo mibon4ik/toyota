@@ -1,208 +1,186 @@
-"use client"
 
-import * as React from "react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+'use client';
 
-import { cn } from "@/lib/utils"
-import { Icons } from "@/components/icons"
-// Correct import path for MobileNav, but we'll remove its usage
-// import { MobileNav } from "@/components/ui/mobile-nav"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import * as React from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { Icons } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState, useCallback } from "react";
 import { getCookie, deleteCookie } from 'cookies-next';
-import type { User } from '@/types/user';
-import type { CookieSerializeOptions } from 'cookie';
+import type { StoredUser } from '@/types/user';
 
-
-interface CartItem {
+interface CartItemType {
   id: string;
   quantity: number;
 }
 
-interface MainNavProps extends React.HTMLAttributes<HTMLElement> {}
+interface NavigationProps extends React.HTMLAttributes<HTMLElement> {}
 
-export function MainNav({ className, ...props }: MainNavProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [cartItemCount, setCartItemCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
+export function MainNav({ className, ...props }: NavigationProps) {
+  const currentPath = usePathname();
+  const appRouter = useRouter();
+  const [cartQuantity, setCartQuantity] = useState(0);
+  const [userIsAuthenticated, setUserIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
+  const [hasMounted, setHasMounted] = useState(false);
 
-  const updateCartCount = useCallback(() => {
+  const refreshCartCount = useCallback(() => {
     if (typeof window !== 'undefined') {
-      const storedCart = localStorage.getItem('cartItems');
-      if (storedCart) {
+      const cartData = localStorage.getItem('cartItems');
+      if (cartData) {
         try {
-          const cartItems: CartItem[] = JSON.parse(storedCart);
-          if (Array.isArray(cartItems)) {
-            const totalCount = cartItems.reduce((total: number, item: CartItem) => total + (item.quantity || 0), 0);
-            setCartItemCount(totalCount);
+          const items: CartItemType[] = JSON.parse(cartData);
+          if (Array.isArray(items)) {
+            const totalItems = items.reduce((total: number, item: CartItemType) => total + (item.quantity || 0), 0);
+            setCartQuantity(totalItems);
           } else {
-             setCartItemCount(0);
+             setCartQuantity(0);
           }
         } catch (e) {
-          console.error("MainNav: Error parsing cartItems from storage:", e);
-          setCartItemCount(0);
+          setCartQuantity(0);
         }
       } else {
-        setCartItemCount(0);
+        setCartQuantity(0);
       }
     }
   }, []);
 
-  const handleLogout = useCallback(() => {
-    console.log("MainNav: Logout initiated.");
-    const cookieOptions: CookieSerializeOptions = {
-      path: '/',
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-    };
+  const refreshAuthState = useCallback(() => {
+    if (typeof window === 'undefined') return;
 
-    deleteCookie('authToken', cookieOptions);
-    deleteCookie('isLoggedIn', cookieOptions);
-    deleteCookie('loggedInUser', cookieOptions);
-    console.log("MainNav: Cookies cleared.");
+    let isAuthenticated = false;
+    let user: StoredUser | null = null;
 
-    if (typeof window !== 'undefined') {
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('loggedInUser');
-        console.log("MainNav: localStorage cleared.");
+    const isLoggedInCookie = getCookie('isLoggedIn'); 
+    const userDataCookieString = getCookie('loggedInUser');
+    
+    console.log("MainNav Debug: Cookies - isLoggedInCookie:", isLoggedInCookie, "userDataCookieString:", !!userDataCookieString);
 
-        setIsLoggedIn(false);
-        setLoggedInUser(null);
-
-        console.log("MainNav: Dispatching authStateChanged event...");
-        window.dispatchEvent(new Event('authStateChanged'));
-        console.log("MainNav: authStateChanged event dispatched.");
-
-    } else {
-         console.warn("MainNav: window object not available during logout.");
-         setIsLoggedIn(false);
-         setLoggedInUser(null);
-    }
-
-    console.log("MainNav: Redirecting to login after logout.");
-    router.push('/auth/login');
-  }, [router]);
-
-  const updateAuthState = useCallback(() => {
-     if (typeof window === 'undefined') {
-         return;
-     }
-
-    const loggedInCookie = getCookie('isLoggedIn');
-    const userCookie = getCookie('loggedInUser');
-    const authTokenCookie = getCookie('authToken');
-
-    let derivedIsLoggedIn = false;
-    let derivedUser: User | null = null;
-
-    if (authTokenCookie && loggedInCookie === 'true' && userCookie) {
-        try {
-            derivedUser = JSON.parse(userCookie);
-            if (derivedUser && derivedUser.id && derivedUser.username) {
-                derivedIsLoggedIn = true;
-            } else {
-                 console.warn("MainNav: Invalid user data structure in cookie storage.");
-                 derivedUser = null;
-                 derivedIsLoggedIn = false;
-            }
-        } catch (e) {
-            console.error("MainNav: Error parsing user cookie:", e);
-            derivedUser = null;
-            derivedIsLoggedIn = false;
+    if (isLoggedInCookie === 'true' && userDataCookieString) {
+      try {
+        const userObj = JSON.parse(userDataCookieString as string) as StoredUser;
+        if (userObj && userObj.id) {
+          isAuthenticated = true;
+          user = userObj;
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('loggedInUser', JSON.stringify(userObj));
+        } else {
+           console.warn("MainNav Debug: Parsed userObj from cookie is invalid or missing id.");
         }
+      } catch (e) {
+         console.warn("MainNav Debug: Error parsing loggedInUser cookie", e);
+      }
     } else {
-        let loggedInLocalStorage = localStorage.getItem('isLoggedIn');
-        let userLocalStorage = localStorage.getItem('loggedInUser');
-        if (loggedInLocalStorage === 'true' && userLocalStorage) {
+        const lsLoggedIn = localStorage.getItem('isLoggedIn');
+        const lsUserData = localStorage.getItem('loggedInUser');
+        console.log("MainNav Debug: LocalStorage - lsLoggedIn:", lsLoggedIn, "lsUserData:", !!lsUserData);
+        if (lsLoggedIn === 'true' && lsUserData) {
             try {
-                derivedUser = JSON.parse(userLocalStorage);
-                 if (derivedUser && derivedUser.id && derivedUser.username) {
-                     derivedIsLoggedIn = true;
-                     console.log("MainNav: Auth state restored from localStorage.");
-                 } else {
-                    console.warn("MainNav: Invalid user data structure in localStorage.");
-                    derivedUser = null;
-                    derivedIsLoggedIn = false;
-                 }
+                const userObj = JSON.parse(lsUserData) as StoredUser;
+                if (userObj && userObj.id) {
+                    isAuthenticated = true;
+                    user = userObj;
+                } else {
+                    console.warn("MainNav Debug: Parsed userObj from localStorage is invalid or missing id.");
+                }
             } catch (e) {
-                 console.error("MainNav: Error parsing user localStorage:", e);
-                 derivedUser = null;
-                 derivedIsLoggedIn = false;
+                 console.warn("MainNav Debug: Error parsing loggedInUser from localStorage:", e);
             }
         }
     }
-
-    if (!derivedIsLoggedIn && (localStorage.getItem('isLoggedIn') || localStorage.getItem('loggedInUser'))) {
-        console.log("MainNav: Cleaning up inconsistent localStorage auth state.");
+    
+    if (!isAuthenticated) {
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('loggedInUser');
     }
 
-    setIsLoggedIn(current => current !== derivedIsLoggedIn ? derivedIsLoggedIn : current);
-    setLoggedInUser(current => JSON.stringify(current) !== JSON.stringify(derivedUser) ? derivedUser : current);
+    setUserIsAuthenticated(isAuthenticated);
+    setCurrentUser(user);
+    console.log("MainNav: Refreshed Auth State - isLoggedIn:", isAuthenticated, "User:", user?.username, "IsAdmin:", user?.isAdmin);
 
-  }, [setIsLoggedIn, setLoggedInUser]);
+  }, []); 
 
-   useEffect(() => {
-        if (!isMounted) {
-            setIsMounted(true);
-        }
+  const logOutUser = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loggedInUser');
+    
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error("MainNav: Logout API call failed:", error);
+    }
+    
+    setUserIsAuthenticated(false);
+    setCurrentUser(null);
+    
+    if (typeof window !== 'undefined') {
+      console.log("MainNav: Dispatching authStateChanged after logout.");
+      window.dispatchEvent(new Event('authStateChanged'));
+    }
+    
+    appRouter.replace('/auth/login');
+    appRouter.refresh(); 
+  }, [appRouter]);
 
-        updateAuthState();
-        updateCartCount();
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === 'cartItems') {
-                updateCartCount();
-            }
-             if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
-                 updateAuthState();
-            }
-        };
+  useEffect(() => {
+    if (!hasMounted) return;
 
-        const handleAuthStateChanged = () => {
-             updateAuthState();
-        };
-        const handleCartUpdated = () => {
-             updateCartCount();
-        };
+    const handleStorageEvents = (event: StorageEvent) => {
+      if (event.key === 'cartItems') refreshCartCount();
+      if (event.key === 'isLoggedIn' || event.key === 'loggedInUser') {
+        console.log("MainNav: Storage event triggered for auth keys, calling refreshAuthState.");
+        refreshAuthState();
+      }
+    };
+    const handleAuthChangeEvent = () => {
+      console.log("MainNav: authStateChanged event received, calling refreshAuthState and appRouter.refresh().");
+      refreshAuthState();
+      appRouter.refresh(); // Force re-evaluation of server components and middleware
+    };
+    const handleCartChangeEvent = () => refreshCartCount();
 
-        window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('authStateChanged', handleAuthStateChanged);
-        window.addEventListener('cartUpdated', handleCartUpdated);
+    window.addEventListener('storage', handleStorageEvents);
+    window.addEventListener('authStateChanged', handleAuthChangeEvent);
+    window.addEventListener('cartUpdated', handleCartChangeEvent);
 
-        return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            window.removeEventListener('authStateChanged', handleAuthStateChanged);
-            window.removeEventListener('cartUpdated', handleCartUpdated);
-        };
-    }, [isMounted, updateAuthState, updateCartCount]);
+    console.log("MainNav: useEffect for listeners - calling initial refreshAuthState and refreshCartCount.");
+    refreshAuthState(); 
+    refreshCartCount(); 
+
+    return () => {
+      window.removeEventListener('storage', handleStorageEvents);
+      window.removeEventListener('authStateChanged', handleAuthChangeEvent);
+      window.removeEventListener('cartUpdated', handleCartChangeEvent);
+    };
+  }, [hasMounted, refreshAuthState, refreshCartCount, appRouter]);
 
 
-   const navigateToCart = () => {
-        router.push('/cart');
+   const goToCartPage = () => {
+        appRouter.push('/cart');
    };
 
-    if (!isMounted) {
+    if (!hasMounted) {
         return (
             <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-                {/* MobileNav Skeleton/Trigger Removed */}
                 <Link href="/" className="mr-6 flex items-center space-x-2">
                      <Icons.truck className="h-6 w-6" />
                      <span className="hidden font-bold sm:inline-block">Toyota</span>
                 </Link>
-                <nav className="hidden md:flex space-x-4 flex-grow">
+                <nav className="hidden md:flex items-center space-x-4 flex-grow">
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
                   <div className="h-4 w-20 bg-muted rounded animate-pulse"></div>
-                   <div className="h-4 w-16 bg-muted rounded animate-pulse"></div>
                 </nav>
                  <div className="ml-auto flex items-center space-x-4">
                      <Button size="sm" variant="ghost" className="relative" disabled>
@@ -217,67 +195,74 @@ export function MainNav({ className, ...props }: MainNavProps) {
 
    return (
      <div className={cn("flex h-16 w-full shrink-0 items-center px-6 border-b shadow-sm", className)} {...props}>
-        {/* MobileNav Component Removed */}
        <Link href="/" className="mr-6 flex items-center space-x-2">
          <Icons.truck className="h-6 w-6" />
          <span className="hidden font-bold sm:inline-block">Toyota</span>
        </Link>
-       <nav className="hidden md:flex space-x-4 flex-grow">
+       <nav className="hidden md:flex items-center space-x-4 flex-grow">
          <Link href="/shop" className={cn(
            "text-sm font-medium transition-colors hover:text-foreground",
-           pathname === "/shop" ? "text-foreground" : "text-muted-foreground"
+           currentPath === "/shop" ? "text-foreground" : "text-muted-foreground"
          )}>
            Магазин
          </Link>
           <Link href="/cart" className={cn(
              "text-sm font-medium transition-colors hover:text-foreground",
-             pathname === "/cart" ? "text-foreground" : "text-muted-foreground"
+             currentPath === "/cart" ? "text-foreground" : "text-muted-foreground"
            )}>
              Корзина
            </Link>
            <Link href="/checkout" className={cn(
              "text-sm font-medium transition-colors hover:text-foreground",
-             pathname === "/checkout" ? "text-foreground" : "text-muted-foreground"
+             currentPath === "/checkout" ? "text-foreground" : "text-muted-foreground"
            )}>
              Оформление
            </Link>
            <Link href="/contacts" className={cn(
                "text-sm font-medium transition-colors hover:text-foreground",
-               pathname === "/contacts" ? "text-foreground" : "text-muted-foreground"
+               currentPath === "/contacts" ? "text-foreground" : "text-muted-foreground"
            )}>
              Контакты
            </Link>
+           {userIsAuthenticated && (
+             <Link href="/dashboard" className={cn(
+               "text-sm font-medium transition-colors hover:text-foreground",
+               currentPath === "/dashboard" ? "text-foreground" : "text-muted-foreground"
+             )}>
+               Личный кабинет
+             </Link>
+           )}
        </nav>
        <div className="ml-auto flex items-center space-x-4">
-           <Button size="sm" variant="ghost" className="relative" onClick={navigateToCart}>
+           <Button size="sm" variant="ghost" className="relative" onClick={goToCartPage}>
                <Icons.shoppingCart className="h-4 w-4" />
                <span className="sr-only">Корзина</span>
-               {cartItemCount > 0 && (
+               {cartQuantity > 0 && (
                  <Badge className="absolute -right-2 -top-2 rounded-full px-1 py-0.5 text-xs" style={{ backgroundColor: '#8dc572' }}>
-                   {cartItemCount}
+                   {cartQuantity}
                  </Badge>
                )}
              </Button>
 
-           {isLoggedIn && loggedInUser ? (
+           {userIsAuthenticated && currentUser ? (
              <>
                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>{loggedInUser.firstName?.[0]}{loggedInUser.lastName?.[0]}</AvatarFallback>
+                    <AvatarFallback>{currentUser.firstName?.[0]?.toUpperCase()}{currentUser.lastName?.[0]?.toUpperCase()}</AvatarFallback>
                   </Avatar>
-               <span className="text-sm font-medium hidden sm:inline-block">{loggedInUser.firstName} {loggedInUser.lastName}</span>
-               {loggedInUser.isAdmin && (
-                 <Link href="/admin" passHref>
+               <span className="text-sm font-medium hidden sm:inline-block">{currentUser.firstName} {currentUser.lastName}</span>
+               {currentUser.isAdmin && (
+                 <Link href="/admin" passHref legacyBehavior={false}>
                    <Button size="sm" variant="outline">
                      Админ панель
                    </Button>
                  </Link>
                )}
-               <Button size="sm" variant="ghost" onClick={handleLogout}>
+               <Button size="sm" variant="ghost" onClick={logOutUser}>
                  Выйти
                </Button>
              </>
            ) : (
-             <Link href="/auth/login" passHref>
+             <Link href="/auth/login" passHref legacyBehavior={false}>
                <Button size="sm" variant="ghost">
                  Войти
                </Button>

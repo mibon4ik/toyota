@@ -6,51 +6,48 @@ import Autopart from "@/app/components/autopart";
 import type { AutoPart } from '@/types/autopart';
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { getAllAutoParts } from '@/services/autoparts'; // Assuming a service to get all parts
+import { getAllAutoParts } from '@/services/autoparts';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
-interface NewArrivalsProps {
-  onAddToCart: (product: AutoPart) => void; // Receive callback from parent
+interface LatestProductsProps {
+  onAddToCart: (product: AutoPart) => void;
 }
 
-export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
-  const [newArrivals, setNewArrivals] = useState<AutoPart[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const NewArrivals: React.FC<LatestProductsProps> = ({ onAddToCart }) => {
+  const [latestItems, setLatestItems] = useState<AutoPart[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
 
-  const fetchNewArrivals = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchLatestProducts = useCallback(async () => {
+    setDataLoading(true);
+    setLoadingError(null);
     try {
-      // Simulate fetching new arrivals - maybe sort by a hypothetical 'dateAdded' or just slice differently
-      const allProducts = await getAllAutoParts();
-      // Example: Define "new" as products added recently (or just a slice for demo)
-      const arrivals = allProducts
-         // .sort((a, b) => (b.dateAdded ?? 0) - (a.dateAdded ?? 0)) // Hypothetical sorting
-        .slice(0, 5) // Take first 5 as "new" for demo
+      const allItems = await getAllAutoParts();
+      const newItems = allItems
+        .slice(0, 5)
         .map(p => ({
           ...p,
           dataAiHint: p.dataAiHint || `${p.category} ${p.brand}`
         }));
-      setNewArrivals(arrivals);
-    } catch (fetchError: any) {
-      console.error("Error fetching new arrivals:", fetchError);
-      setError("Не удалось загрузить новые поступления.");
+      setLatestItems(newItems);
+    } catch (error: any) {
+      console.error("Error fetching new arrivals:", error);
+      setLoadingError("Не удалось загрузить новые поступления.");
     } finally {
-      setIsLoading(false);
+      setDataLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchNewArrivals();
-  }, [fetchNewArrivals]);
+    fetchLatestProducts();
+  }, [fetchLatestProducts]);
 
   return (
     <section className="py-12">
       <div className="container mx-auto">
         <h2 className="text-3xl font-bold mb-8 text-center">Новые поступления</h2>
-        {isLoading ? (
+        {dataLoading ? (
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {[...Array(5)].map((_, index) => (
               <Card key={index} className="w-full overflow-hidden">
@@ -64,16 +61,15 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onAddToCart }) => {
               </Card>
             ))}
           </div>
-        ) : error ? (
-          <p className="text-center text-destructive">{error}</p>
-        ) : newArrivals.length === 0 ? (
+        ) : loadingError ? (
+          <p className="text-center text-destructive">{loadingError}</p>
+        ) : latestItems.length === 0 ? (
             <p className="text-center text-muted-foreground">Новые поступления не найдены.</p>
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {newArrivals.map((product) => (
-                 // Pass the onAddToCart function down to each Autopart
-                <Autopart key={product.id} product={product} onAddToCart={onAddToCart}/>
+              {latestItems.map((item) => (
+                <Autopart key={item.id} productInfo={item} onAddToCart={onAddToCart}/>
               ))}
             </div>
             <div className="text-center mt-8">

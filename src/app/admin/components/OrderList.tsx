@@ -11,26 +11,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Order } from '@/types/order';
 import { formatPrice } from '@/lib/utils';
 
-interface OrderListProps {
-  orders: Order[];
-  isLoading: boolean;
-  error: string | null;
+interface OrdersDisplayProps {
+  orderData: Order[];
+  isLoadingStatus: boolean;
+  errorMessage: string | null;
 }
 
-export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }) => {
+export const OrderList: React.FC<OrdersDisplayProps> = ({ orderData, isLoadingStatus, errorMessage }) => {
 
-  const getStatusBadgeVariant = (status: Order['status']) => {
+  const getStatusBadgeStyle = (status: Order['status']) => {
     switch (status) {
       case 'pending': return 'secondary';
       case 'processing': return 'default';
       case 'shipped': return 'outline';
-      case 'delivered': return 'default'; // Consider a success variant if added
+      case 'delivered': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
   };
 
-  const getStatusText = (status: Order['status']) => {
+  const localizeStatusText = (status: Order['status']) => {
       switch (status) {
         case 'pending': return 'В ожидании';
         case 'processing': return 'В обработке';
@@ -41,7 +41,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }
       }
   };
 
-  if (isLoading) {
+  if (isLoadingStatus) {
     return (
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Заказы:</h2>
@@ -56,16 +56,16 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }
     );
   }
 
-  if (error) {
+  if (errorMessage) {
     return (
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">Заказы:</h2>
-        <p className="text-destructive text-center">{error}</p>
+        <p className="text-destructive text-center">{errorMessage}</p>
       </div>
     );
   }
 
-  if (orders.length === 0) {
+  if (orderData.length === 0) {
     return (
        <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4">Заказы:</h2>
@@ -78,36 +78,33 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }
     <div className="mt-8">
       <h2 className="text-xl font-semibold mb-4">Заказы:</h2>
       <Accordion type="multiple" className="w-full space-y-4">
-        {orders.map((order) => (
-          <AccordionItem key={order.id} value={order.id} className="border rounded-md px-4 bg-card">
+        {orderData.map((singleOrder) => (
+          <AccordionItem key={singleOrder.id} value={singleOrder.id} className="border rounded-md px-4 bg-card">
             <AccordionTrigger className="hover:no-underline">
               <div className="flex flex-col sm:flex-row justify-between w-full pr-4 text-sm">
                  <div className="flex items-center gap-2 mb-2 sm:mb-0">
-                   <span className="font-medium">Заказ #{order.id.substring(0, 8)}...</span>
-                   <span className="text-muted-foreground">от {format(new Date(order.orderDate), 'PPP', { locale: ru })}</span>
+                   <span className="font-medium">Заказ #{singleOrder.id.substring(0, 8)}...</span>
+                   <span className="text-muted-foreground">от {format(new Date(singleOrder.orderDate), 'PPP', { locale: ru })}</span>
                  </div>
                  <div className="flex items-center gap-4">
-                   <span className="font-semibold">{formatPrice(order.totalAmount)}</span>
-                   <Badge variant={getStatusBadgeVariant(order.status)}>{getStatusText(order.status)}</Badge>
+                   <span className="font-semibold">{formatPrice(singleOrder.totalAmount)}</span>
+                   <Badge variant={getStatusBadgeStyle(singleOrder.status)}>{localizeStatusText(singleOrder.status)}</Badge>
                  </div>
                </div>
             </AccordionTrigger>
             <AccordionContent className="pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                {/* Customer Info */}
                 <div>
                   <h4 className="font-semibold mb-2">Покупатель:</h4>
-                  <p>{order.customerInfo.firstName} {order.customerInfo.lastName}</p>
-                  <p>{order.customerInfo.email}</p>
-                  <p>{order.customerInfo.phone}</p>
+                  <p>{singleOrder.customerInfo.firstName} {singleOrder.customerInfo.lastName}</p>
+                  <p>{singleOrder.customerInfo.email}</p>
+                  <p>{singleOrder.customerInfo.phone}</p>
                 </div>
-                 {/* Shipping Address */}
                 <div>
                   <h4 className="font-semibold mb-2">Адрес доставки:</h4>
-                  <p>{order.shippingAddress.city}, {order.shippingAddress.street}, д. {order.shippingAddress.house}</p>
-                  {order.shippingAddress.apartment && <p>кв./офис {order.shippingAddress.apartment}</p>}
+                  <p>{singleOrder.shippingAddress.city}, {singleOrder.shippingAddress.street}, д. {singleOrder.shippingAddress.house}</p>
+                  {singleOrder.shippingAddress.apartment && <p>кв./офис {singleOrder.shippingAddress.apartment}</p>}
                 </div>
-                {/* Items */}
                 <div className="md:col-span-2">
                   <h4 className="font-semibold mb-2">Товары:</h4>
                    <div className="overflow-x-auto rounded-md border">
@@ -122,7 +119,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {order.items.map((item) => (
+                          {singleOrder.items.map((item) => (
                             <TableRow key={item.id}>
                               <TableCell className="font-medium">{item.name}</TableCell>
                               <TableCell>{item.brand}</TableCell>
@@ -135,10 +132,9 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, isLoading, error }
                       </Table>
                     </div>
                 </div>
-                {/* Payment Method */}
                 <div>
                   <h4 className="font-semibold mb-1">Способ оплаты:</h4>
-                  <p>{order.paymentMethod === 'cash_on_delivery' ? 'Оплата при получении' : 'Онлайн оплата'}</p>
+                  <p>{singleOrder.paymentMethod === 'cash_on_delivery' ? 'Оплата при получении' : 'Онлайн оплата'}</p>
                 </div>
               </div>
             </AccordionContent>

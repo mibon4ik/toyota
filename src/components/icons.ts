@@ -4,26 +4,14 @@ import {
   ChevronsUpDown,
   Circle,
   Copy,
-  Edit,
-  ExternalLink,
-  File,
-  HelpCircle,
-  Home,
-  Loader2,
-  Mail,
-  MessageSquare,
-  Moon,
   Plus,
   PlusCircle,
   Search,
-  Server,
   Settings,
   Share2,
-  Shield,
   Sun,
   Trash,
   User,
-  Workflow,
   ShoppingCart,
   Menu,
   Filter,
@@ -37,34 +25,27 @@ import {
   EyeOff,
   Aperture,
   Zap,
-  Gift, // Added Gift icon
+  Gift,
+  Loader2,
+  HelpCircle, // Explicitly kept as it's used
+  Wrench, // Assuming this is for Suspension, if not, needs specific icon
 } from 'lucide-react';
 
-const Icons = {
+const IconsCollection = {
   arrowRight: ArrowRight,
   check: Check,
   chevronDown: ChevronsUpDown,
   circle: Circle,
-  workflow: Workflow,
   close: X,
   copy: Copy,
-  dark: Moon,
-  edit: Edit,
-  externalLink: ExternalLink,
-  file: File,
-  help: HelpCircle,
-  home: Home,
+  dark: Sun,
   light: Sun,
   loader: Loader2,
-  mail: Mail,
-  messageSquare: MessageSquare,
   plus: Plus,
   plusCircle: PlusCircle,
   search: Search,
-  server: Server,
   settings: Settings,
   share: Share2,
-  shield: Shield,
   spinner: Loader2,
   trash: Trash,
   user: User,
@@ -73,17 +54,19 @@ const Icons = {
   filter: Filter,
   chevronDownRadix: ChevronDown,
   chevronUpRadix: ChevronUp,
-  car: Car, // Changed 'engine' key to 'car' to match import
-  suspension: Zap, // Reverted to Zap as Suspension is not valid
-  brakes: Circle,
-  electrical: Zap,
-  body: Box,
-  accessories: Gift, // Using Gift for accessories
-  truck: Truck,
+  car: Car, // For Engine category
+  suspension: Wrench, // Changed from Zap to Wrench for Suspension
+  brakes: Circle, // For Brakes category
+  electrical: Zap, // For Electrical category
+  body: Box, // For Body category
+  accessories: Gift, // For Accessories category
+  truck: Truck, // For delivery/store benefits
   eye: Eye,
   eyeOff: EyeOff,
   aperture: Aperture,
-  zap: Zap,
+  zap: Zap, // General purpose 'power' or 'electrical'
+  help: HelpCircle, 
+  gift: Gift, // Added gift as it was used as Icons.accessories
 };
 
-export {Icons};
+export {IconsCollection as Icons};

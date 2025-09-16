@@ -1,159 +1,136 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/icons";
-import { cn } from "@/lib/utils";
-import Autopart from "@/app/components/autopart"; // Autopart is used within dynamic components
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import type { AutoPart } from '@/types/autopart';
+import type { AutoPart as ProductInfo } from '@/types/autopart';
+import type { Banner as BannerType } from '@/types/banner';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getActiveBanners } from '@/services/banners';
 
-// Dynamically import components that might cause hydration issues or are heavy
-const PopularCategories = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
-  ssr: false, // Disable SSR for this component if it uses client-side only APIs directly
-  loading: () => <Skeleton className="h-40 w-full" />, // Loading skeleton
+const PopularCategoriesComponent = dynamic(() => import('./page/components/PopularCategories').then(mod => mod.PopularCategories), {
+  ssr: false,
+  loading: () => <Skeleton className="h-40 w-full" />,
 });
-const HitsOfSales = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
+const FeaturedProductsComponent = dynamic(() => import('./page/components/HitsOfSales').then(mod => mod.HitsOfSales), {
   ssr: false,
    loading: () => <Skeleton className="h-96 w-full" />,
 });
-const NewArrivals = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), {
+const LatestArrivalsComponent = dynamic(() => import('./page/components/NewArrivals').then(mod => mod.NewArrivals), {
   ssr: false,
   loading: () => <Skeleton className="h-96 w-full" />,
 });
-const StoreBenefits = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
-  ssr: false, // Potentially safe for SSR, but keep dynamic for consistency
+const StoreAdvantagesComponent = dynamic(() => import('./page/components/StoreBenefits').then(mod => mod.StoreBenefits), {
+  ssr: false,
   loading: () => <Skeleton className="h-48 w-full" />,
 });
-const MiniBlog = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
+const BlogPreviewComponent = dynamic(() => import('./page/components/MiniBlog').then(mod => mod.MiniBlog), {
   ssr: false,
   loading: () => <Skeleton className="h-64 w-full" />,
 });
-const CompatibilityChecker = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
-  ssr: false, // Likely uses client-side state/effects
+const PartFinderComponent = dynamic(() => import('./page/components/CompatibilityChecker').then(mod => mod.CompatibilityChecker), {
+  ssr: false,
   loading: () => <Skeleton className="h-80 w-full" />,
 });
 
-
-const banners = [
-  {
-    id: 'banner-1',
-    title: 'Летняя распродажа - скидки до 50%',
-    imageUrl: 'https://picsum.photos/seed/summersale/1200/400', // Use picsum for placeholder
-    buttonText: 'Купить сейчас',
-    href: '/shop?sale=true',
-    dataAiHint: "car parts summer sale" // Keep hint
-  },
-  {
-    id: 'banner-2',
-    title: 'Новые поступления - ознакомьтесь с последними деталями',
-     imageUrl: 'https://picsum.photos/seed/newarrivals/1200/400', // Use picsum for placeholder
-    buttonText: 'Посмотреть новинки',
-    href: '/shop?sort=newest',
-    dataAiHint: "new car parts arrivals" // Keep hint
-  },
-];
-
-interface CartItem extends AutoPart {
+interface CartItem extends ProductInfo {
   quantity: number;
 }
 
 const HomePage = () => {
-  const { toast } = useToast();
-  const [isMounted, setIsMounted] = useState(false);
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { toast: showToast } = useToast();
+  const [clientReady, setClientReady] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [currentBanners, setCurrentBanners] = useState<BannerType[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
 
-  // Load cart from localStorage only on the client-side after mount
   useEffect(() => {
-    setIsMounted(true);
-    const storedCart = localStorage.getItem('cartItems');
-    if (storedCart) {
+    setClientReady(true);
+    const cartData = localStorage.getItem('cartItems');
+    if (cartData) {
       try {
-        const parsedCart: CartItem[] = JSON.parse(storedCart);
-        // Enhanced validation
-        if (Array.isArray(parsedCart) && parsedCart.every(item =>
-            item && // Check if item is not null/undefined
-            typeof item.id === 'string' &&
-            typeof item.name === 'string' &&
-            typeof item.price === 'number' &&
-            typeof item.quantity === 'number' &&
-            typeof item.imageUrl === 'string' // Ensure imageUrl exists and is a string
+        const items: CartItem[] = JSON.parse(cartData);
+        if (Array.isArray(items) && items.every(item =>
+            item && typeof item.id === 'string' && typeof item.name === 'string' &&
+            typeof item.price === 'number' && typeof item.quantity === 'number' && typeof item.imageUrl === 'string'
         )) {
-          setCartItems(parsedCart);
+          setCart(items);
         } else {
-           console.warn("Invalid cart data found in localStorage (HomePage). Clearing cart.");
            localStorage.removeItem('cartItems');
-           setCartItems([]); // Clear state too
+           setCart([]);
         }
       } catch (e) {
-        console.error("Error parsing cart from localStorage (HomePage):", e);
         localStorage.removeItem('cartItems');
-         setCartItems([]); // Clear state too
+         setCart([]);
       }
     } else {
-        setCartItems([]);
+        setCart([]);
     }
-  }, []);
 
-  // Update localStorage whenever cartItems change, only on client
+    const loadBanners = async () => {
+      setBannersLoading(true);
+      try {
+        const activeBanners = await getActiveBanners();
+        setCurrentBanners(activeBanners);
+      } catch (error) {
+        showToast({
+          title: "Ошибка загрузки баннеров",
+          description: "Не удалось загрузить баннеры. Попробуйте обновить страницу.",
+          variant: "destructive"
+        });
+      } finally {
+        setBannersLoading(false);
+      }
+    };
+    loadBanners();
+
+  }, [showToast]);
+
   useEffect(() => {
-    if (isMounted) {
-      localStorage.setItem('cartItems', JSON.stringify(cartItems));
-      window.dispatchEvent(new CustomEvent('cartUpdated')); // Notify other components like nav
+    if (clientReady) {
+      localStorage.setItem('cartItems', JSON.stringify(cart));
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
     }
-  }, [cartItems, isMounted]);
+  }, [cart, clientReady]);
 
-  // Define handleAddToCart in the parent component
-  const handleAddToCart = useCallback((product: AutoPart) => {
-    if (!isMounted) return; // Prevent execution on server or before mount
-    console.log("Adding to cart (HomePage):", product.name, "with ImageUrl:", product.imageUrl);
-
-    setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => item.id === product.id);
-      let updatedCart;
+  const addProductToCart = useCallback((product: ProductInfo) => {
+    if (!clientReady) return;
+    
+    setCart(currentCart => {
+      const existingItem = currentCart.find(item => item.id === product.id);
+      let newCart;
       let toastTitle = "";
-      let toastDescription = "";
+      let toastMessage = "";
 
-      if (existingItemIndex > -1) {
-        // Increase quantity if item exists
-        updatedCart = currentItems.map((item, index) =>
-          index === existingItemIndex ? { ...item, quantity: (item.quantity || 1) + 1 } : item
+      if (existingItem) {
+        newCart = currentCart.map(item =>
+          item.id === product.id ? { ...item, quantity: (item.quantity || 1) + 1 } : item
         );
         toastTitle = "Количество обновлено!";
-        toastDescription = `Количество ${product.name} в корзине увеличено.`;
+        toastMessage = `Количество ${product.name} в корзине увеличено.`;
       } else {
-        // Add new item with quantity 1, ensuring imageUrl is included
-        updatedCart = [...currentItems, { ...product, quantity: 1 }];
+        newCart = [...currentCart, { ...product, quantity: 1 }];
         toastTitle = "Товар добавлен в корзину!";
-        toastDescription = `${product.name} был добавлен в вашу корзину.`;
+        toastMessage = `${product.name} был добавлен в вашу корзину.`;
       }
-
-      // Defer toast to avoid calling it during render
-       setTimeout(() => {
-           toast({ title: toastTitle, description: toastDescription });
-           console.log("Toast displayed for:", product.name);
-       }, 0);
-
-      return updatedCart; // Return the updated cart state
+      
+      showToast({ title: toastTitle, description: toastMessage });
+      return newCart;
     });
 
-  }, [toast, isMounted]); // Add isMounted to dependencies
+  }, [showToast, clientReady]);
 
 
-  // Render skeleton or simplified content until mounted
-  if (!isMounted) {
+  if (!clientReady) {
      return (
         <div className="space-y-12 container mx-auto">
-             {/* Skeleton for Banners */}
              <div className="space-y-4">
-                {[...Array(2)].map((_, index) => (
-                    <Card key={index} className="overflow-hidden">
+                {[...Array(2)].map((_, idx) => (
+                    <Card key={idx} className="overflow-hidden">
                         <CardHeader className="p-4"><Skeleton className="h-6 w-3/4" /></CardHeader>
                         <CardContent className="flex flex-col items-start p-4 pt-0">
                            <Skeleton className="w-full aspect-[3/1] mb-4 rounded-md" />
@@ -172,61 +149,79 @@ const HomePage = () => {
      );
   }
 
-  // Render full content after mounting
   return (
     <div className="fade-in space-y-12">
-        {/* Banner Section */}
         <div className="space-y-4">
-            {banners.map((banner, index) => (
-                <Card key={banner.id} className="overflow-hidden">
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-xl">{banner.title}</CardTitle>
-                    </CardHeader>
+            {bannersLoading ? (
+              [...Array(currentBanners.length > 0 ? currentBanners.length : 1)].map((_, idx) => (
+                <Card key={`banner-skeleton-${idx}`} className="overflow-hidden">
+                    <CardHeader className="p-4"><Skeleton className="h-6 w-3/4" /></CardHeader>
                     <CardContent className="flex flex-col items-start p-4 pt-0">
-                      <div className="relative w-full aspect-[3/1] mb-4">
-                        {/* Use next/image for optimization */}
-                        <Image
-                          src={banner.imageUrl}
-                          alt={banner.title}
-                          fill // Use fill to cover the container
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Provide sizes
-                          className="rounded-md object-cover" // Ensure image covers the area
-                          priority={index === 0} // Prioritize the first banner image
-                          onError={(e) => (e.currentTarget.src = 'https://picsum.photos/1200/400')} // Fallback
-                          data-ai-hint={banner.dataAiHint} // Keep AI hint
-                        />
-                      </div>
-                      <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
-                        <Link href={banner.href ?? '#'}>{banner.buttonText}</Link>
-                      </Button>
+                       <Skeleton className="w-full aspect-[3/1] mb-4 rounded-md" />
+                       <Skeleton className="h-10 w-32 mt-4 rounded-md" />
                     </CardContent>
-                  </Card>
-            ))}
+                </Card>
+              ))
+            ) : currentBanners.length > 0 ? (
+                currentBanners.map((bannerItem, idx) => (
+                    <Card key={bannerItem.id} className="overflow-hidden">
+                        <CardHeader className="p-4">
+                          <CardTitle className="text-xl">{bannerItem.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex flex-col items-start p-4 pt-0">
+                          <div className="relative w-full aspect-[3/1] mb-4">
+                            <Image
+                              src={bannerItem.imageUrl}
+                              alt={bannerItem.title}
+                              fill
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              className="rounded-md object-cover"
+                              priority={idx === 0}
+                              onError={(e) => (e.currentTarget.src = 'https://placehold.co/1200x400.png')}
+                              data-ai-hint={bannerItem.dataAiHint || bannerItem.imageHint}
+                            />
+                          </div>
+                          <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
+                            <Link href={bannerItem.link ?? '#'}>{bannerItem.buttonText}</Link>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                ))
+            ) : (
+              <Card className="overflow-hidden">
+                <CardHeader className="p-4"><CardTitle className="text-xl">Добро пожаловать в Toyota!</CardTitle></CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p>Ознакомьтесь с нашими специальными предложениями и широким ассортиментом запчастей в магазине.</p>
+                  <Button asChild className="bg-[#535353ff] hover:bg-[#535353ff]/90 mt-4">
+                    <Link href="/shop">Перейти в магазин</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
         </div>
 
-       {/* Wrap dynamic components in Suspense and pass handleAddToCart */}
        <Suspense fallback={<Skeleton className="h-80 w-full" />}>
-         <CompatibilityChecker onAddToCart={handleAddToCart} />
+         <PartFinderComponent onAddToCart={addProductToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-         <PopularCategories />
+         <PopularCategoriesComponent />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-          <HitsOfSales onAddToCart={handleAddToCart} />
+          <FeaturedProductsComponent onAddToCart={addProductToCart} />
        </Suspense>
 
        <Suspense fallback={<Skeleton className="h-96 w-full" />}>
-         <NewArrivals onAddToCart={handleAddToCart} />
+         <LatestArrivalsComponent onAddToCart={addProductToCart} />
        </Suspense>
 
         <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-          <StoreBenefits />
+          <StoreAdvantagesComponent />
         </Suspense>
 
         <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-          <MiniBlog />
+          <BlogPreviewComponent />
         </Suspense>
      </div>
     );
